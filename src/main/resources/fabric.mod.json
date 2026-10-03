@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "id": "symauto",
+  "version": "${version}",
+  "name": "SymAuto",
+  "description": "代码写的跟shit一样",
+  "authors": [],
+  "contact": {},
+  "license": "All-Rights-Reserved",
+  "icon": "assets/symauto/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "fabric-datagen": [
+      "com.symauto.SymautoDataGenerator"
+    ],
+    "client": [
+      "com.symauto.SymautoClient"
+    ],
+    "main": [
+      "com.symauto.Symauto"
+    ]
+  },
+  "mixins": [
+    "symauto.mixins.json",
+    {
+      "config": "symauto.client.mixins.json",
+      "environment": "client"
+    }
+  ],
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "fabric-api": "*",
+    "minecraft": "${minecraft_version}",
+    "combind": "*"
+  }
+}
