@@ -33,10 +33,23 @@ public class FeatureMenuScreen extends Screen {
             final SymAbstractFunction func = FeatureConfig.AUTO_ALL.get(i);
             Button btn = Button.builder(buildLabel(func), b -> {
                 func.toggle();
+                refreshAllButtons();
                 b.setMessage(buildLabel(func));
             }).tooltip(Tooltip.create(Component.literal(func.getTooltip()))
             ).bounds(startX, startY + i * (BTN_H + GAP), BTN_W, BTN_H).build();
             this.addRenderableWidget(btn);
+        }
+    }
+
+    private void refreshAllButtons() {
+        for (int i = 0; i < FeatureConfig.AUTO_ALL.size(); i++) {
+            SymAbstractFunction func = FeatureConfig.AUTO_ALL.get(i);
+            if (this.children() instanceof java.util.List<?> list && i < list.size()) {
+                Object widget = list.get(i);
+                if (widget instanceof Button btn) {
+                    btn.setMessage(buildLabel(func));
+                }
+            }
         }
     }
 

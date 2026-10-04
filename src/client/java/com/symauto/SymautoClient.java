@@ -3,6 +3,7 @@ package com.symauto;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.symauto.function.FeatureConfig;
 import com.symauto.function.SymAbstractFunction;
+import com.symauto.function.functions.AutoSwiftToolsFunction;
 import com.symauto.function.functions.FixYPlaceOrDestroyFunction;
 import com.symauto.gui.FeatureMenuScreen;
 import net.fabricmc.api.ClientModInitializer;
@@ -12,9 +13,12 @@ import net.minecraft.client.KeyMapping;
 import net.minecraft.resources.Identifier;
 import org.lwjgl.glfw.GLFW;
 
+import static net.fabricmc.fabric.impl.client.rendering.hud.HudStatusBarHeightRegistryImpl.LOGGER;
+
 public class SymautoClient implements ClientModInitializer {
 
     private KeyMapping openMenuKey;
+    private boolean debugLogged = false;
 
     @Override
     public void onInitializeClient() {
@@ -31,6 +35,13 @@ public class SymautoClient implements ClientModInitializer {
 
         KeyMappingHelper.registerKeyMapping(openMenuKey);
 
+        ClientTickEvents.START_CLIENT_TICK.register(client -> {
+            if (FeatureConfig.AUTO_SWIFT_TOOLS_FUNCTION.isEnable() && client.player != null) {
+                ((AutoSwiftToolsFunction) FeatureConfig.AUTO_SWIFT_TOOLS_FUNCTION).earlySwitchBack(client);
+            }
+        });
+
+
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (FixYPlaceOrDestroyFunction.isHolding() && !client.options.keyUse.isDown()) {
                 FixYPlaceOrDestroyFunction.endHold();
@@ -44,6 +55,13 @@ public class SymautoClient implements ClientModInitializer {
                     client.getWindow(), GLFW.GLFW_KEY_LEFT_SHIFT)) {
                 if (client.gui.screen() == null) {
                     client.gui.setScreen(new FeatureMenuScreen());
+                }
+            }
+
+            if (!debugLogged && client.player != null) {
+                debugLogged = true;
+                for (SymAbstractFunction f : FeatureConfig.AUTO_ALL) {
+                    LOGGER.info("[SymAuto] Function: {} enabled={}", f.getName(), f.isEnable());
                 }
             }
 

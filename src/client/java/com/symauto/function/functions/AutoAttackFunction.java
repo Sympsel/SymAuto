@@ -1,5 +1,6 @@
 package com.symauto.function.functions;
 
+import com.symauto.function.FeatureConfig;
 import com.symauto.function.SymAbstractFunction;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
@@ -19,6 +20,10 @@ public class AutoAttackFunction extends SymAbstractFunction {
             return;
         }
 
+        if (client.player.isUsingItem() || isAutoEatActive()) {
+            return;
+        }
+
         if (client.player.getAttackStrengthScale(0f) < 1.0f) {
             return;
         }
@@ -30,5 +35,10 @@ public class AutoAttackFunction extends SymAbstractFunction {
             return;
         }
         client.gameMode.attack(client.player, target);
+    }
+
+    private boolean isAutoEatActive() {
+        SymAbstractFunction autoEat = FeatureConfig.AUTO_EAT_FUNCTION;
+        return autoEat.isEnable() && autoEat instanceof AutoEatFunction f && f.isEating();
     }
 }

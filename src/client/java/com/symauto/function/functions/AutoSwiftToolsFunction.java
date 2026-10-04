@@ -55,11 +55,21 @@ public class AutoSwiftToolsFunction extends SymAbstractFunction {
     }
 
     @Override
+    protected void onDisable() {
+        Minecraft client = Minecraft.getInstance();
+        if (client.player != null) {
+            switchBack(client);
+        }
+        resetTarget();
+    }
+
+    @Override
     protected void onTrigger(Minecraft client) {
         if (client.player == null || client.level == null) {
             return;
         }
         if (client.player.isCreative()) {
+            switchBack(client);
             return;
         }
         if (client.gui.screen() != null) {
@@ -89,9 +99,7 @@ public class AutoSwiftToolsFunction extends SymAbstractFunction {
             return;
         }
 
-        // 刚切换或交换过物品时，先停止破坏，等待服务器按顺序处理同步包
         if (syncTicks > 0) {
-            abortDestroy(client);
             syncTicks--;
             return;
         }
@@ -127,6 +135,17 @@ public class AutoSwiftToolsFunction extends SymAbstractFunction {
         }
 
         swapInventoryIntoSelectedHotbar(client, invSlot);
+    }
+
+    public void earlySwitchBack(Minecraft client) {
+        if (prevSlot == -1 || client.player == null) {
+            return;
+        }
+        if (client.options.keyAttack.isDown()) {
+            return;
+        }
+        resetTarget();
+        switchBack(client);
     }
 
     private void selectSlot(Minecraft client, int slot) {

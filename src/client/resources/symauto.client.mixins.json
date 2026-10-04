@@ -4,7 +4,8 @@
   "package": "com.symauto.mixin",
   "compatibilityLevel": "JAVA_25",
   "client": [
-    "FixYPlaceMixin"
+    "FixYPlaceMixin",
+    "FishingHookAccessor"
   ],
   "injectors": {
     "defaultRequire": 1

@@ -4,7 +4,9 @@ import lombok.Getter;
 import lombok.Setter;
 import net.minecraft.client.Minecraft;
 
+import java.util.Collections;
 import java.util.Random;
+import java.util.Set;
 
 public abstract class SymAbstractFunction {
     protected static final Random RANDOM = new Random();
@@ -13,7 +15,6 @@ public abstract class SymAbstractFunction {
     private final String name;
     @Getter
     private final String tooltip;
-    @Setter
     @Getter
     private boolean enable = false;
 
@@ -33,6 +34,16 @@ public abstract class SymAbstractFunction {
         setEnable(!enable);
     }
 
-    public void compatibility() {
+    public Set<Class<? extends SymAbstractFunction>> getConflicts() {
+        return Collections.emptySet();
+    }
+
+    protected void onDisable() {}
+
+    public void setEnable(boolean enable) {
+        if (this.enable && !enable) {
+            onDisable();
+        }
+        this.enable = enable;
     }
 }
