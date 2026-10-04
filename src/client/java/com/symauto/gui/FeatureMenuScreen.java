@@ -10,6 +10,8 @@ import net.minecraft.network.chat.Component;
 import org.jspecify.annotations.NonNull;
 
 public class FeatureMenuScreen extends Screen {
+    private final Screen parent;
+
     private static final int BTN_W = 220;
     private static final int BTN_H = 24;
     private static final int GAP = 5;
@@ -18,8 +20,9 @@ public class FeatureMenuScreen extends Screen {
     private static final int MARGIN_LEFT = 20;
     private static final int MARGIN_TOP = 20;
 
-    public FeatureMenuScreen() {
+    public FeatureMenuScreen(Screen parent) {
         super(Component.literal("SymAuto 功能菜单"));
+        this.parent = parent;
     }
 
     @Override
@@ -27,7 +30,7 @@ public class FeatureMenuScreen extends Screen {
         int autoCount = FeatureConfig.AUTO_ALL.size();
 
         int startX = MARGIN_LEFT;
-        int startY = MARGIN_TOP + 20; // 给标题留一行
+        int startY = MARGIN_TOP + 20;
 
         for (int i = 0; i < autoCount; i++) {
             final SymAbstractFunction func = FeatureConfig.AUTO_ALL.get(i);
@@ -38,6 +41,14 @@ public class FeatureMenuScreen extends Screen {
             }).tooltip(Tooltip.create(Component.literal(func.getTooltip()))
             ).bounds(startX, startY + i * (BTN_H + GAP), BTN_W, BTN_H).build();
             this.addRenderableWidget(btn);
+        }
+
+        if (parent != null) {
+            this.addRenderableWidget(
+                    Button.builder(Component.literal("返回"), b -> this.minecraft.gui.setScreen(parent))
+                            .bounds(startX, startY + autoCount * (BTN_H + GAP) + 10, BTN_W, BTN_H)
+                            .build()
+            );
         }
     }
 
@@ -63,5 +74,11 @@ public class FeatureMenuScreen extends Screen {
         super.extractRenderState(graphics, mouseX, mouseY, delta);
 
         graphics.text(this.font, this.title, MARGIN_LEFT, MARGIN_TOP, 0xFFFFFF, true);
+    }
+
+
+    @Override
+    public void onClose() {
+        this.minecraft.gui.setScreen(parent);
     }
 }

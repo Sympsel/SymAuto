@@ -54,7 +54,7 @@ public class SymautoClient implements ClientModInitializer {
             if (openMenuKey.isDown() && InputConstants.isKeyDown(
                     client.getWindow(), GLFW.GLFW_KEY_LEFT_SHIFT)) {
                 if (client.gui.screen() == null) {
-                    client.gui.setScreen(new FeatureMenuScreen());
+                    client.gui.setScreen(new FeatureMenuScreen(null));
                 }
             }
 

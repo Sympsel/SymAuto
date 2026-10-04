@@ -3,8 +3,8 @@
   "id": "symauto",
   "version": "${version}",
   "name": "SymAuto",
-  "description": "Sympsel 所写的自动化mod",
-  "authors": [],
+  "description": "Sympsel 所写的自动化mod, Shift + X 打开菜单",
+  "authors": ["Sympsel"],
   "contact": {},
   "license": "All-Rights-Reserved",
   "icon": "assets/symauto/icon.png",
@@ -17,6 +17,9 @@
     ],
     "main": [
       "com.symauto.Symauto"
+    ],
+    "modmenu": [
+      "com.symauto.gui.ModMenuIntegration"
     ]
   },
   "mixins": [
@@ -30,5 +33,8 @@
     "fabricloader": ">=${loader_version}",
     "fabric-api": "*",
     "minecraft": "${minecraft_version}"
+  },
+  "suggests": {
+    "modmenu": "*"
   }
 }
