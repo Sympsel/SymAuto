@@ -4,8 +4,6 @@
   "package": "com.symauto.mixin",
   "compatibilityLevel": "JAVA_25",
   "client": [
-    "MinecraftMixin",
-    "MinecraftInvoker",
     "FixYPlaceMixin"
   ],
   "injectors": {

@@ -1,5 +1,7 @@
-package com.symauto.function;
+package com.symauto.function.functions;
 
+import com.symauto.function.SymAbstractFunction;
+import lombok.Getter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
@@ -25,11 +27,31 @@ public class AutoSwiftToolsFunction extends SymAbstractFunction {
     private int prevSlot = -1;
     private BlockPos currBlockPos = null;
     private int syncTicks = 0;
+    @Getter
+    private int intervalMs = 100;
+    @Getter
+    private float floatFactor = 0.1f;
 
-    protected AutoSwiftToolsFunction() {
-        super("自动切换破坏工具", "自动切换破坏工具");
+    public AutoSwiftToolsFunction() {
+        super("自动切换破坏工具", "自动切换破坏工具，快捷栏工具优先，其次精准采集工具优先，最后挖掘速度优先");
         setIntervalMs(50);
         setFloatFactor(0.1f);
+    }
+
+
+    public void setIntervalMs(int intervalMs) {
+        this.intervalMs = Math.max(10, intervalMs);
+    }
+
+    public void setFloatFactor(float floatFactor) {
+        this.floatFactor = Math.max(0f, floatFactor);
+    }
+
+    protected int nextDelay() {
+        float min = intervalMs * (1f - floatFactor);
+        float max = intervalMs * (1f + floatFactor);
+        int delay = (int) (min + RANDOM.nextFloat() * (max - min));
+        return Math.max(10, delay);
     }
 
     @Override

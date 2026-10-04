@@ -1,12 +1,13 @@
-package com.symauto.function;
+package com.symauto.function.functions;
 
+import com.symauto.function.SymAbstractFunction;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
 
 
-public class AutoLeftClickFunction extends SymAbstractFunction {
-    protected AutoLeftClickFunction() {
-        super("自动左键", "定时左键");
+public class AutoAttackFunction extends SymAbstractFunction {
+    public AutoAttackFunction() {
+        super("自动攻击", "自动攻击，自适应当前攻速，同时添加浮动系数，防检测");
     }
 
     @Override

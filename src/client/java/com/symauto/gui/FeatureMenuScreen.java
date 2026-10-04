@@ -1,10 +1,10 @@
-package com.symauto;
+package com.symauto.gui;
 
 import com.symauto.function.FeatureConfig;
-import com.symauto.function.FixYPlaceFunction;
 import com.symauto.function.SymAbstractFunction;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import org.jspecify.annotations.NonNull;
@@ -34,28 +34,15 @@ public class FeatureMenuScreen extends Screen {
             Button btn = Button.builder(buildLabel(func), b -> {
                 func.toggle();
                 b.setMessage(buildLabel(func));
-            }).bounds(startX, startY + i * (BTN_H + GAP), BTN_W, BTN_H).build();
+            }).tooltip(Tooltip.create(Component.literal(func.getTooltip()))
+            ).bounds(startX, startY + i * (BTN_H + GAP), BTN_W, BTN_H).build();
             this.addRenderableWidget(btn);
         }
-
-        // 锁定Y轴放置那一行
-        int yPlaceRowY = startY + autoCount * (BTN_H + GAP);
-
-        Button yPlaceBtn = Button.builder(buildYPlaceLabel(), b -> {
-            FixYPlaceFunction.toggle();
-            b.setMessage(buildYPlaceLabel());
-        }).bounds(startX, yPlaceRowY, BTN_W, BTN_H).build();
-        this.addRenderableWidget(yPlaceBtn);
     }
 
     private Component buildLabel(SymAbstractFunction func) {
         String state = func.isEnable() ? "§a开启" : "§c关闭";
         return Component.literal(func.getName() + "  " + state);
-    }
-
-    private Component buildYPlaceLabel() {
-        String state = FixYPlaceFunction.isEnable() ? "§a开启" : "§c关闭";
-        return Component.literal("锁定Y轴放置/破坏  " + state);
     }
 
     @Override

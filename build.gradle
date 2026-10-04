@@ -1,6 +1,7 @@
 plugins {
     id 'net.fabricmc.fabric-loom' version '1.17-SNAPSHOT'
     id 'maven-publish'
+    id 'io.freefair.lombok' version '9.5.0'
 }
 
 version = project.mod_version
@@ -28,19 +29,6 @@ fabricApi {
 }
 
 repositories {
-    // Modrinth Maven —— 用于解析 Combind 等 mod 依赖
-    exclusiveContent {
-        forRepository {
-            maven {
-                name = "Modrinth"
-                url = "https://api.modrinth.com/maven"
-            }
-        }
-        filter {
-            includeGroup "maven.modrinth"
-        }
-    }
-    // 你的其他仓库可以继续加在这里
 }
 
 dependencies {
@@ -48,10 +36,6 @@ dependencies {
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
     implementation "net.fabricmc:fabric-loader:${project.loader_version}"
     implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
-
-    // Combind：26.1+ 已移除 modCompileOnly / modRuntimeOnly，统一用标准配置
-    compileOnly "maven.modrinth:combind:FI91jgs2"
-    runtimeOnly "maven.modrinth:combind:FI91jgs2"
 }
 
 processResources {
