@@ -9,7 +9,7 @@ import net.minecraft.world.item.Items;
 
 public class AutoFishingFunction extends SymAbstractFunction {
     private static final int RECAST_DELAY_TICKS = 15;
-    private static final int CAST_TIMEOUT_TICKS = 600;
+    private static final int CAST_TIMEOUT_TICKS = 900;
 
     private enum State { IDLE, CAST, WAITING, REELING, RECASTING }
 
@@ -18,7 +18,7 @@ public class AutoFishingFunction extends SymAbstractFunction {
     private int recastCountdown = 0;
 
     public AutoFishingFunction() {
-        super("自动钓鱼", "手持钓鱼杆时自动甩杆收杆");
+        super("自动钓鱼", "手持钓鱼杆时自动甩杆收杆，45秒没有鱼会超时重新抛竿");
     }
 
     @Override
@@ -26,13 +26,6 @@ public class AutoFishingFunction extends SymAbstractFunction {
         if (client.player == null || client.level == null || client.gameMode == null) {
             return;
         }
-
-//        if (client.gui.screen() != null) {
-//            if (state != State.IDLE) {
-//                reset();
-//            }
-//            return;
-//        }
 
         boolean mainRod = client.player.getMainHandItem().is(Items.FISHING_ROD);
         boolean offRod = client.player.getOffhandItem().is(Items.FISHING_ROD);

@@ -2,24 +2,26 @@ package com.symauto.function.functions;
 
 import com.symauto.function.FeatureConfig;
 import com.symauto.function.SymAbstractFunction;
+import com.symauto.mixin.MinecraftInvoker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
 
-
-public class AutoAttackFunction extends SymAbstractFunction {
-    public AutoAttackFunction() {
-        super("自动攻击§c(危险)", "§c⚠ 警告：此版本直接调用 gameMode.attack()，可后台挂机，但缺少挥手/音效封包，会被反作弊检测！\n§c⚠ 请改用「自动攻击(安全版)」\n§7原逻辑：自适应当前攻速");
+public class AutoAttackSafetyFunction extends SymAbstractFunction {
+    public AutoAttackSafetyFunction() {
+        super("自动攻击(安全版)", "§a走原版 startAttack() 点击流程，附带挥手/音效封包，自适应攻速，防检测\n§e推荐使用此版本");
     }
 
     @Override
     protected void onTrigger(Minecraft client) {
-        if (client.player == null || client.level == null || client.gameMode == null) {
+        if (client.player == null || client.level == null) {
+            return;
+        }
+        if (client.gui.screen() != null) {
             return;
         }
         if (client.player.isCreative()) {
             return;
         }
-
         if (client.player.isUsingItem() || isAutoEatActive()) {
             return;
         }
@@ -28,13 +30,10 @@ public class AutoAttackFunction extends SymAbstractFunction {
             return;
         }
         Entity target = client.crosshairPickEntity;
-        if (target == null) {
+        if (target == null || !target.isAlive()) {
             return;
         }
-        if (!target.isAlive()) {
-            return;
-        }
-        client.gameMode.attack(client.player, target);
+        ((MinecraftInvoker) client).invokeStartAttack();
     }
 
     private boolean isAutoEatActive() {
