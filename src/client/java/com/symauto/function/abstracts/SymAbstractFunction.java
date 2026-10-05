@@ -1,7 +1,7 @@
-package com.symauto.function;
+package com.symauto.function.abstracts;
 
+import com.symauto.function.FeatureConfig;
 import lombok.Getter;
-import lombok.Setter;
 import net.minecraft.client.Minecraft;
 
 import java.util.Collections;

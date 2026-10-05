@@ -1,5 +1,6 @@
 package com.symauto.function;
 
+import com.symauto.function.abstracts.SymAbstractFunction;
 import com.symauto.function.functions.*;
 
 import java.util.List;
@@ -13,6 +14,7 @@ public class FeatureConfig {
     public static final SymAbstractFunction AUTO_LOOT_CONTAINER_FUNCTION = new AutoLootContainerFunction();
     public static final SymAbstractFunction AUTO_SWIFT_SAME_ITEMS_TO_CONTAINER_FUNCTION = new AutoSwiftSameItemsToContainerFunction();
     public static final SymAbstractFunction AUTO_SWIFT_SAME_ITEMS_TO_INVENTORY_FUNCTION = new AutoSwiftSameItemsToInventoryFunction();
+    public static final SymAbstractFunction ONE_CLICK_DISCARD_ITEMS = new OneClickDiscardItems();
     public static final SymAbstractFunction FIX_Y_PLACE_OR_DESTROY_FUNCTION = new FixYPlaceOrDestroyFunction();
 
     public static final List<SymAbstractFunction> AUTO_ALL = List.of(
@@ -24,6 +26,7 @@ public class FeatureConfig {
             AUTO_LOOT_CONTAINER_FUNCTION,
             AUTO_SWIFT_SAME_ITEMS_TO_CONTAINER_FUNCTION,
             AUTO_SWIFT_SAME_ITEMS_TO_INVENTORY_FUNCTION,
+            ONE_CLICK_DISCARD_ITEMS,
             FIX_Y_PLACE_OR_DESTROY_FUNCTION
     );
 }

@@ -1,7 +1,7 @@
 package com.symauto.gui;
 
 import com.symauto.function.FeatureConfig;
-import com.symauto.function.SymAbstractFunction;
+import com.symauto.function.abstracts.SymAbstractFunction;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;

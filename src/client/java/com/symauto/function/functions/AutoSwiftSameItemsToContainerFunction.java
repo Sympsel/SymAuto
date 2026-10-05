@@ -1,6 +1,6 @@
 package com.symauto.function.functions;
 
-import com.symauto.function.SymAbstractFunction;
+import com.symauto.function.abstracts.SymAbstractFunction;
 import com.symauto.function.utils.ItemUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -15,7 +15,8 @@ public class AutoSwiftSameItemsToContainerFunction extends SymAbstractFunction {
     private boolean executed = false;
 
     public AutoSwiftSameItemsToContainerFunction() {
-        super("auto_swift_same_items_to_container", "自动转移相同物品到容器", "打开容器会将背包内的而且存在于容器的物品尽可能填满容器\n对于潜影盒，当盒内只有一种物品且两盒物品相同时视作同一物品");
+        super("auto_swift_same_items_to_container", "自动转移相同物品到容器",
+                "打开容器会将背包内的而且存在于容器的物品尽可能填满容器\n对于潜影盒，当盒内只有一种物品且两盒物品相同时视作同一物品");
     }
 
     @Override

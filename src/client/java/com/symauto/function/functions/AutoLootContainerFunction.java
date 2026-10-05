@@ -1,6 +1,6 @@
 package com.symauto.function.functions;
 
-import com.symauto.function.SymAbstractFunction;
+import com.symauto.function.abstracts.SymAbstractFunction;
 import com.symauto.function.utils.Constants;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -11,7 +11,7 @@ public class AutoLootContainerFunction extends SymAbstractFunction {
     private boolean executed = false;
 
     public AutoLootContainerFunction() {
-        super("auto_loot_container", "一键拿取容器物品", "打开容器会将容器内物品尽可能填满背包");
+        super("auto_loot_container", "自动拿取容器物品", "打开容器会将容器内物品尽可能填满背包");
     }
 
     @Override

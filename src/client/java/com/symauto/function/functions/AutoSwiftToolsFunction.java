@@ -1,6 +1,6 @@
 package com.symauto.function.functions;
 
-import com.symauto.function.SymAbstractFunction;
+import com.symauto.function.abstracts.SymAbstractFunction;
 import com.symauto.function.utils.Constants;
 import lombok.Getter;
 import net.minecraft.client.Minecraft;

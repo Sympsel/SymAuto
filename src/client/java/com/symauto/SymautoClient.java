@@ -2,7 +2,7 @@ package com.symauto;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import com.symauto.function.FeatureConfig;
-import com.symauto.function.SymAbstractFunction;
+import com.symauto.function.abstracts.SymAbstractFunction;
 import com.symauto.function.functions.AutoSwiftToolsFunction;
 import com.symauto.function.functions.FixYPlaceOrDestroyFunction;
 import com.symauto.gui.FeatureMenuScreen;
@@ -12,10 +12,6 @@ import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.resources.Identifier;
 import org.lwjgl.glfw.GLFW;
-
-import java.util.Set;
-
-import static net.fabricmc.fabric.impl.client.rendering.hud.HudStatusBarHeightRegistryImpl.LOGGER;
 
 public class SymautoClient implements ClientModInitializer {
 
