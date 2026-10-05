@@ -14,18 +14,23 @@ import net.minecraft.world.item.Items;
 import java.util.Set;
 
 public class AutoEatFunction extends SymAbstractFunction {
+    public static final AutoEatFunction INSTANCE = new AutoEatFunction();
     private static final int HUNGER_THRESHOLD = 16;
     @Getter
     private boolean eating = false;
 
-    private static BWList<Item> BW_LISTED_FOOD;
+    @Getter
+    private final BWList<Item> BW_LISTED_FOOD;
 
     private InteractionHand eatingHand = InteractionHand.MAIN_HAND;
     private int initialFoodCount = 0;
     private boolean startedUsingItem = false;
 
-    public AutoEatFunction() {
-        BW_LISTED_FOOD = new BWList<>();
+    private AutoEatFunction() {
+        String id = "auto_eat";
+        BW_LISTED_FOOD = new BWList<>(id);
+        super(id, "自动吃食物", "");
+        String blacklist = String.join(", ", BW_LISTED_FOOD.getBlacklist().stream().map(Item::toString).toArray(String[]::new));
         // todo 从配置文件中读取黑名单
         BW_LISTED_FOOD.addAllToBlacklist(Set.of(
                         Items.GOLDEN_APPLE,
@@ -38,15 +43,14 @@ public class AutoEatFunction extends SymAbstractFunction {
                         Items.CHICKEN
                 )
         );
-        String blacklist = String.join(", ", BW_LISTED_FOOD.getBlacklist().stream().map(Item::toString).toArray(String[]::new));
-        super("auto_eat", "自动吃食物", "饥饿值低于阈值（" + HUNGER_THRESHOLD + "）时自动进食（仅主副手）\n黑名单：" + blacklist);
+        super.setTooltip("饥饿值低于阈值（" + HUNGER_THRESHOLD + "）时自动进食（仅主副手）\n黑名单：" + blacklist);
     }
 
     @Override
     protected void onDisable() {
         Minecraft client = Minecraft.getInstance();
         client.options.keyUse.setDown(false);
-        if (client.player != null && client.player.isUsingItem()) {
+        if (client.player != null && client.player.isUsingItem() && client.getConnection() != null) {
             client.player.stopUsingItem();
         }
         resetState();

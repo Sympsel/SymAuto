@@ -8,6 +8,7 @@ import net.minecraft.world.entity.projectile.FishingHook;
 import net.minecraft.world.item.Items;
 
 public class AutoFishingFunction extends SymAbstractFunction {
+    public static final AutoFishingFunction INSTANCE = new AutoFishingFunction();
     private static final int RECAST_DELAY_TICKS = 15;
     private static final int CAST_TIMEOUT_TICKS = 900;
 
@@ -17,7 +18,7 @@ public class AutoFishingFunction extends SymAbstractFunction {
     private int waitTicks = 0;
     private int recastCountdown = 0;
 
-    public AutoFishingFunction() {
+    private AutoFishingFunction() {
         super("auto_fishing","自动钓鱼", "手持钓鱼杆时自动甩杆收杆，45秒没有鱼会超时重新抛竿");
     }
 

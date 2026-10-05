@@ -7,7 +7,9 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
 
 public class AutoAttackSafetyFunction extends SymAbstractFunction {
-    public AutoAttackSafetyFunction() {
+    public static final AutoAttackSafetyFunction INSTANCE = new AutoAttackSafetyFunction();
+
+    private AutoAttackSafetyFunction() {
         super("auto_attack_safety", "自动攻击(安全版)", "§a走自适应攻速，防检测\n§e推荐使用此版本");
     }
 

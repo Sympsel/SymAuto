@@ -10,6 +10,7 @@ import net.minecraft.world.inventory.Slot;
 import org.lwjgl.glfw.GLFW;
 
 public class AutoSellEmcFunction extends SymAbstractFunction {
+    public static final AutoSellEmcFunction INSTANCE = new AutoSellEmcFunction();
 
     private enum State {
         // 未开始 / 已结束
@@ -55,7 +56,7 @@ public class AutoSellEmcFunction extends SymAbstractFunction {
     // 等待菜单计时（用于超时重置）
     private int menuTimer = 0;
 
-    public AutoSellEmcFunction() {
+    private AutoSellEmcFunction() {
         super("auto_sell_emc", "自动 EMC 出售",
                 "小水果服务器专用，Shift + F 打开商店后，自动进入 EMC 出售并每 10 秒出售一次");
     }

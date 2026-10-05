@@ -1,12 +1,14 @@
 package com.symauto;
 
 import com.mojang.blaze3d.platform.InputConstants;
+import com.symauto.command.SymAutoCommand;
 import com.symauto.function.FeatureConfig;
 import com.symauto.function.abstracts.SymAbstractFunction;
 import com.symauto.function.functions.AutoSwiftToolsFunction;
 import com.symauto.function.functions.FixYPlaceOrDestroyFunction;
 import com.symauto.gui.FeatureMenuScreen;
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.minecraft.client.KeyMapping;
@@ -30,7 +32,15 @@ public class SymautoClient implements ClientModInitializer {
                 category
         );
 
+
         KeyMappingHelper.registerKeyMapping(openMenuKey);
+
+        // 客户端停止时禁用所有功能
+        ClientLifecycleEvents.CLIENT_STOPPING.register(client -> {
+            for (SymAbstractFunction f : FeatureConfig.AUTO_ALL) {
+                f.setEnable(false);
+            }
+        });
 
         ClientTickEvents.START_CLIENT_TICK.register(client -> {
             if (FeatureConfig.AUTO_SWIFT_TOOLS_FUNCTION.isEnable() && client.player != null) {
@@ -61,5 +71,6 @@ public class SymautoClient implements ClientModInitializer {
                 }
             }
         });
+        SymAutoCommand.register();
     }
 }

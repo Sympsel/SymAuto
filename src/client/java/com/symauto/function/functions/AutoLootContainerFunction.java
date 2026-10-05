@@ -8,9 +8,10 @@ import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.Slot;
 
 public class AutoLootContainerFunction extends SymAbstractFunction {
+    public static final AutoLootContainerFunction INSTANCE = new AutoLootContainerFunction();
     private boolean executed = false;
 
-    public AutoLootContainerFunction() {
+    private AutoLootContainerFunction() {
         super("auto_loot_container", "自动拿取容器物品", "打开容器会将容器内物品尽可能填满背包");
     }
 

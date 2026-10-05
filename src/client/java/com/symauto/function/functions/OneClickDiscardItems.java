@@ -6,6 +6,8 @@ import com.symauto.entity.BWList;
 import com.symauto.entity.KeyCombination;
 import com.symauto.function.FeatureConfig;
 import com.symauto.function.abstracts.SymAbstractFunction;
+import lombok.Getter;
+import lombok.Setter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -18,14 +20,20 @@ import org.lwjgl.glfw.GLFW;
 import java.util.Set;
 
 public class OneClickDiscardItems extends SymAbstractFunction {
+    public static final OneClickDiscardItems INSTANCE = new OneClickDiscardItems();
+
     // 边沿触发检测
     private boolean wasDown = false;
 
-    private static final BWList<Item> BW_LIST = new BWList<>();
+    @Getter
+    private final BWList<Item> BW_LIST;
     private static final KeyCombination KEY_COMBINATION =
             new KeyCombination("key.keyboard.q", GLFW.GLFW_MOD_ALT);
 
-    static {
+    private OneClickDiscardItems() {
+        String id = "one_click_discard_items_whitelist";
+        BW_LIST = new BWList<>(id);
+        super(id, "一键丢弃垃圾物品", "Alt + Q 一键丢弃白名单内（90+小垃圾）物品");
         BW_LIST.addAllToWhitelist(Set.of(
                 // 垃圾食物
                 Items.ROTTEN_FLESH,
@@ -121,9 +129,6 @@ public class OneClickDiscardItems extends SymAbstractFunction {
         ));
     }
 
-    public OneClickDiscardItems() {
-        super("one_click_discard_items_whitelist", "一键丢弃垃圾物品", "Alt + Q 一键丢弃白名单内（90+小垃圾）物品");
-    }
 
     @Override
     protected void onTrigger(Minecraft client) {
@@ -186,6 +191,7 @@ public class OneClickDiscardItems extends SymAbstractFunction {
         }
         return false;
     }
+
     private boolean isCombinationDown(Minecraft client) {
         Window window = client.getWindow();
         if (!InputConstants.isKeyDown(window, KEY_COMBINATION.key().getValue())) {

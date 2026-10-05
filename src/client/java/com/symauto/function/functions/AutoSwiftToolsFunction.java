@@ -18,6 +18,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 
 public class AutoSwiftToolsFunction extends SymAbstractFunction {
+    public static final AutoSwiftToolsFunction INSTANCE = new AutoSwiftToolsFunction();
 
     private int prevSlot = -1;
     private BlockPos currBlockPos = null;
@@ -27,7 +28,7 @@ public class AutoSwiftToolsFunction extends SymAbstractFunction {
     @Getter
     private float floatFactor = 0.1f;
 
-    public AutoSwiftToolsFunction() {
+    private AutoSwiftToolsFunction() {
         super("auto_swift_tools", "自动切换破坏工具", "自动切换破坏工具，快捷栏工具优先，其次精准采集工具优先，最后挖掘速度优先");
         setIntervalMs(50);
         setFloatFactor(0.1f);

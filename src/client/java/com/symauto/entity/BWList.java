@@ -4,10 +4,12 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class BWList<T> {
+    private static String featureId = "undefined";
     private final Set<T> blacklist;
     private final Set<T> whitelist;
 
-    public BWList() {
+    public BWList(String featureId) {
+        BWList.featureId = featureId;
         blacklist = new HashSet<>();
         whitelist = new HashSet<>();
     }
@@ -53,5 +55,9 @@ public class BWList<T> {
 
     public Set<T> getWhitelist() {
         return whitelist;
+    }
+
+    public String getFeatureId() {
+        return featureId;
     }
 }

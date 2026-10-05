@@ -6,17 +6,17 @@ import com.symauto.function.functions.*;
 import java.util.List;
 
 public class FeatureConfig {
-    public static final SymAbstractFunction AUTO_ATTACK_FUNCTION = new AutoAttackFunction();
-    public static final SymAbstractFunction AUTO_ATTACK_SAFETY_FUNCTION = new AutoAttackSafetyFunction();
-    public static final SymAbstractFunction AUTO_FISHING_FUNCTION = new AutoFishingFunction();
-    public static final SymAbstractFunction AUTO_EAT_FUNCTION = new AutoEatFunction();
-    public static final SymAbstractFunction AUTO_SWIFT_TOOLS_FUNCTION = new AutoSwiftToolsFunction();
-    public static final SymAbstractFunction AUTO_LOOT_CONTAINER_FUNCTION = new AutoLootContainerFunction();
-    public static final SymAbstractFunction AUTO_SWIFT_SAME_ITEMS_TO_CONTAINER_FUNCTION = new AutoSwiftSameItemsToContainerFunction();
-    public static final SymAbstractFunction AUTO_SWIFT_SAME_ITEMS_TO_INVENTORY_FUNCTION = new AutoSwiftSameItemsToInventoryFunction();
-    public static final SymAbstractFunction ONE_CLICK_DISCARD_ITEMS = new OneClickDiscardItems();
-    public static final SymAbstractFunction FIX_Y_PLACE_OR_DESTROY_FUNCTION = new FixYPlaceOrDestroyFunction();
-    public static final SymAbstractFunction AUTO_SELL_EMC_FUNCTION = new AutoSellEmcFunction();
+    public static final AutoAttackFunction AUTO_ATTACK_FUNCTION = AutoAttackFunction.INSTANCE;
+    public static final SymAbstractFunction AUTO_ATTACK_SAFETY_FUNCTION = AutoAttackSafetyFunction.INSTANCE;
+    public static final SymAbstractFunction AUTO_FISHING_FUNCTION = AutoFishingFunction.INSTANCE;
+    public static final SymAbstractFunction AUTO_EAT_FUNCTION = AutoEatFunction.INSTANCE;
+    public static final SymAbstractFunction AUTO_SWIFT_TOOLS_FUNCTION = AutoSwiftToolsFunction.INSTANCE;
+    public static final SymAbstractFunction AUTO_LOOT_CONTAINER_FUNCTION = AutoLootContainerFunction.INSTANCE;
+    public static final SymAbstractFunction AUTO_SWIFT_SAME_ITEMS_TO_CONTAINER_FUNCTION = AutoSwiftSameItemsToContainerFunction.INSTANCE;
+    public static final SymAbstractFunction AUTO_SWIFT_SAME_ITEMS_TO_INVENTORY_FUNCTION = AutoSwiftSameItemsToInventoryFunction.INSTANCE;
+    public static final SymAbstractFunction ONE_CLICK_DISCARD_ITEMS = OneClickDiscardItems.INSTANCE;
+    public static final SymAbstractFunction FIX_Y_PLACE_OR_DESTROY_FUNCTION = FixYPlaceOrDestroyFunction.INSTANCE;
+    public static final SymAbstractFunction AUTO_SELL_EMC_FUNCTION = AutoSellEmcFunction.INSTANCE;
 
     public static final List<SymAbstractFunction> AUTO_ALL = List.of(
             AUTO_ATTACK_FUNCTION,

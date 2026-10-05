@@ -11,10 +11,12 @@ import java.util.Collections;
 import java.util.Set;
 
 public class AutoSwiftSameItemsToContainerFunction extends SymAbstractFunction {
+    public static final AutoSwiftSameItemsToContainerFunction INSTANCE = new AutoSwiftSameItemsToContainerFunction();
+
     private static final int PLAYER_SLOT_COUNT = 36;
     private boolean executed = false;
 
-    public AutoSwiftSameItemsToContainerFunction() {
+    private AutoSwiftSameItemsToContainerFunction() {
         super("auto_swift_same_items_to_container", "自动转移相同物品到容器",
                 "打开容器会将背包内的而且存在于容器的物品尽可能填满容器\n对于潜影盒，当盒内只有一种物品且两盒物品相同时视作同一物品");
     }
