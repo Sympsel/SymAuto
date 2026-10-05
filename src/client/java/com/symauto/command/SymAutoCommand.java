@@ -5,6 +5,7 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
+import com.symauto.config.ConfigManager;
 import com.symauto.entity.BWList;
 import com.symauto.function.FeatureConfig;
 import com.symauto.function.abstracts.SymAbstractFunction;
@@ -125,6 +126,7 @@ public class SymAutoCommand {
             return 1;
         }
         f.setEnable(state);
+        ConfigManager.save();
         String result = f.isEnable() ? "§a已开启§r" : "§c已关闭§r";
         ctx.getSource().sendFeedback(Component.literal("§e" + f.getName() + "§r " + result));
         return 1;
@@ -138,6 +140,7 @@ public class SymAutoCommand {
             return 0;
         }
         f.toggle();
+        ConfigManager.save();
         String result = f.isEnable() ? "§a已开启§r" : "§c已关闭§r";
         ctx.getSource().sendFeedback(Component.literal("§e" + f.getName() + "§r " + result));
         return 1;
@@ -221,6 +224,7 @@ public class SymAutoCommand {
             } else {
                 bwList.addToBlacklist(item);
             }
+            ConfigManager.save();
             ctx.getSource().sendFeedback(Component.literal("已将 §f" + itemName + "§r 加入 §e" + title));
         } else {
             if (type.equalsIgnoreCase("whitelist")) {
@@ -228,6 +232,7 @@ public class SymAutoCommand {
             } else {
                 bwList.removeFromBlacklist(item);
             }
+            ConfigManager.save();
             ctx.getSource().sendFeedback(Component.literal("已将 §f" + itemName + "§r 从 §e" + title + "§r 移除"));
         }
         return 1;

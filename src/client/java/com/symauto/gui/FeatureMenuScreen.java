@@ -1,5 +1,6 @@
 package com.symauto.gui;
 
+import com.symauto.config.ConfigManager;
 import com.symauto.function.FeatureConfig;
 import com.symauto.function.abstracts.SymAbstractFunction;
 import net.minecraft.ChatFormatting;
@@ -56,12 +57,12 @@ public class FeatureMenuScreen extends Screen {
             int y = startY + row * (BTN_H + GAP_Y);
 
             Button btn = Button.builder(buildLabel(func), b -> {
-                func.toggle();
-                refreshAllButtons();
-            })
-            .tooltip(Tooltip.create(Component.literal(func.getTooltip())))
-            .bounds(x, y, BTN_W, BTN_H)
-            .build();
+                        func.toggle();
+                        ConfigManager.save();
+                        refreshAllButtons();
+                    }).tooltip(Tooltip.create(Component.literal(func.getTooltip())))
+                    .bounds(x, y, BTN_W, BTN_H)
+                    .build();
 
             featureButtons.add(btn);
             this.addRenderableWidget(btn);

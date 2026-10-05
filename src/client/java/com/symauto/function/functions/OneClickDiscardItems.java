@@ -34,13 +34,14 @@ public class OneClickDiscardItems extends SymAbstractFunction {
         String id = "one_click_discard_items_whitelist";
         BW_LIST = new BWList<>(id);
         super(id, "一键丢弃垃圾物品", "Alt + Q 一键丢弃白名单内（90+小垃圾）物品");
-        BW_LIST.addAllToWhitelist(Set.of(
-                // 垃圾食物
+    }
+
+    public static void applyDefaults() {
+        INSTANCE.BW_LIST.addAllToWhitelist(Set.of(
                 Items.ROTTEN_FLESH,
                 Items.SPIDER_EYE,
                 Items.POISONOUS_POTATO,
                 Items.CHICKEN,
-                // 垃圾武器和工具
                 Items.STONE_SWORD,
                 Items.GOLDEN_SWORD,
                 Items.WOODEN_SWORD,
@@ -57,7 +58,6 @@ public class OneClickDiscardItems extends SymAbstractFunction {
                 Items.WOODEN_PICKAXE,
                 Items.WOODEN_SPEAR,
                 Items.GOLDEN_SPEAR,
-                // 垃圾装备
                 Items.LEATHER_HELMET,
                 Items.LEATHER_CHESTPLATE,
                 Items.LEATHER_LEGGINGS,
@@ -70,8 +70,7 @@ public class OneClickDiscardItems extends SymAbstractFunction {
                 Items.COPPER_CHESTPLATE,
                 Items.COPPER_LEGGINGS,
                 Items.COPPER_BOOTS,
-                Items.SADDLE, // 鞍
-                // 垃圾掉落物
+                Items.SADDLE,
                 Items.BONE,
                 Items.GOLD_NUGGET,
                 Items.COPPER_NUGGET,
@@ -89,7 +88,6 @@ public class OneClickDiscardItems extends SymAbstractFunction {
                 Items.RABBIT_FOOT,
                 Items.PHANTOM_MEMBRANE,
                 Items.GLOWSTONE_DUST,
-                // 垃圾植物
                 Items.DRY_SHORT_GRASS,
                 Items.BUSH,
                 Items.GLOW_LICHEN,
@@ -114,12 +112,11 @@ public class OneClickDiscardItems extends SymAbstractFunction {
                 Items.DANDELION,
                 Items.POPPY,
                 Items.AZURE_BLUET,
-                // 垃圾方块
                 Items.DRIPSTONE_BLOCK,
                 Items.POINTED_DRIPSTONE
         ));
 
-        BW_LIST.addAllToBlacklist(Set.of(
+        INSTANCE.BW_LIST.addAllToBlacklist(Set.of(
                 Items.NETHERITE_SWORD,
                 Items.NETHERITE_AXE,
                 Items.NETHERITE_HOE,

@@ -60,4 +60,9 @@ public class BWList<T> {
     public String getFeatureId() {
         return featureId;
     }
+
+    public void clear() {
+        blacklist.clear();
+        whitelist.clear();
+    }
 }

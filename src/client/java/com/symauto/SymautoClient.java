@@ -2,6 +2,7 @@ package com.symauto;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import com.symauto.command.SymAutoCommand;
+import com.symauto.config.ConfigManager;
 import com.symauto.function.FeatureConfig;
 import com.symauto.function.abstracts.SymAbstractFunction;
 import com.symauto.function.functions.AutoSwiftToolsFunction;
@@ -31,7 +32,6 @@ public class SymautoClient implements ClientModInitializer {
                 GLFW.GLFW_KEY_X,
                 category
         );
-
 
         KeyMappingHelper.registerKeyMapping(openMenuKey);
 
@@ -71,6 +71,7 @@ public class SymautoClient implements ClientModInitializer {
                 }
             }
         });
+        ConfigManager.load();
         SymAutoCommand.register();
     }
 }

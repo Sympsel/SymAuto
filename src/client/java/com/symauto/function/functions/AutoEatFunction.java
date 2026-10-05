@@ -29,21 +29,7 @@ public class AutoEatFunction extends SymAbstractFunction {
     private AutoEatFunction() {
         String id = "auto_eat";
         BW_LISTED_FOOD = new BWList<>(id);
-        super(id, "自动吃食物", "");
-        String blacklist = String.join(", ", BW_LISTED_FOOD.getBlacklist().stream().map(Item::toString).toArray(String[]::new));
-        // todo 从配置文件中读取黑名单
-        BW_LISTED_FOOD.addAllToBlacklist(Set.of(
-                        Items.GOLDEN_APPLE,
-                        Items.ENCHANTED_GOLDEN_APPLE,
-                        Items.ROTTEN_FLESH,
-                        Items.SPIDER_EYE,
-                        Items.POTION,
-                        Items.PUFFERFISH,
-                        Items.POISONOUS_POTATO,
-                        Items.CHICKEN
-                )
-        );
-        super.setTooltip("饥饿值低于阈值（" + HUNGER_THRESHOLD + "）时自动进食（仅主副手）\n黑名单：" + blacklist);
+        super(id, "自动吃食物", "饥饿值低于阈值（" + HUNGER_THRESHOLD + "）时自动进食");
     }
 
     @Override
@@ -145,5 +131,23 @@ public class AutoEatFunction extends SymAbstractFunction {
         if (stack.isEmpty()) return false;
         if (!stack.has(DataComponents.FOOD)) return false;
         return !BW_LISTED_FOOD.isBlacklisted(stack.getItem());
+    }
+
+    public static void applyDefaults() {
+        INSTANCE.BW_LISTED_FOOD.addAllToBlacklist(Set.of(
+                Items.GOLDEN_APPLE,
+                Items.ENCHANTED_GOLDEN_APPLE,
+                Items.ROTTEN_FLESH,
+                Items.SPIDER_EYE,
+                Items.POTION,
+                Items.PUFFERFISH,
+                Items.POISONOUS_POTATO,
+                Items.CHICKEN
+        ));
+        String blacklist = String.join(", ",
+                INSTANCE.BW_LISTED_FOOD.getBlacklist().stream()
+                        .map(Item::toString)
+                        .toArray(String[]::new));
+        INSTANCE.setTooltip("饥饿值低于阈值（" + HUNGER_THRESHOLD + "）时自动进食（仅主副手）\n黑名单：\n" + blacklist);
     }
 }
