@@ -4,6 +4,7 @@ import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.platform.Window;
 import com.symauto.entity.BWList;
 import com.symauto.entity.KeyCombination;
+import com.symauto.function.FeatureConfig;
 import com.symauto.function.abstracts.SymAbstractFunction;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.player.Inventory;
@@ -217,6 +218,26 @@ public class OneClickDiscardItems extends SymAbstractFunction {
             }
         }
         return false;
+    }
+
+    /**
+     * 供 Mixin 调用：启用本功能且按下的键命中组合键时，返回 true 表示应拦截原版按键。
+     *
+     * @param glfwKey       GLFW 物理键码
+     * @param glfwModifiers GLFW 修饰键位掩码（GLFW_MOD_*）
+     */
+    public static boolean shouldInterceptVanillaKey(int glfwKey, int glfwModifiers) {
+        if (!FeatureConfig.ONE_CLICK_DISCARD_ITEMS.isEnable()) {
+            return false;
+        }
+        InputConstants.Key bound = KEY_COMBINATION.key();
+        // 仅支持键盘键（KEYSYM）拦截
+        if (bound.getType() != InputConstants.Type.KEYSYM || bound.getValue() != glfwKey) {
+            return false;
+        }
+        int required = KEY_COMBINATION.modifiers();
+        // 至少包含所需修饰键
+        return (glfwModifiers & required) == required;
     }
 
     @Override

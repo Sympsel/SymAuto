@@ -6,7 +6,8 @@
   "client": [
     "FixYPlaceMixin",
     "FishingHookAccessor",
-    "MinecraftInvoker"
+    "MinecraftInvoker",
+    "InterceptDropKeyMixin"
   ],
   "injectors": {
     "defaultRequire": 1
