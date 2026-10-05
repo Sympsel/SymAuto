@@ -2,6 +2,7 @@ package com.symauto.gui;
 
 import com.symauto.function.FeatureConfig;
 import com.symauto.function.SymAbstractFunction;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
@@ -15,7 +16,8 @@ import java.util.List;
 public class FeatureMenuScreen extends Screen {
     private final Screen parent;
 
-    // 更紧凑的按钮尺寸
+    private static final int TITLE_COLOR = 0xFFFFFFFF;
+
     private static final int BTN_W = 120;
     private static final int BTN_H = 20;
     private static final int GAP_X = 6;
@@ -26,11 +28,12 @@ public class FeatureMenuScreen extends Screen {
     private static final int GRID_TOP = 34;
     private static final int MAX_COLUMNS = 3;
 
-    // 持有功能按钮引用，便于精确刷新，避免依赖 children() 顺序
     private final List<Button> featureButtons = new ArrayList<>();
 
     public FeatureMenuScreen(Screen parent) {
-        super(Component.literal("SymAuto 功能菜单"));
+        super(Component.literal("SymAuto 功能菜单")
+                .withStyle(ChatFormatting.BOLD, ChatFormatting.GOLD));
+
         this.parent = parent;
     }
 
@@ -96,9 +99,8 @@ public class FeatureMenuScreen extends Screen {
     @Override
     public void extractRenderState(@NonNull GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
         super.extractRenderState(graphics, mouseX, mouseY, delta);
-        // 标题居中
         int titleX = (this.width - this.font.width(this.title)) / 2;
-        graphics.text(this.font, this.title, titleX, TITLE_Y, 0xFFFFFF, true);
+        graphics.text(this.font, this.title, titleX, TITLE_Y, TITLE_COLOR, true);
     }
 
     @Override
