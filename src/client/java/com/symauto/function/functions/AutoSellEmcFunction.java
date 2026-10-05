@@ -32,7 +32,7 @@ public class AutoSellEmcFunction extends SymAbstractFunction {
         SELL_MENU
     }
     // 步骤间等待
-    private static final int STEP_DELAY_TICKS = 2;
+    private static final int STEP_DELAY_TICKS = 6;
     // 出售循环间隔 10s
     private static final int SELL_INTERVAL_TICKS = 200;
     // 等待菜单超时 5s
