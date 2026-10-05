@@ -16,6 +16,7 @@ public class FeatureConfig {
     public static final SymAbstractFunction AUTO_SWIFT_SAME_ITEMS_TO_INVENTORY_FUNCTION = new AutoSwiftSameItemsToInventoryFunction();
     public static final SymAbstractFunction ONE_CLICK_DISCARD_ITEMS = new OneClickDiscardItems();
     public static final SymAbstractFunction FIX_Y_PLACE_OR_DESTROY_FUNCTION = new FixYPlaceOrDestroyFunction();
+    public static final SymAbstractFunction AUTO_SELL_EMC_FUNCTION = new AutoSellEmcFunction();
 
     public static final List<SymAbstractFunction> AUTO_ALL = List.of(
             AUTO_ATTACK_FUNCTION,
@@ -27,6 +28,7 @@ public class FeatureConfig {
             AUTO_SWIFT_SAME_ITEMS_TO_CONTAINER_FUNCTION,
             AUTO_SWIFT_SAME_ITEMS_TO_INVENTORY_FUNCTION,
             ONE_CLICK_DISCARD_ITEMS,
-            FIX_Y_PLACE_OR_DESTROY_FUNCTION
+            FIX_Y_PLACE_OR_DESTROY_FUNCTION,
+            AUTO_SELL_EMC_FUNCTION
     );
 }

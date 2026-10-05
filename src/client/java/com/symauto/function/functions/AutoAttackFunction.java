@@ -8,7 +8,7 @@ import net.minecraft.world.entity.Entity;
 
 public class AutoAttackFunction extends SymAbstractFunction {
     public AutoAttackFunction() {
-        super("auto_attack", "自动攻击§c(危险)", "§c⚠ 警告：此版本直接调用 gameMode.attack()，可后台挂机，但缺少挥手/音效封包，会被反作弊检测！\n§c⚠ 请改用「自动攻击(安全版)」");
+        super("auto_attack", "自动攻击§c(危险)", "§c⚠ 警告：此版本直接为了可以后台挂机，没有封包，会被反作弊检测！\n§c⚠ 请改用「自动攻击(安全版)」或者仅在单人游戏下使用");
     }
 
     @Override

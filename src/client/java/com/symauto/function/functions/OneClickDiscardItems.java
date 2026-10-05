@@ -122,7 +122,7 @@ public class OneClickDiscardItems extends SymAbstractFunction {
     }
 
     public OneClickDiscardItems() {
-        super("one_click_discard_items_whitelist", "一键丢弃物品白名单", "Alt + Q 一键丢弃白名单内物品");
+        super("one_click_discard_items_whitelist", "一键丢弃垃圾物品", "Alt + Q 一键丢弃白名单内（90+小垃圾）物品");
     }
 
     @Override
