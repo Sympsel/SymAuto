@@ -18,7 +18,7 @@ public class AutoFishingFunction extends SymAbstractFunction {
     private int recastCountdown = 0;
 
     public AutoFishingFunction() {
-        super("自动钓鱼", "手持钓鱼杆时自动甩杆收杆，45秒没有鱼会超时重新抛竿");
+        super("auto_fishing","自动钓鱼", "手持钓鱼杆时自动甩杆收杆，45秒没有鱼会超时重新抛竿");
     }
 
     @Override

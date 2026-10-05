@@ -8,7 +8,7 @@ import net.minecraft.world.entity.Entity;
 
 public class AutoAttackSafetyFunction extends SymAbstractFunction {
     public AutoAttackSafetyFunction() {
-        super("自动攻击(安全版)", "§a走原版 startAttack() 点击流程，附带挥手/音效封包，自适应攻速，防检测\n§e推荐使用此版本");
+        super("auto_attack_safety", "自动攻击(安全版)", "§a走原版 startAttack() 点击流程，附带挥手/音效封包，自适应攻速，防检测\n§e推荐使用此版本");
     }
 
     @Override

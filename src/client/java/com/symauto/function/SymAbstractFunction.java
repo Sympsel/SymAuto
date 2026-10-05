@@ -12,13 +12,16 @@ public abstract class SymAbstractFunction {
     protected static final Random RANDOM = new Random();
 
     @Getter
+    private final String id;
+    @Getter
     private final String name;
     @Getter
     private final String tooltip;
     @Getter
     private boolean enable = false;
 
-    public SymAbstractFunction(String name, String tooltip) {
+    public SymAbstractFunction(String id, String name, String tooltip) {
+        this.id = id;
         this.name = name;
         this.tooltip = tooltip;
     }

@@ -33,7 +33,7 @@ public class AutoSwiftToolsFunction extends SymAbstractFunction {
     private float floatFactor = 0.1f;
 
     public AutoSwiftToolsFunction() {
-        super("自动切换破坏工具", "自动切换破坏工具，快捷栏工具优先，其次精准采集工具优先，最后挖掘速度优先");
+        super("auto_swift_tools", "自动切换破坏工具", "自动切换破坏工具，快捷栏工具优先，其次精准采集工具优先，最后挖掘速度优先");
         setIntervalMs(50);
         setFloatFactor(0.1f);
     }

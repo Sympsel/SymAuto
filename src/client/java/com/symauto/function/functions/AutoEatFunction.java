@@ -32,7 +32,7 @@ public class AutoEatFunction extends SymAbstractFunction {
 
     public AutoEatFunction() {
         String blacklist = String.join(", ", BLACKLISTED_FOOD.stream().map(Item::toString).toArray(String[]::new));
-        super("自动吃食物", "饥饿值低于阈值（" + HUNGER_THRESHOLD + "）时自动进食（仅主副手）\n黑名单：" + blacklist);
+        super("auto_eat", "自动吃食物", "饥饿值低于阈值（" + HUNGER_THRESHOLD + "）时自动进食（仅主副手）\n黑名单：" + blacklist);
     }
 
     public boolean isEating() {

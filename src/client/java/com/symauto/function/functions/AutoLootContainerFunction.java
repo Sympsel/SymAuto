@@ -11,7 +11,7 @@ public class AutoLootContainerFunction extends SymAbstractFunction {
     private boolean executed = false;
 
     public AutoLootContainerFunction() {
-        super("一键拿取容器物品", "打开容器会将容器内物品尽可能填满背包");
+        super("auto_loot_container", "一键拿取容器物品", "打开容器会将容器内物品尽可能填满背包");
     }
 
     @Override
