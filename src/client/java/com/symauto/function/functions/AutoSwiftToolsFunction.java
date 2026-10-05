@@ -1,6 +1,7 @@
 package com.symauto.function.functions;
 
 import com.symauto.function.SymAbstractFunction;
+import com.symauto.function.utils.Constants;
 import lombok.Getter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
@@ -17,12 +18,6 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 
 public class AutoSwiftToolsFunction extends SymAbstractFunction {
-    private static final int HOTBAR_START = 0;
-    private static final int HOTBAR_END = 9;
-    private static final int INV_START = 9;
-    private static final int INV_END = 36;
-
-    private static final int SYNC_TICKS = 2;
 
     private int prevSlot = -1;
     private BlockPos currBlockPos = null;
@@ -113,7 +108,7 @@ public class AutoSwiftToolsFunction extends SymAbstractFunction {
         currBlockPos = blockPos;
 
         // 第一阶段：快捷栏
-        int hotBarSlot = findBestInRange(inv, blockState, HOTBAR_START, HOTBAR_END);
+        int hotBarSlot = findBestInRange(inv, blockState, Constants.HOTBAR_START, Constants.HOTBAR_END);
         if (hotBarSlot >= 0) {
             if (hotBarSlot != currSlot) {
                 if (prevSlot == -1) {
@@ -125,7 +120,7 @@ public class AutoSwiftToolsFunction extends SymAbstractFunction {
         }
 
         // 第二阶段：背包，使用服务器认可的容器交换
-        int invSlot = findBestInRange(inv, blockState, INV_START, INV_END);
+        int invSlot = findBestInRange(inv, blockState, Constants.INV_START, Constants.INV_END);
         if (invSlot < 0) {
             return;
         }
@@ -149,7 +144,7 @@ public class AutoSwiftToolsFunction extends SymAbstractFunction {
     }
 
     private void selectSlot(Minecraft client, int slot) {
-        if (client.player == null || slot < HOTBAR_START || slot >= HOTBAR_END) {
+        if (client.player == null || slot < Constants.HOTBAR_START || slot >= Constants.HOTBAR_END) {
             return;
         }
 
@@ -168,14 +163,14 @@ public class AutoSwiftToolsFunction extends SymAbstractFunction {
             connection.send(new ServerboundSetCarriedItemPacket(slot));
         }
 
-        syncTicks = SYNC_TICKS;
+        syncTicks = Constants.SYNC_TICKS;
     }
 
     private void swapInventoryIntoSelectedHotbar(Minecraft client, int inventorySlot) {
         if (client.player == null || client.gameMode == null) {
             return;
         }
-        if (inventorySlot < INV_START || inventorySlot >= INV_END) {
+        if (inventorySlot < Constants.INV_START || inventorySlot >= Constants.INV_END) {
             return;
         }
 
@@ -193,7 +188,7 @@ public class AutoSwiftToolsFunction extends SymAbstractFunction {
                 client.player
         );
 
-        syncTicks = SYNC_TICKS;
+        syncTicks = Constants.SYNC_TICKS;
     }
 
     private void abortDestroy(Minecraft client) {
@@ -208,7 +203,7 @@ public class AutoSwiftToolsFunction extends SymAbstractFunction {
     }
 
     private boolean isBest(Inventory inv, BlockState state, int slot) {
-        if (slot < HOTBAR_START || slot >= HOTBAR_END) {
+        if (slot < Constants.HOTBAR_START || slot >= Constants.HOTBAR_END) {
             return false;
         }
 
@@ -225,7 +220,7 @@ public class AutoSwiftToolsFunction extends SymAbstractFunction {
         Holder.Reference<Enchantment> silkTouchHolder = getSilkTouchHolder(inv);
         boolean mySilk = stack.getEnchantments().getLevel(silkTouchHolder) > 0;
 
-        for (int i = HOTBAR_START; i < HOTBAR_END; i++) {
+        for (int i = Constants.HOTBAR_START; i < Constants.HOTBAR_END; i++) {
             if (i == slot) {
                 continue;
             }

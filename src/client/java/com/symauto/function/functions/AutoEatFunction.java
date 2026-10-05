@@ -1,6 +1,7 @@
 package com.symauto.function.functions;
 
 import com.symauto.function.SymAbstractFunction;
+import lombok.Getter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.InteractionHand;
@@ -13,6 +14,7 @@ import java.util.Set;
 
 public class AutoEatFunction extends SymAbstractFunction {
     private static final int HUNGER_THRESHOLD = 16;
+    @Getter
     private boolean eating = false;
 
     private static final Set<Item> BLACKLISTED_FOOD = Set.of(
@@ -33,10 +35,6 @@ public class AutoEatFunction extends SymAbstractFunction {
     public AutoEatFunction() {
         String blacklist = String.join(", ", BLACKLISTED_FOOD.stream().map(Item::toString).toArray(String[]::new));
         super("auto_eat", "自动吃食物", "饥饿值低于阈值（" + HUNGER_THRESHOLD + "）时自动进食（仅主副手）\n黑名单：" + blacklist);
-    }
-
-    public boolean isEating() {
-        return eating;
     }
 
     @Override
@@ -80,6 +78,9 @@ public class AutoEatFunction extends SymAbstractFunction {
     }
 
     private void handleEating(Minecraft client) {
+        if (client.player == null) {
+            return;
+        }
         ItemStack heldStack = client.player.getItemInHand(eatingHand);
 
         if (heldStack.isEmpty() || !heldStack.has(DataComponents.FOOD)) {
@@ -119,6 +120,9 @@ public class AutoEatFunction extends SymAbstractFunction {
     }
 
     private InteractionHand findFoodHand(Minecraft client) {
+        if (client.player == null) {
+            return null;
+        }
         if (isEdible(client.player.getMainHandItem())) {
             return InteractionHand.MAIN_HAND;
         }

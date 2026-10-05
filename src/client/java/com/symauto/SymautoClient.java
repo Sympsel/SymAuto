@@ -13,12 +13,13 @@ import net.minecraft.client.KeyMapping;
 import net.minecraft.resources.Identifier;
 import org.lwjgl.glfw.GLFW;
 
+import java.util.Set;
+
 import static net.fabricmc.fabric.impl.client.rendering.hud.HudStatusBarHeightRegistryImpl.LOGGER;
 
 public class SymautoClient implements ClientModInitializer {
 
     private KeyMapping openMenuKey;
-    private boolean debugLogged = false;
 
     @Override
     public void onInitializeClient() {
@@ -55,13 +56,6 @@ public class SymautoClient implements ClientModInitializer {
                     client.getWindow(), GLFW.GLFW_KEY_LEFT_SHIFT)) {
                 if (client.gui.screen() == null) {
                     client.gui.setScreen(new FeatureMenuScreen(null));
-                }
-            }
-
-            if (!debugLogged && client.player != null) {
-                debugLogged = true;
-                for (SymAbstractFunction f : FeatureConfig.AUTO_ALL) {
-                    LOGGER.info("[SymAuto] Function: {} enabled={}", f.getName(), f.isEnable());
                 }
             }
 

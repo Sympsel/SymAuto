@@ -47,6 +47,28 @@ public abstract class SymAbstractFunction {
         if (this.enable && !enable) {
             onDisable();
         }
+        if (enable && !this.enable) {
+            disableConflicts();
+        }
         this.enable = enable;
+    }
+
+    /**
+     * 遍历所有已注册功能，关闭与当前功能冲突且已启用的项。
+     * 采用双向判定：只要任意一方声明了冲突即生效，
+     * 因此冲突关系只需在一侧声明即可。
+     */
+    private void disableConflicts() {
+        Set<Class<? extends SymAbstractFunction>> mine = getConflicts();
+        for (SymAbstractFunction other : FeatureConfig.AUTO_ALL) {
+            if (other == this || !other.isEnable()) {
+                continue;
+            }
+            boolean conflict = mine.contains(other.getClass())
+                    || other.getConflicts().contains(this.getClass());
+            if (conflict) {
+                other.setEnable(false);
+            }
+        }
     }
 }

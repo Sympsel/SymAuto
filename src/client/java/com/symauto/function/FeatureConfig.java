@@ -12,6 +12,7 @@ public class FeatureConfig {
     public static final SymAbstractFunction AUTO_SWIFT_TOOLS_FUNCTION = new AutoSwiftToolsFunction();
     public static final SymAbstractFunction AUTO_LOOT_CONTAINER_FUNCTION = new AutoLootContainerFunction();
     public static final SymAbstractFunction AUTO_SWIFT_SAME_ITEMS_TO_CONTAINER_FUNCTION = new AutoSwiftSameItemsToContainerFunction();
+    public static final SymAbstractFunction AUTO_SWIFT_SAME_ITEMS_TO_INVENTORY_FUNCTION = new AutoSwiftSameItemsToInventoryFunction();
     public static final SymAbstractFunction FIX_Y_PLACE_OR_DESTROY_FUNCTION = new FixYPlaceOrDestroyFunction();
 
     public static final List<SymAbstractFunction> AUTO_ALL = List.of(
@@ -22,6 +23,7 @@ public class FeatureConfig {
             AUTO_SWIFT_TOOLS_FUNCTION,
             AUTO_LOOT_CONTAINER_FUNCTION,
             AUTO_SWIFT_SAME_ITEMS_TO_CONTAINER_FUNCTION,
+            AUTO_SWIFT_SAME_ITEMS_TO_INVENTORY_FUNCTION,
             FIX_Y_PLACE_OR_DESTROY_FUNCTION
     );
 }
