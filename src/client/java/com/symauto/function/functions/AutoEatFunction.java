@@ -16,6 +16,13 @@ import java.util.Set;
 public class AutoEatFunction extends SymAbstractFunction {
     public static final AutoEatFunction INSTANCE = new AutoEatFunction();
     private static final int HUNGER_THRESHOLD = 16;
+
+    // 主手拿着这些物品时，禁止自动进食（避免右键误触发）
+    private static final Set<Item> BLOCKED_MAIN_HAND_USABLES = Set.of(
+            Items.FIREWORK_ROCKET,
+            Items.FIREWORK_STAR
+    );
+
     @Getter
     private boolean eating = false;
 
@@ -83,6 +90,15 @@ public class AutoEatFunction extends SymAbstractFunction {
             return;
         }
 
+        // 吃副手食物时，如果主手切出了烟花等可触发物品，立刻停止
+        if (eatingHand == InteractionHand.OFF_HAND) {
+            Item mainItem = client.player.getMainHandItem().getItem();
+            if (BLOCKED_MAIN_HAND_USABLES.contains(mainItem)) {
+                stopEating(client);
+                return;
+            }
+        }
+
         client.options.keyUse.setDown(true);
 
         if (client.player.isUsingItem()) {
@@ -122,6 +138,11 @@ public class AutoEatFunction extends SymAbstractFunction {
             return InteractionHand.MAIN_HAND;
         }
         if (isEdible(client.player.getOffhandItem())) {
+            // 主手是烟花等会右键触发的物品时，不吃副手食物
+            Item mainItem = client.player.getMainHandItem().getItem();
+            if (BLOCKED_MAIN_HAND_USABLES.contains(mainItem)) {
+                return null;
+            }
             return InteractionHand.OFF_HAND;
         }
         return null;
@@ -130,6 +151,7 @@ public class AutoEatFunction extends SymAbstractFunction {
     private boolean isEdible(ItemStack stack) {
         if (stack.isEmpty()) return false;
         if (!stack.has(DataComponents.FOOD)) return false;
+        if (BLOCKED_MAIN_HAND_USABLES.contains(stack.getItem())) return false;
         return !BW_LISTED_FOOD.isBlacklisted(stack.getItem());
     }
 
