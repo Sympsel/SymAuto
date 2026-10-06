@@ -2,11 +2,9 @@ package com.symauto.function.functions;
 
 import com.symauto.function.abstracts.SymAbstractFunction;
 import net.minecraft.client.Minecraft;
-import net.minecraft.world.item.ItemStack;
 
 public class OneClickDiscardSameItems extends SymAbstractFunction {
     public static final OneClickDiscardSameItems INSTANCE = new OneClickDiscardSameItems();
-    private static boolean throwCarried = false;
 
     private OneClickDiscardSameItems() {
         super("one_click_discard_same_items", "一键丢出相同物品",
