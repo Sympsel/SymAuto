@@ -14,7 +14,8 @@ public class FeatureConfig {
     public static final SymAbstractFunction AUTO_LOOT_CONTAINER_FUNCTION = AutoLootContainerFunction.INSTANCE;
     public static final SymAbstractFunction AUTO_SWIFT_SAME_ITEMS_TO_CONTAINER_FUNCTION = AutoSwiftSameItemsToContainerFunction.INSTANCE;
     public static final SymAbstractFunction AUTO_SWIFT_SAME_ITEMS_TO_INVENTORY_FUNCTION = AutoSwiftSameItemsToInventoryFunction.INSTANCE;
-    public static final SymAbstractFunction ONE_CLICK_DISCARD_ITEMS = OneClickDiscardItems.INSTANCE;
+    public static final SymAbstractFunction ONE_CLICK_DISCARD_ITEMS_FUNCTION = OneClickDiscardItems.INSTANCE;
+    public static final SymAbstractFunction ONE_CLICK_DISCARD_SAME_ITEMS_FUNCTION = OneClickDiscardSameItems.INSTANCE;
     public static final SymAbstractFunction FIX_Y_PLACE_OR_DESTROY_FUNCTION = FixYPlaceOrDestroyFunction.INSTANCE;
     public static final SymAbstractFunction AUTO_SELL_EMC_FUNCTION = AutoSellEmcFunction.INSTANCE;
     public static final SymAbstractFunction BETTER_BUNDLE_FUNCTION = BetterBundleFunction.INSTANCE;
@@ -28,7 +29,8 @@ public class FeatureConfig {
             AUTO_LOOT_CONTAINER_FUNCTION,
             AUTO_SWIFT_SAME_ITEMS_TO_CONTAINER_FUNCTION,
             AUTO_SWIFT_SAME_ITEMS_TO_INVENTORY_FUNCTION,
-            ONE_CLICK_DISCARD_ITEMS,
+            ONE_CLICK_DISCARD_ITEMS_FUNCTION,
+            ONE_CLICK_DISCARD_SAME_ITEMS_FUNCTION,
             FIX_Y_PLACE_OR_DESTROY_FUNCTION,
             AUTO_SELL_EMC_FUNCTION,
             BETTER_BUNDLE_FUNCTION

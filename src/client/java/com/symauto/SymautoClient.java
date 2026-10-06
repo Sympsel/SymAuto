@@ -1,5 +1,6 @@
 package com.symauto;
 
+import com.betterbundle.mixin.AbstractContainerScreenAccessor;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.symauto.command.SymAutoCommand;
 import com.symauto.config.ConfigManager;
@@ -7,13 +8,22 @@ import com.symauto.function.FeatureConfig;
 import com.symauto.function.abstracts.SymAbstractFunction;
 import com.symauto.function.functions.AutoSwiftToolsFunction;
 import com.symauto.function.functions.FixYPlaceOrDestroyFunction;
+import com.symauto.function.utils.Constants;
+import com.symauto.function.utils.ItemUtils;
 import com.symauto.gui.FeatureMenuScreen;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
+import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
+import net.fabricmc.fabric.api.client.screen.v1.ScreenMouseEvents;
 import net.minecraft.client.KeyMapping;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.ContainerInput;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
 import org.lwjgl.glfw.GLFW;
 
 public class SymautoClient implements ClientModInitializer {
@@ -39,6 +49,70 @@ public class SymautoClient implements ClientModInitializer {
         ClientLifecycleEvents.CLIENT_STOPPING.register(client -> {
             for (SymAbstractFunction f : FeatureConfig.AUTO_ALL) {
                 f.setEnable(false);
+            }
+        });
+
+        ScreenEvents.BEFORE_INIT.register((client, screen, scaledWidth, scaledHeight) -> {
+            if (screen instanceof AbstractContainerScreen<?> containerScreen) {
+                ScreenMouseEvents.allowMouseClick(screen).register((s, event) -> {
+                    if (!FeatureConfig.ONE_CLICK_DISCARD_SAME_ITEMS_FUNCTION.isEnable()) {
+                        return true;
+                    }
+                    if (!(s instanceof AbstractContainerScreen<?> cs)) {
+                        return true;
+                    }
+                    if (client.player == null || client.gameMode == null) {
+                        return true;
+                    }
+
+                    AbstractContainerMenu menu = cs.getMenu();
+                    ItemStack carried = menu.getCarried();
+                    if (carried.isEmpty()) return true;
+
+                    double mouseX = event.x();
+                    double mouseY = event.y();
+
+                    AbstractContainerScreenAccessor acc = (AbstractContainerScreenAccessor) cs;
+                    int xo = acc.getLeftPos();
+                    int yo = acc.getTopPos();
+                    int imgW = acc.getImageWidth();
+                    int imgH = acc.getImageHeight();
+                    boolean outside = mouseX < xo || mouseY < yo
+                            || mouseX >= xo + imgW || mouseY >= yo + imgH;
+                    if (!outside) return true;
+
+                    ItemStack target = carried.copy();
+
+                    client.gameMode.handleContainerInput(menu.containerId, -999, 0, ContainerInput.PICKUP, client.player);
+
+                    // 再遍历所有槽位丢相同的
+                    if (menu == client.player.inventoryMenu) {
+                        for (int i = Constants.MAIN_INVENTORY_START; i < menu.slots.size(); i++) {
+                            if (i == Constants.OFFHAND) continue;
+                            Slot slot = menu.getSlot(i);
+                            if (slot.hasItem() && ItemUtils.isSameItem(target, slot.getItem())) {
+                                client.gameMode.handleContainerInput(menu.containerId, i, 1, ContainerInput.THROW, client.player);
+                            }
+                        }
+                    } else {
+                        int containerEnd = menu.slots.size() - Constants.PLAYER_SLOT_COUNT;
+                        for (int i = 0; i < containerEnd; i++) {
+                            Slot slot = menu.getSlot(i);
+                            if (slot.hasItem() && ItemUtils.isSameItem(target, slot.getItem())) {
+                                client.gameMode.handleContainerInput(menu.containerId, i, 1, ContainerInput.THROW, client.player);
+                            }
+                        }
+                        for (int i = containerEnd; i < menu.slots.size(); i++) {
+                            if (i == Constants.OFFHAND) continue;
+                            Slot slot = menu.getSlot(i);
+                            if (slot.hasItem() && ItemUtils.isSameItem(target, slot.getItem())) {
+                                client.gameMode.handleContainerInput(menu.containerId, i, 1, ContainerInput.THROW, client.player);
+                            }
+                        }
+                    }
+
+                    return false;
+                });
             }
         });
 

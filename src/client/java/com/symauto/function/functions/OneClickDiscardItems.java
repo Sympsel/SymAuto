@@ -8,7 +8,6 @@ import com.symauto.entity.KeyCombination;
 import com.symauto.function.FeatureConfig;
 import com.symauto.function.abstracts.SymAbstractFunction;
 import lombok.Getter;
-import lombok.Setter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.network.protocol.game.ServerboundSelectBundleItemPacket;
@@ -287,7 +286,7 @@ public class OneClickDiscardItems extends SymAbstractFunction {
      * @param glfwModifiers GLFW 修饰键位掩码（GLFW_MOD_*）
      */
     public static boolean shouldInterceptVanillaKey(int glfwKey, int glfwModifiers) {
-        if (!FeatureConfig.ONE_CLICK_DISCARD_ITEMS.isEnable()) {
+        if (!FeatureConfig.ONE_CLICK_DISCARD_ITEMS_FUNCTION.isEnable()) {
             return false;
         }
         InputConstants.Key bound = KEY_COMBINATION.key();
