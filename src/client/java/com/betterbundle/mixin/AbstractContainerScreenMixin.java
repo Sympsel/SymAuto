@@ -8,8 +8,6 @@ import com.betterbundle.sort.exec.SortStateMachine;
 import com.symauto.function.FeatureConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.client.gui.screens.inventory.AbstractRecipeBookScreen;
-import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.world.inventory.Slot;
@@ -46,21 +44,11 @@ public abstract class AbstractContainerScreenMixin {
         AbstractContainerScreen<?> self = (AbstractContainerScreen<?>) (Object) this;
         double mx = event.x();
         double my = event.y();
-        boolean isRecipeBookScreen = ((Object) this) instanceof AbstractRecipeBookScreen;
-        boolean isInventoryScreen = ((Object) this) instanceof InventoryScreen;
-        System.out.println("[BetterBundle] === mouseClicked START === ("
-                + mx + "," + my + ") leftPos=" + leftPos + " topPos=" + topPos
-                + " imageW=" + imageWidth + " imageH=" + imageHeight
-                + " visible=" + BundlePanelRenderer.visible
-                + " isRecipeBookScreen=" + isRecipeBookScreen
-                + " isInventoryScreen=" + isInventoryScreen
-                + " isRecipeBookOpen=" + BundlePanelRenderer.isRecipeBookOpen());
 
         // 一键整理按钮（面板可见时优先；运行中点击即取消）
         // 使用 visible 而非 isEffectivelyVisible，确保配方书关闭的过渡帧也能响应
         if (BundlePanelRenderer.visible
                 && SortButton.handleClick(leftPos, topPos, imageHeight, mx, my)) {
-            System.out.println("[BetterBundle] -> handled by SortButton");
             cir.setReturnValue(true);
             return;
         }
@@ -78,7 +66,6 @@ public abstract class AbstractContainerScreenMixin {
         if (hovered != null && hovered.hasItem()) {
             boolean handled = BundlePanelInteraction.handleSpaceClick(hovered);
             if (handled) {
-                System.out.println("[BetterBundle] -> handled by handleSpaceClick");
                 cir.setReturnValue(true);
                 return;
             }
@@ -88,43 +75,31 @@ public abstract class AbstractContainerScreenMixin {
         int bx = BundlePanelRenderer.toggleX(leftPos, imageWidth);
         int by = BundlePanelRenderer.toggleY(topPos);
         if (mx >= bx && mx < bx + 20 && my >= by && my < by + 20) {
-            System.out.println("[BetterBundle] -> toggle button clicked at (" + bx + "," + by + ")");
             BundlePanelRenderer.togglePanel();
             cir.setReturnValue(true);
             return;
         }
 
-        // For InventoryScreen (背包界面): handle category, search bar
-        // 注意: InventoryScreen 继承自 AbstractRecipeBookScreen, 所以不能用 !(instanceof AbstractRecipeBookScreen)
-        // 其他配方书界面 (如工作台) 的分类检测由 AbstractRecipeBookScreenMixin 处理
-        if (isInventoryScreen) {
-            if (BundlePanelRenderer.visible) {
-                BundleCategory cat = BundlePanelRenderer.getCategoryAt(mx, my, leftPos, topPos, imageHeight);
-                System.out.println("[BetterBundle] -> category check: cat=" + cat);
-                if (cat != null) {
-                    BundlePanelRenderer.currentCategory = cat;
-                    BundlePanelRenderer.searchQuery = "";
-                    BundlePanelRenderer.scrollToTop();
-                    System.out.println("[BetterBundle] Category clicked: " + cat.name()
-                            + " at (" + mx + "," + my + ") leftPos=" + leftPos + " topPos=" + topPos);
-                    cir.setReturnValue(true);
-                    return;
-                }
-            }
-
-            if (BundlePanelRenderer.visible
-                    && BundlePanelRenderer.isInsideSearchBar(mx, my, leftPos, topPos, imageHeight)) {
-                BundlePanelRenderer.searchFocused = true;
-                System.out.println("[BetterBundle] -> search bar focused");
+        // 分类标签和搜索栏对所有容器界面生效
+        if (BundlePanelRenderer.visible) {
+            BundleCategory cat = BundlePanelRenderer.getCategoryAt(mx, my, leftPos, topPos, imageHeight);
+            if (cat != null) {
+                BundlePanelRenderer.currentCategory = cat;
+                BundlePanelRenderer.searchQuery = "";
+                BundlePanelRenderer.scrollToTop();
                 cir.setReturnValue(true);
                 return;
             }
 
-            BundlePanelRenderer.searchFocused = false;
+            if (BundlePanelRenderer.isInsideSearchBar(mx, my, leftPos, topPos, imageHeight)) {
+                BundlePanelRenderer.searchFocused = true;
+                cir.setReturnValue(true);
+                return;
+            }
         }
+        BundlePanelRenderer.searchFocused = false;
 
         if (!BundlePanelRenderer.visible) {
-            System.out.println("[BetterBundle] -> visible=false, early return");
             return;
         }
 
@@ -135,7 +110,6 @@ public abstract class AbstractContainerScreenMixin {
             if (cat == null) {
                 boolean handled = BundlePanelInteraction.handlePanelInsert(event.button());
                 if (handled) {
-                    System.out.println("[BetterBundle] -> handled by handlePanelInsert");
                     cir.setReturnValue(true);
                 }
             }
@@ -151,16 +125,6 @@ public abstract class AbstractContainerScreenMixin {
                 }
             }
         }
-
-        // 面板可见时，点击背包中的收纳袋格子 → 提取物品而不是拿起收纳袋
-        if (cursor.isEmpty() && hoveredSlot != null && hoveredSlot.hasItem()) {
-            boolean handled = BundlePanelInteraction.handleBundleSlotClick(hoveredSlot, self);
-            if (handled) {
-                cir.setReturnValue(true);
-                return;
-            }
-        }
-        System.out.println("[BetterBundle] === mouseClicked END (no handler) ===");
     }
 
     private static boolean isInsidePanelBounds(double mx, double my, int leftPos, int topPos, int imageHeight) {

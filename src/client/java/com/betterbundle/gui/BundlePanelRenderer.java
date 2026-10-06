@@ -60,10 +60,10 @@ public final class BundlePanelRenderer {
         boolean isInventoryScreen = client.gui.screen() instanceof InventoryScreen;
         int screenWidth = client.getWindow().getGuiScaledWidth();
 
-        // 始终跟随背包/容器界面（相对定位），配方书开启时 leftPos 会自动右移
+        // 背包界面固定位置；其他容器界面居中于 GUI 顶部
         int desired = isInventoryScreen
                 ? leftPos + 130
-                : leftPos + imageWidth - 24;
+                : leftPos + (imageWidth - 20) / 2;
 
         return Math.clamp(desired, 4, screenWidth - 20 - 4);
     }
@@ -72,7 +72,7 @@ public final class BundlePanelRenderer {
         Minecraft client = Minecraft.getInstance();
         int desired = client.gui.screen() instanceof InventoryScreen
                 ? topPos + 60
-                : topPos + 5;
+                : topPos - 22;
         return Math.clamp(desired, 4,
                 Math.max(4, client.getWindow().getGuiScaledHeight() - 20 - 4));
     }
@@ -227,9 +227,6 @@ public final class BundlePanelRenderer {
         if (!wasRecipeBookOpen) {
             visible = !visible;
         }
-        System.out.println("[BetterBundle] togglePanel: visible=" + visible
-                + " wasRecipeBookOpen=" + wasRecipeBookOpen
-                + " isRecipeBookOpenNow=" + isRecipeBookOpen());
     }
 
     // --- category button layout ---
@@ -250,16 +247,9 @@ public final class BundlePanelRenderer {
         BundleCategory[] cats = BundleCategory.values();
         int catStartX = panelX + PADDING - 5;
 
-        System.out.println("[BetterBundle] getCategoryAt: mouseX=" + mouseX + " mouseY=" + mouseY
-                + " panelX=" + panelX + " panelY=" + panelY + " pw=" + pw
-                + " actualPanelHeight=" + actualPanelHeight
-                + " catStartX=" + catStartX
-                + " numCategories=" + cats.length);
-
         for (int i = 0; i < cats.length; i++) {
             int by = catButtonY(i, panelY);
             if (by + CAT_BAR_WIDTH > panelY + actualPanelHeight) {
-                System.out.println("[BetterBundle] getCategoryAt: break at i=" + i + " by=" + by);
                 break;
             }
 
@@ -270,16 +260,11 @@ public final class BundlePanelRenderer {
                 bx -= 5;
                 bw += 5;
             }
-            System.out.println("[BetterBundle] getCategoryAt: i=" + i + " cat=" + cats[i].name()
-                    + " bx=" + bx + " by=" + by + " bw=" + bw
-                    + " selected=" + selected);
             if (mouseX >= bx && mouseX < bx + bw
                     && mouseY >= by && mouseY < by + CAT_BAR_WIDTH) {
-                System.out.println("[BetterBundle] getCategoryAt: HIT " + cats[i].name());
                 return cats[i];
             }
         }
-        System.out.println("[BetterBundle] getCategoryAt: MISS - no category matched");
         return null;
     }
 

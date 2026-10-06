@@ -1,16 +1,14 @@
 package com.betterbundle.gui;
 
 import com.betterbundle.util.BundleContentsHelper;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientPacketListener;
-import net.minecraft.network.HashedStack;
-import net.minecraft.network.protocol.game.ServerboundContainerClickPacket;
 import net.minecraft.network.protocol.game.ServerboundSelectBundleItemPacket;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.BundleContents;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
@@ -111,11 +109,11 @@ public final class BundlePanelInteraction {
         int itemSlot = hoveredSlot.index;
 
         // 拿起整叠 → 依次放入多个袋子（每个尽量填充，余量留在光标）→ 余量放回原槽。
-        connection.send(makeClickPacket(containerId, itemSlot, (byte) 0));
+        sendClick(containerId, itemSlot, 0);
         for (int target : targets) {
-            connection.send(makeClickPacket(containerId, target, (byte) 0));
+            sendClick(containerId, target, 0);
         }
-        connection.send(makeClickPacket(containerId, itemSlot, (byte) 0));
+        sendClick(containerId, itemSlot, 0);
 
         return true;
     }
@@ -156,10 +154,13 @@ public final class BundlePanelInteraction {
         return targets;
     }
 
-    private static ServerboundContainerClickPacket makeClickPacket(int containerId, int slot, byte button) {
-        return new ServerboundContainerClickPacket(
-                containerId, -1, (short) slot, button,
-                ContainerInput.PICKUP, new Int2ObjectOpenHashMap<>(), HashedStack.EMPTY);
+    /** 发送容器点击操作（通过 gameMode.handleContainerInput 自动追踪 stateID） */
+    private static void sendClick(int containerId, int slot, int button) {
+        Minecraft client = Minecraft.getInstance();
+        if (client.gameMode != null && client.player != null) {
+            client.gameMode.handleContainerInput(
+                    containerId, slot, button, ContainerInput.PICKUP, client.player);
+        }
     }
 
     private static long bulkInsertStart = 0;
@@ -200,7 +201,7 @@ public final class BundlePanelInteraction {
 
         // 光标已有整叠，直接依次放入多个袋子；每个尽量填充，余量留在光标上。
         for (int target : targets) {
-            connection.send(makeClickPacket(containerId, target, (byte) 0));
+            sendClick(containerId, target, 0);
         }
         return true;
     }
@@ -250,33 +251,153 @@ public final class BundlePanelInteraction {
     }
 
     /**
-     * 核心提取逻辑（之前验证有效的模式）：
-     * 逐个条目提取到光标，中间条目放入空槽，最后一个留在光标。
+     * 核心提取逻辑：跨收纳袋自动凑满一组（maxStack）。
+     * <p>
+     * 1. 升序排列 sources（小袋子先取），中间条目 deposit 到空槽
+     * 2. 最后一个条目留在光标
+     * 3. 从 deposit 槽位取回物品合并到光标（Minecraft 自动处理：
+     *    光标+槽位 → 最多 maxStack 在光标，余量留在槽位）
+     * 4. 余量塞回有容量的收纳袋
      */
     private static void extractFromSources(ClientPacketListener connection, int containerId,
                                             Player player,
                                             List<BundlePanelRenderer.SourceEntry> sources, int maxStack) {
+        // 升序排列：小袋子先 deposit，大袋子留光标
+        List<BundlePanelRenderer.SourceEntry> sortedSources = new ArrayList<>(sources);
+        sortedSources.sort(Comparator.comparingInt(BundlePanelRenderer.SourceEntry::itemCount));
+
+        // 在提取前缓存物品类型（bundle 提取后内容会变空）
+        ItemStack sampleItem = getItemFromSource(player, sortedSources.get(0));
+
         List<Integer> emptySlots = findAllEmptyPlayerSlots(player);
         int emptyIdx = 0;
-        int accumulated = 0;
+        List<Integer> usedSlotIndices = new ArrayList<>();
+        List<Integer> usedSlotCounts = new ArrayList<>();
 
-        for (int i = 0; i < sources.size(); i++) {
-            if (accumulated >= maxStack) break;
-            BundlePanelRenderer.SourceEntry src = sources.get(i);
-            boolean isLast = (i == sources.size() - 1) || (accumulated + src.itemCount() >= maxStack);
+        int totalExtracted = 0;
+        int cursorCount = 0;
+
+        // Phase 1: 提取整叠 + deposit（bundle 提取是全有或全无）
+        for (int i = 0; i < sortedSources.size(); i++) {
+            BundlePanelRenderer.SourceEntry src = sortedSources.get(i);
+            boolean isLast = (i == sortedSources.size() - 1);
 
             connection.send(new ServerboundSelectBundleItemPacket(src.bundleSlot(), -1));
             connection.send(new ServerboundSelectBundleItemPacket(src.bundleSlot(), src.itemIndex()));
-            connection.send(makeClickPacket(containerId, src.bundleSlot(), (byte) 1));
+            sendClick(containerId, src.bundleSlot(), 1);
 
-            if (!isLast && emptyIdx < emptySlots.size()) {
-                // 中间条目：放入空槽，清空光标以便下次提取
-                connection.send(makeClickPacket(containerId, emptySlots.get(emptyIdx++), (byte) 0));
+            totalExtracted += src.itemCount();
+
+            if (!isLast) {
+                if (emptyIdx < emptySlots.size()) {
+                    int slot = emptySlots.get(emptyIdx++);
+                    sendClick(containerId, slot, 0);
+                    usedSlotIndices.add(slot);
+                    usedSlotCounts.add(src.itemCount());
+                } else {
+                    cursorCount = src.itemCount();
+                    break;
+                }
+            } else {
+                cursorCount = src.itemCount();
             }
-            // 最后一条目：留在光标上
-
-            accumulated += Math.min(src.itemCount(), maxStack - accumulated);
         }
+
+        // Phase 2: 从 deposit 槽位取回合并到光标
+        for (int j = 0; j < usedSlotIndices.size(); j++) {
+            if (cursorCount >= maxStack) break;
+            int slot = usedSlotIndices.get(j);
+            int inSlot = usedSlotCounts.get(j);
+            sendClick(containerId, slot, 0);
+            int merged = Math.min(inSlot, maxStack - cursorCount);
+            int remaining = inSlot - merged;
+            usedSlotCounts.set(j, remaining);
+            cursorCount += merged;
+        }
+
+        // Phase 3: 余量塞回收纳袋（优先刚提取过的 bundle，用数学推算容量）
+        if (!sampleItem.isEmpty()) {
+            int targetBundle = findExtractedBundleWithCapacity(sortedSources, sampleItem);
+            if (targetBundle < 0) {
+                targetBundle = findBundleWithCapacity(player, sampleItem);
+            }
+            if (targetBundle >= 0) {
+                for (int j = 0; j < usedSlotIndices.size(); j++) {
+                    if (usedSlotCounts.get(j) <= 0) continue;
+                    int slot = usedSlotIndices.get(j);
+                    if (cursorCount >= maxStack) {
+                        if (emptyIdx < emptySlots.size()) {
+                            int tempSlot = emptySlots.get(emptyIdx++);
+                            sendClick(containerId, tempSlot, 0);
+                            sendClick(containerId, slot, 0);
+                            sendClick(containerId, targetBundle, 0);
+                            sendClick(containerId, tempSlot, 0);
+                            usedSlotCounts.set(j, 0);
+                        }
+                    } else {
+                        sendClick(containerId, slot, 0);
+                        sendClick(containerId, targetBundle, 0);
+                        usedSlotCounts.set(j, 0);
+                    }
+                    break;
+                }
+            }
+        }
+    }
+
+    /** 从 source 获取物品类型样本 */
+    private static ItemStack getItemFromSource(Player player, BundlePanelRenderer.SourceEntry src) {
+        BundleContents contents = BundleContentsHelper.getContents(
+                player.containerMenu.getSlot(src.bundleSlot()).getItem());
+        if (contents == null) return ItemStack.EMPTY;
+        List<ItemStack> items = contents.itemCopyStream().toList();
+        if (src.itemIndex() >= items.size()) return ItemStack.EMPTY;
+        return items.get(src.itemIndex());
+    }
+
+    /** 查找有剩余容量接受该物品的收纳袋槽位（基于客户端数据，可能过时） */
+    private static int findBundleWithCapacity(Player player, ItemStack item) {
+        if (item.isEmpty()) return -1;
+        for (Slot slot : player.containerMenu.slots) {
+            if (slot.container != player.getInventory()) continue;
+            if (!slot.hasItem()) continue;
+            ItemStack bundleStack = slot.getItem();
+            if (!BundleContentsHelper.isBundle(bundleStack)) continue;
+            if (BundleContentsHelper.maxAcceptable(bundleStack, item) > 0) {
+                return slot.index;
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * 从刚提取过的 bundle 中查找有剩余容量的槽位。
+     * 通过数学计算判断：原始重量 - 提取的物品重量 = 当前重量，剩余空间 = 1 - 当前重量。
+     * 不依赖过时的客户端 bundle 数据。
+     */
+    private static int findExtractedBundleWithCapacity(
+            List<BundlePanelRenderer.SourceEntry> sortedSources, ItemStack item) {
+        int itemMaxStack = Math.max(1, item.getMaxStackSize());
+        for (BundlePanelRenderer.SourceEntry src : sortedSources) {
+            double totalWeight = 0;
+            for (Slot slot : Minecraft.getInstance().player.containerMenu.slots) {
+                if (slot.index == src.bundleSlot() && slot.hasItem()) {
+                    BundleContents contents = BundleContentsHelper.getContents(slot.getItem());
+                    if (contents != null) {
+                        totalWeight = contents.weight().result()
+                                .orElse(org.apache.commons.lang3.math.Fraction.ZERO).doubleValue();
+                    }
+                    break;
+                }
+            }
+            double extractedWeight = (double) src.itemCount() / itemMaxStack;
+            double remainingWeight = totalWeight - extractedWeight;
+            double freeWeight = 1.0 - remainingWeight;
+            if (freeWeight >= 1.0 / itemMaxStack - 0.001) {
+                return src.bundleSlot();
+            }
+        }
+        return -1;
     }
 
     /** 找出所有空的玩家背包槽位，先主背包(9-35)后快捷栏(0-8) */

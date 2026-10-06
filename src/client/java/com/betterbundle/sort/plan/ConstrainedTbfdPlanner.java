@@ -53,7 +53,7 @@ public final class ConstrainedTbfdPlanner {
 
         mergeSameItems(vm);
 
-        // 生成顺序本身已满足“撤离先于依赖它的放入”。取最长有效前缀，避免误报。
+        // 生成顺序本身已满足"撤离先于依赖它的放入"。取最长有效前缀，避免误报。
         List<PlannedMove> ordered = validPrefix(live, moves);
         if (ordered.isEmpty()) return PlanResult.fail("没有可安全执行的整理步骤");
 

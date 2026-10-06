@@ -1,11 +1,9 @@
 package com.betterbundle.mixin;
 
-import com.betterbundle.gui.BundleCategory;
 import com.betterbundle.gui.BundlePanelRenderer;
 import com.betterbundle.gui.SortButton;
 import com.betterbundle.sort.exec.SortStateMachine;
 import net.minecraft.client.gui.screens.inventory.AbstractRecipeBookScreen;
-import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import org.spongepowered.asm.mixin.Mixin;
@@ -46,28 +44,7 @@ public abstract class AbstractRecipeBookScreenMixin {
             return;
         }
 
-        // 非 InventoryScreen 的配方书界面(如工作台):处理分类标签和搜索栏
-        // InventoryScreen 的分类检测已由 AbstractContainerScreenMixin 处理，避免重复
-        if (!(((Object) this) instanceof InventoryScreen)) {
-            if (BundlePanelRenderer.visible) {
-                BundleCategory cat = BundlePanelRenderer.getCategoryAt(mouseX, mouseY, leftPos, topPos, imageHeight);
-                if (cat != null) {
-                    BundlePanelRenderer.currentCategory = cat;
-                    BundlePanelRenderer.searchQuery = "";
-                    BundlePanelRenderer.scrollToTop();
-                    cir.setReturnValue(true);
-                    return;
-                }
-
-                if (BundlePanelRenderer.isInsideSearchBar(mouseX, mouseY, leftPos, topPos, imageHeight)) {
-                    BundlePanelRenderer.searchFocused = true;
-                    cir.setReturnValue(true);
-                    return;
-                }
-            }
-
-            BundlePanelRenderer.searchFocused = false;
-        }
+        // 分类标签和搜索栏已由 AbstractContainerScreenMixin 统一处理
     }
 
     @Inject(method = "keyPressed", at = @At("HEAD"), cancellable = true)
