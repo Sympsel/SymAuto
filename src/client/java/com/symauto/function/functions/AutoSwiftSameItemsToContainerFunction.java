@@ -66,6 +66,9 @@ public class AutoSwiftSameItemsToContainerFunction extends SymAbstractFunction {
 
     @Override
     public Set<Class<? extends SymAbstractFunction>> getConflicts() {
-        return Collections.singleton(AutoSwiftSameItemsToInventoryFunction.class);
+        return Set.of(
+                AutoSwiftSameItemsToInventoryFunction.class,
+                AutoLootContainerFunction.class
+        );
     }
 }
