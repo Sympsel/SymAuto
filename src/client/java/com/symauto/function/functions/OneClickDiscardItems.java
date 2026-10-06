@@ -1,5 +1,6 @@
 package com.symauto.function.functions;
 
+import com.betterbundle.util.BundleContentsHelper;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.platform.Window;
 import com.symauto.entity.BWList;
@@ -9,14 +10,19 @@ import com.symauto.function.abstracts.SymAbstractFunction;
 import lombok.Getter;
 import lombok.Setter;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientPacketListener;
+import net.minecraft.network.protocol.game.ServerboundSelectBundleItemPacket;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.component.BundleContents;
 import org.lwjgl.glfw.GLFW;
 
+import java.util.List;
 import java.util.Set;
 
 public class OneClickDiscardItems extends SymAbstractFunction {
@@ -33,7 +39,7 @@ public class OneClickDiscardItems extends SymAbstractFunction {
     private OneClickDiscardItems() {
         String id = "one_click_discard_items_whitelist";
         BW_LIST = new BWList<>(id);
-        super(id, "一键丢弃垃圾物品", "Alt + Q 一键丢弃白名单内（90+小垃圾）物品");
+        super(id, "一键丢弃垃圾物品", "Alt + Q 一键丢弃白名单内（70+小垃圾）物品，包括收纳袋里的");
     }
 
     public static void applyDefaults() {
@@ -155,6 +161,10 @@ public class OneClickDiscardItems extends SymAbstractFunction {
         AbstractContainerMenu menu = client.player.containerMenu;
         int containerId = menu.containerId;
 
+        // 先将收纳袋内的白名单物品提取到背包槽位
+        extractFromBundles(client, menu, containerId);
+
+        // 统一丢弃背包中所有白名单物品（包括刚提取出来的）
         for (int i = 0; i < menu.slots.size(); i++) {
             Slot slot = menu.slots.get(i);
             if (!slot.hasItem()) {
@@ -178,6 +188,53 @@ public class OneClickDiscardItems extends SymAbstractFunction {
                     ContainerInput.THROW,
                     client.player
             );
+        }
+    }
+
+    /**
+     * 对每个收纳袋：如果顶部物品（index 0）是白名单垃圾，提取到光标 → 放入空背包槽 → 从槽位丢弃。
+     * 多次按 Alt+Q 可逐层清理。
+     */
+    private void extractFromBundles(Minecraft client, AbstractContainerMenu menu, int containerId) {
+        if (client.player == null) return;
+        ClientPacketListener connection = client.getConnection();
+        if (connection == null) return;
+
+        for (int s = 0; s < menu.slots.size(); s++) {
+            Slot slot = menu.slots.get(s);
+            if (!slot.hasItem()) continue;
+            if (isWornSlot(slot)) continue;
+
+            ItemStack bundleStack = slot.getItem();
+            if (!BundleContentsHelper.isNonEmptyBundle(bundleStack)) continue;
+
+            BundleContents contents = BundleContentsHelper.getContents(bundleStack);
+            if (contents == null) continue;
+
+            List<ItemStack> items = contents.itemCopyStream().toList();
+            if (items.isEmpty()) continue;
+
+            // 按客户端列表顺序，逐个提取 index 0 并丢弃，遇到非白名单停止
+            int emptySlot = -1;
+            for (int i = 9; i <= 44 && i < menu.slots.size(); i++) {
+                if (!menu.slots.get(i).hasItem()) { emptySlot = i; break; }
+            }
+            if (emptySlot < 0) continue;
+
+            for (int iter = 0; iter < items.size(); iter++) {
+                // 按客户端顺序检查，遇到非白名单就停止
+                if (!BW_LIST.isWhitelisted(items.get(iter).getItem())) break;
+
+                // Select(-1) + Select(0)：服务端每次移除后下一个自动成为 0
+                connection.send(new ServerboundSelectBundleItemPacket(slot.index, -1));
+                connection.send(new ServerboundSelectBundleItemPacket(slot.index, 0));
+                client.gameMode.handleContainerInput(
+                        containerId, s, 1, ContainerInput.PICKUP, client.player);
+                client.gameMode.handleContainerInput(
+                        containerId, emptySlot, 0, ContainerInput.PICKUP, client.player);
+                client.gameMode.handleContainerInput(
+                        containerId, emptySlot, 1, ContainerInput.THROW, client.player);
+            }
         }
     }
 

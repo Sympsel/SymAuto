@@ -77,10 +77,11 @@ public abstract class InventoryScreenMixin {
                 BundlePanelRenderer.toggleY(topPos),
                 mouseX, mouseY);
 
-        if (BundlePanelRenderer.isEffectivelyVisible()) {
-            SortButton.render(graphics, Minecraft.getInstance().font,
-                    leftPos, topPos, imageHeight, mouseX, mouseY);
-        }
+        // 一键整理按钮暂时隐藏（功能有 bug）
+        // if (BundlePanelRenderer.isEffectivelyVisible()) {
+        //     SortButton.render(graphics, Minecraft.getInstance().font,
+        //             leftPos, topPos, imageHeight, mouseX, mouseY);
+        // }
     }
 
     @Unique
@@ -92,13 +93,5 @@ public abstract class InventoryScreenMixin {
         // 根据原版 RecipeBookTabButton 逻辑：用 WidgetSprites.get(true, hovered) 取精灵
         Identifier sprite = BUNDLE_BUTTON_SPRITES.get(true, hovered);
         graphics.blitSprite(RenderPipelines.GUI_TEXTURED, sprite, x, y, BUTTON_SIZE, BUTTON_SIZE);
-
-        // 在按钮上绘制收纳袋图标
-        graphics.fakeItem(new ItemStack(Items.BUNDLE), x + 2, y + 2);
-
-        // 开启状态底部加一条小蓝线
-        if (BundlePanelRenderer.isEffectivelyVisible()) {
-            graphics.fill(x + 3, y + 17, x + 17, y + 18, 0xFF80B0FF);
-        }
     }
 }

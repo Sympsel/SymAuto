@@ -26,13 +26,12 @@ public abstract class AbstractRecipeBookScreenMixin {
         double mouseX = event.x();
         double mouseY = event.y();
 
-        // 一键整理按钮(面板可见时优先;运行中点击即取消)
-        // 使用 visible 而非 isEffectivelyVisible,避免配方书关闭过渡帧导致交互失效
-        if (BundlePanelRenderer.visible
-                && SortButton.handleClick(leftPos, topPos, imageHeight, mouseX, mouseY)) {
-            cir.setReturnValue(true);
-            return;
-        }
+        // 一键整理按钮暂时隐藏（功能有 bug）
+        // if (BundlePanelRenderer.visible
+        //         && SortButton.handleClick(leftPos, topPos, imageHeight, mouseX, mouseY)) {
+        //     cir.setReturnValue(true);
+        //     return;
+        // }
         SortStateMachine.get().abortByUser();
 
         // 配方书界面:切换按钮

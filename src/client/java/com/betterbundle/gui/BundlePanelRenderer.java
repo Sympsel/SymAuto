@@ -301,13 +301,6 @@ public final class BundlePanelRenderer {
     public static void render(GuiGraphicsExtractor graphics, int leftPos, int topPos, int imageHeight, int mouseX, int mouseY) {
         if (!isEffectivelyVisible()) return;
         List<BundleSlotEntry> bundles = getBundles();
-        if (bundles.isEmpty()) { scrollOffset = 0; return; }
-
-        List<FlatItem> allItems = buildFlatItemList(bundles);
-        if (allItems.isEmpty()) { scrollOffset = 0; return; }
-
-        List<FlatItem> items = filterItems(allItems, searchQuery);
-        if (items.isEmpty()) scrollOffset = 0;
 
         int pw = panelWidth();
         int panelX = leftPos - pw - 4;
@@ -322,19 +315,50 @@ public final class BundlePanelRenderer {
         // Panel background (full panel with visible border)
         int bgColor = 0x80202020;
         int borderColor = 0xCC606060;
-        // 完整背景
         graphics.fill(panelX, panelY, panelX + pw, panelY + panelHeight, bgColor);
-        // 上边框
         graphics.fill(panelX, panelY, panelX + pw, panelY + 1, borderColor);
-        // 下边框
         graphics.fill(panelX, panelY + panelHeight - 1, panelX + pw, panelY + panelHeight, borderColor);
-        // 左边框
         graphics.fill(panelX, panelY, panelX + 1, panelY + panelHeight, borderColor);
-        // 右边框
         graphics.fill(panelX + pw - 1, panelY, panelX + pw, panelY + panelHeight, borderColor);
 
         Minecraft client = Minecraft.getInstance();
         Font font = client.font;
+
+        // 无收纳袋或所有收纳袋为空时显示提示
+        List<BundleSlotEntry> allBundles = getAllBundles();
+        if (allBundles.isEmpty()) {
+            String hint = "背包中没有收纳袋";
+            int textW = font.width(hint);
+            int textX = panelX + (pw - textW) / 2;
+            int textY = panelY + panelHeight / 2 - font.lineHeight / 2;
+            graphics.text(font, hint, textX, textY, 0xFF888888, false);
+            renderCategoryButtons(graphics, font, panelX, panelY, panelHeight, mouseX, mouseY);
+            return;
+        }
+
+        if (bundles.isEmpty()) {
+            String hint = "所有收纳袋为空";
+            int textW = font.width(hint);
+            int textX = panelX + (pw - textW) / 2;
+            int textY = panelY + panelHeight / 2 - font.lineHeight / 2;
+            graphics.text(font, hint, textX, textY, 0xFF888888, false);
+            renderCategoryButtons(graphics, font, panelX, panelY, panelHeight, mouseX, mouseY);
+            return;
+        }
+
+        List<FlatItem> allItems = buildFlatItemList(bundles);
+        if (allItems.isEmpty()) {
+            String hint = "所有收纳袋为空";
+            int textW = font.width(hint);
+            int textX = panelX + (pw - textW) / 2;
+            int textY = panelY + panelHeight / 2 - font.lineHeight / 2;
+            graphics.text(font, hint, textX, textY, 0xFF888888, false);
+            renderCategoryButtons(graphics, font, panelX, panelY, panelHeight, mouseX, mouseY);
+            return;
+        }
+
+        List<FlatItem> items = filterItems(allItems, searchQuery);
+        if (items.isEmpty()) scrollOffset = 0;
 
         int totalRows = Math.max(1, (items.size() + COLUMNS - 1) / COLUMNS);
         int maxScroll = Math.max(0, totalRows - VISIBLE_ROWS);
@@ -347,25 +371,7 @@ public final class BundlePanelRenderer {
         int gridContentH = panelHeight - searchH;
 
         // Category buttons
-        BundleCategory[] cats = BundleCategory.values();
-        int catX = panelX + PADDING - 5;
-        int catAreaH = panelHeight - PADDING * 2;
-
-        for (int i = 0; i < cats.length; i++) {
-            int by = catButtonY(i, catTop);
-            if (by + CAT_BAR_WIDTH > catTop + panelHeight) break;
-
-            boolean selected = cats[i] == currentCategory;
-            int bx = catX;
-            int bw = CAT_BAR_WIDTH;
-            if (selected) { bx -= 5; bw += 5; }
-            boolean hovered = mouseX >= bx && mouseX < bx + bw
-                    && mouseY >= by && mouseY < by + CAT_BAR_WIDTH;
-            int bg = selected ? 0x25101010 : (hovered ? 0x40FFFFFF : 0x30FFFFFF);
-            graphics.fill(bx, by, bx + bw, by + CAT_BAR_WIDTH, bg);
-            int iconOff = (CAT_BAR_WIDTH - 16) / 2;
-            graphics.item(cats[i].getIcon(), bx + iconOff, by + iconOff);
-        }
+        renderCategoryButtons(graphics, font, panelX, panelY, panelHeight, mouseX, mouseY);
 
         // Scroll bar
         int sbX = panelX + PADDING + CAT_BAR_WIDTH + 2;
@@ -472,5 +478,30 @@ public final class BundlePanelRenderer {
         Fraction remaining = maxWeight.subtract(totalWeight);
         int effectiveMax = totalItems + remaining.multiplyBy(Fraction.getFraction(64, 1)).intValue();
         return new int[] { totalItems, effectiveMax };
+    }
+
+    /** 渲染分类按钮（提取为独立方法以便空状态时也能调用） */
+    private static void renderCategoryButtons(GuiGraphicsExtractor graphics, Font font,
+                                              int panelX, int panelY, int panelHeight,
+                                              int mouseX, int mouseY) {
+        int catTop = panelY;
+        BundleCategory[] cats = BundleCategory.values();
+        int catX = panelX + PADDING - 5;
+
+        for (int i = 0; i < cats.length; i++) {
+            int by = catButtonY(i, catTop);
+            if (by + CAT_BAR_WIDTH > catTop + panelHeight) break;
+
+            boolean selected = cats[i] == currentCategory;
+            int bx = catX;
+            int bw = CAT_BAR_WIDTH;
+            if (selected) { bx -= 5; bw += 5; }
+            boolean hovered = mouseX >= bx && mouseX < bx + bw
+                    && mouseY >= by && mouseY < by + CAT_BAR_WIDTH;
+            int bg = selected ? 0x25101010 : (hovered ? 0x40FFFFFF : 0x30FFFFFF);
+            graphics.fill(bx, by, bx + bw, by + CAT_BAR_WIDTH, bg);
+            int iconOff = (CAT_BAR_WIDTH - 16) / 2;
+            graphics.item(cats[i].getIcon(), bx + iconOff, by + iconOff);
+        }
     }
 }

@@ -45,13 +45,12 @@ public abstract class AbstractContainerScreenMixin {
         double mx = event.x();
         double my = event.y();
 
-        // 一键整理按钮（面板可见时优先；运行中点击即取消）
-        // 使用 visible 而非 isEffectivelyVisible，确保配方书关闭的过渡帧也能响应
-        if (BundlePanelRenderer.visible
-                && SortButton.handleClick(leftPos, topPos, imageHeight, mx, my)) {
-            cir.setReturnValue(true);
-            return;
-        }
+        // 一键整理按钮暂时隐藏（功能有 bug）
+        // if (BundlePanelRenderer.visible
+        //         && SortButton.handleClick(leftPos, topPos, imageHeight, mx, my)) {
+        //     cir.setReturnValue(true);
+        //     return;
+        // }
 
         // 玩家任意输入 → 立即中止整理（不回滚，D4）
         SortStateMachine.get().abortByUser();
