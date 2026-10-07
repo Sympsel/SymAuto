@@ -10,6 +10,7 @@ import com.symauto.function.abstracts.SymAbstractFunction;
 import lombok.Getter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientPacketListener;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.protocol.game.ServerboundSelectBundleItemPacket;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -26,7 +27,7 @@ import java.util.Set;
 
 public class OneClickDiscardItems extends SymAbstractFunction {
     public static final OneClickDiscardItems INSTANCE = new OneClickDiscardItems();
-
+    private static String TOOLTIP_BASE = "Alt + Q 一键丢弃白名单内（70+小垃圾）物品，包括收纳袋里的";
     // 边沿触发检测
     private boolean wasDown = false;
 
@@ -38,7 +39,16 @@ public class OneClickDiscardItems extends SymAbstractFunction {
     private OneClickDiscardItems() {
         String id = "one_click_discard_items_whitelist";
         BW_LIST = new BWList<>(id);
-        super(id, "一键丢弃垃圾物品", "Alt + Q 一键丢弃白名单内（70+小垃圾）物品，包括收纳袋里的");
+        super(id, "一键丢弃垃圾物品", TOOLTIP_BASE);
+        BW_LIST.withDefaultsApplier(
+                OneClickDiscardItems::applyDefaults
+        );
+    }
+
+    @Override
+    public String getTooltip() {
+        return "Alt + Q 一键丢弃白名单内（" + BW_LIST.getWhitelistSize() + "垃圾）物品，包括收纳袋里的";
+
     }
 
     public static void applyDefaults() {

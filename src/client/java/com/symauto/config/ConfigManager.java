@@ -5,11 +5,13 @@ import com.google.gson.GsonBuilder;
 import com.symauto.entity.BWList;
 import com.symauto.function.FeatureConfig;
 import com.symauto.function.abstracts.SymAbstractFunction;
+import com.symauto.function.functions.AutoAttackSafetyFunction;
 import com.symauto.function.functions.AutoEatFunction;
 import com.symauto.function.functions.OneClickDiscardItems;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.Item;
 
 import java.io.IOException;
@@ -17,6 +19,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class ConfigManager {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
@@ -88,24 +91,41 @@ public class ConfigManager {
         }
     }
 
+    private static final Function<Item, String> ITEM_TO_ID =
+            item -> BuiltInRegistries.ITEM.getKey(item).toString();
+    private static final Function<String, Item> ITEM_FROM_ID = ConfigManager::parseItem;
+
+    private static final Function<EntityType<?>, String> ENTITY_TO_ID =
+            type -> BuiltInRegistries.ENTITY_TYPE.getKey(type).toString();
+    private static final Function<String, EntityType<?>> ENTITY_FROM_ID = ConfigManager::parseEntityType;
+
     private static boolean applyBWLists(ModConfig config) {
         boolean merged = false;
-        // 没有配置应用默认值
-        merged |= applyBWList(config, OneClickDiscardItems.INSTANCE.getId(), OneClickDiscardItems.INSTANCE.getBW_LIST(), OneClickDiscardItems::applyDefaults);
-        merged |= applyBWList(config, AutoEatFunction.INSTANCE.getId(), AutoEatFunction.INSTANCE.getBW_LISTED_FOOD(), AutoEatFunction::applyDefaults);
+        merged |= applyBWList(config, OneClickDiscardItems.INSTANCE.getBW_LIST(), ITEM_TO_ID, ITEM_FROM_ID);
+        merged |= applyBWList(config, AutoEatFunction.INSTANCE.getBW_LISTED_FOOD(), ITEM_TO_ID, ITEM_FROM_ID);
+        merged |= applyBWList(config, AutoAttackSafetyFunction.INSTANCE.getBLACK_LIST(), ENTITY_TO_ID, ENTITY_FROM_ID);
         return merged;
     }
 
-    private static boolean applyBWList(ModConfig config, String featureId, BWList<Item> bwList, Runnable applyDefaults) {
+    private static void captureBWLists(ModConfig config) {
+        captureBWList(config, OneClickDiscardItems.INSTANCE.getBW_LIST(), ITEM_TO_ID);
+        captureBWList(config, AutoEatFunction.INSTANCE.getBW_LISTED_FOOD(), ITEM_TO_ID);
+        captureBWList(config, AutoAttackSafetyFunction.INSTANCE.getBLACK_LIST(), ENTITY_TO_ID);
+    }
+
+    private static <T> boolean applyBWList(ModConfig config, BWList<T> bwList,
+                                           Function<T, String> toId, Function<String, T> fromId) {
+        String featureId = bwList.getFeatureId();
         ModConfig.BWListConfig cfg = config.bwlists.get(featureId);
         if (cfg == null) {
-            applyDefaults.run();
+            // 配置缺失才触发默认值
+            bwList.applyDefaults();
             cfg = new ModConfig.BWListConfig();
-            for (Item item : bwList.getBlacklist()) {
-                cfg.blacklist.add(BuiltInRegistries.ITEM.getKey(item).toString());
+            for (T value : bwList.getBlacklist()) {
+                cfg.blacklist.add(toId.apply(value));
             }
-            for (Item item : bwList.getWhitelist()) {
-                cfg.whitelist.add(BuiltInRegistries.ITEM.getKey(item).toString());
+            for (T value : bwList.getWhitelist()) {
+                cfg.whitelist.add(toId.apply(value));
             }
             config.bwlists.put(featureId, cfg);
             return true;
@@ -114,10 +134,8 @@ public class ConfigManager {
         // 配置文件里有，就按配置应用
         bwList.getBlacklist().clear();
         bwList.getWhitelist().clear();
-
-        loadItems(cfg.blacklist, bwList::addToBlacklist);
-        loadItems(cfg.whitelist, bwList::addToWhitelist);
-
+        loadIds(cfg.blacklist, bwList::addToBlacklist, fromId);
+        loadIds(cfg.whitelist, bwList::addToWhitelist, fromId);
         return false;
     }
 
@@ -133,12 +151,30 @@ public class ConfigManager {
         }
     }
 
+    private static <T> void loadIds(List<String> ids, Consumer<T> adder, Function<String, T> fromId) {
+        if (ids == null) {
+            return;
+        }
+        for (String id : ids) {
+            T value = fromId.apply(id);
+            if (value != null) {
+                adder.accept(value);
+            }
+        }
+    }
+
     /**
      * 将当前所有功能的黑白名单状态抓取到配置对象中
      */
-    private static void captureBWLists(ModConfig config) {
-        captureBWLists(config, OneClickDiscardItems.INSTANCE.getId(), OneClickDiscardItems.INSTANCE.getBW_LIST());
-        captureBWLists(config, AutoEatFunction.INSTANCE.getId(), AutoEatFunction.INSTANCE.getBW_LISTED_FOOD());
+    private static <T> void captureBWList(ModConfig config, BWList<T> bwList, Function<T, String> toId) {
+        ModConfig.BWListConfig cfg = new ModConfig.BWListConfig();
+        for (T value : bwList.getBlacklist()) {
+            cfg.blacklist.add(toId.apply(value));
+        }
+        for (T value : bwList.getWhitelist()) {
+            cfg.whitelist.add(toId.apply(value));
+        }
+        config.bwlists.put(bwList.getFeatureId(), cfg);
     }
 
     private static void captureBWLists(ModConfig config, String featureId, BWList<Item> bwList) {
@@ -159,4 +195,13 @@ public class ConfigManager {
         }
         return BuiltInRegistries.ITEM.getOptional(identifier).orElse(null);
     }
+
+
+private static EntityType<?> parseEntityType(String id) {
+    Identifier identifier = Identifier.tryParse(id);
+    if (identifier == null) {
+        return null;
+    }
+    return BuiltInRegistries.ENTITY_TYPE.getOptional(identifier).orElse(null);
+}
 }

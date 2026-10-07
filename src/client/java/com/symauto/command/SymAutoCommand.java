@@ -9,6 +9,7 @@ import com.symauto.config.ConfigManager;
 import com.symauto.entity.BWList;
 import com.symauto.function.FeatureConfig;
 import com.symauto.function.abstracts.SymAbstractFunction;
+import com.symauto.function.functions.AutoAttackSafetyFunction;
 import com.symauto.function.functions.AutoEatFunction;
 import com.symauto.function.functions.OneClickDiscardItems;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
@@ -16,9 +17,11 @@ import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.Item;
 
 import java.util.Set;
+import java.util.function.Function;
 
 import static net.fabricmc.fabric.api.client.command.v2.ClientCommands.argument;
 import static net.fabricmc.fabric.api.client.command.v2.ClientCommands.literal;
@@ -37,12 +40,17 @@ public class SymAutoCommand {
             (context, builder) -> {
                 builder.suggest(OneClickDiscardItems.INSTANCE.getBW_LIST().getFeatureId());
                 builder.suggest(AutoEatFunction.INSTANCE.getBW_LISTED_FOOD().getFeatureId());
+                builder.suggest(AutoAttackSafetyFunction.INSTANCE.getBLACK_LIST().getFeatureId());
                 return builder.buildFuture();
             };
 
-    private static final SuggestionProvider<FabricClientCommandSource> ITEM_IDS =
+    // 值补全：实体类型功能补全 entity type id，其余补全 item id
+    private static final SuggestionProvider<FabricClientCommandSource> BW_VALUE_IDS =
             (context, builder) -> {
-                for (Identifier id : BuiltInRegistries.ITEM.keySet()) {
+                Iterable<Identifier> ids = isEntityFeature(safeFeature(context))
+                        ? BuiltInRegistries.ENTITY_TYPE.keySet()
+                        : BuiltInRegistries.ITEM.keySet();
+                for (Identifier id : ids) {
                     builder.suggest(id.toString());
                 }
                 return builder.buildFuture();
@@ -81,9 +89,9 @@ public class SymAutoCommand {
                                         .then(argument("action", StringArgumentType.word())
                                                 .suggests((ctx, builder) -> builder.suggest("add").suggest("remove").suggest("list").suggest("clear").buildFuture())
                                                 .executes(SymAutoCommand::handleBWList)
-                                                .then(argument("item", StringArgumentType.greedyString())
-                                                        .suggests(ITEM_IDS)
-                                                        .executes(SymAutoCommand::handleBWListWithItem))))));
+                                                .then(argument("value", StringArgumentType.greedyString())
+                                                        .suggests(BW_VALUE_IDS)
+                                                        .executes(SymAutoCommand::handleBWListWithValue))))));
     }
 
     private static int showUsage(CommandContext<FabricClientCommandSource> ctx) {
@@ -147,34 +155,34 @@ public class SymAutoCommand {
     }
 
     private static int handleBWList(CommandContext<FabricClientCommandSource> ctx) {
-        return handleBWListWithItem(ctx, null);
+        return handleBWListWithValue(ctx, null);
     }
 
-    private static int handleBWListWithItem(CommandContext<FabricClientCommandSource> ctx) {
-        String itemId = StringArgumentType.getString(ctx, "item");
-        return handleBWListWithItem(ctx, itemId);
+    private static int handleBWListWithValue(CommandContext<FabricClientCommandSource> ctx) {
+        String valueId = StringArgumentType.getString(ctx, "value");
+        return handleBWListWithValue(ctx, valueId);
     }
 
-    private static int handleBWListWithItem(CommandContext<FabricClientCommandSource> ctx, String itemId) {
+    private static int handleBWListWithValue(CommandContext<FabricClientCommandSource> ctx, String valueId) {
         String featureId = StringArgumentType.getString(ctx, "feature");
         String type = StringArgumentType.getString(ctx, "type");
         String action = StringArgumentType.getString(ctx, "action");
 
-        BWList<Item> bwList = getBWList(featureId);
-        if (bwList == null) {
+        BWTarget<?> target = resolveTarget(featureId);
+        if (target == null) {
             ctx.getSource().sendError(Component.literal("功能 §c" + featureId + "§r 没有黑白名单"));
             return 0;
         }
 
         return switch (action.toLowerCase()) {
-            case "list" -> listBWList(ctx, bwList, type);
-            case "clear" -> clearBWList(ctx, bwList, type);
+            case "list" -> listBWList(ctx, target, type);
+            case "clear" -> clearBWList(ctx, target, type);
             case "add", "remove" -> {
-                if (itemId == null || itemId.isBlank()) {
-                    ctx.getSource().sendError(Component.literal("add/remove 需要指定物品 ID"));
+                if (valueId == null || valueId.isBlank()) {
+                    ctx.getSource().sendError(Component.literal("add/remove 需要指定 " + target.noun + " ID"));
                     yield 0;
                 }
-                yield modifyBWList(ctx, bwList, type, action, itemId);
+                yield modifyBWList(ctx, target, type, action, valueId);
             }
             default -> {
                 ctx.getSource().sendError(Component.literal("未知操作：§c" + action));
@@ -183,57 +191,59 @@ public class SymAutoCommand {
         };
     }
 
-    private static int listBWList(CommandContext<FabricClientCommandSource> ctx, BWList<Item> bwList, String type) {
-        Set<Item> items = type.equalsIgnoreCase("whitelist") ? bwList.getWhitelist() : bwList.getBlacklist();
-        String title = type.equalsIgnoreCase("whitelist") ? "白名单" : "黑名单";
-        if (items.isEmpty()) {
+    private static <T> int listBWList(CommandContext<FabricClientCommandSource> ctx, BWTarget<T> target, String type) {
+        boolean white = type.equalsIgnoreCase("whitelist");
+        Set<T> values = white ? target.list.getWhitelist() : target.list.getBlacklist();
+        String title = white ? "白名单" : "黑名单";
+        if (values.isEmpty()) {
             ctx.getSource().sendFeedback(Component.literal("§e" + title + "§r 为空"));
             return 1;
         }
-        ctx.getSource().sendFeedback(Component.literal("§e" + title + "§r 共 " + items.size() + " 项："));
-        for (Item item : items) {
-            String id = BuiltInRegistries.ITEM.getKey(item).toString();
-            ctx.getSource().sendFeedback(Component.literal("  §7- §f" + id));
+        ctx.getSource().sendFeedback(Component.literal("§e" + title + "§r 共 " + values.size() + " 项（" + target.noun + "）："));
+        for (T value : values) {
+            ctx.getSource().sendFeedback(Component.literal("  §7- §f" + target.toId.apply(value)));
         }
         return 1;
     }
 
-    private static int clearBWList(CommandContext<FabricClientCommandSource> ctx, BWList<Item> bwList, String type) {
-        if (type.equalsIgnoreCase("whitelist")) {
-            bwList.getWhitelist().clear();
+    private static <T> int clearBWList(CommandContext<FabricClientCommandSource> ctx, BWTarget<T> target, String type) {
+        boolean white = type.equalsIgnoreCase("whitelist");
+        if (white) {
+            target.list.getWhitelist().clear();
         } else {
-            bwList.getBlacklist().clear();
+            target.list.getBlacklist().clear();
         }
-        ctx.getSource().sendFeedback(Component.literal("§e" + (type.equalsIgnoreCase("whitelist") ? "白名单" : "黑名单") + "§r 已清空"));
+        ctx.getSource().sendFeedback(Component.literal("§e" + (white ? "白名单" : "黑名单") + "§r 已清空"));
         return 1;
     }
 
-    private static int modifyBWList(CommandContext<FabricClientCommandSource> ctx, BWList<Item> bwList,
-                                    String type, String action, String itemId) {
-        Item item = parseItem(itemId);
-        if (item == null) {
-            ctx.getSource().sendError(Component.literal("无效物品 ID：§c" + itemId));
+    private static <T> int modifyBWList(CommandContext<FabricClientCommandSource> ctx, BWTarget<T> target,
+                                        String type, String action, String valueId) {
+        boolean white = type.equalsIgnoreCase("whitelist");
+        T value = target.parser.apply(valueId);
+        if (value == null) {
+            ctx.getSource().sendError(Component.literal("无效 " + target.noun + " ID：§c" + valueId));
             return 0;
         }
-        String itemName = BuiltInRegistries.ITEM.getKey(item).toString();
-        String title = type.equalsIgnoreCase("whitelist") ? "白名单" : "黑名单";
+        String shown = target.toId.apply(value);
+        String title = white ? "白名单" : "黑名单";
 
         if (action.equalsIgnoreCase("add")) {
-            if (type.equalsIgnoreCase("whitelist")) {
-                bwList.addToWhitelist(item);
+            if (white) {
+                target.list.addToWhitelist(value);
             } else {
-                bwList.addToBlacklist(item);
+                target.list.addToBlacklist(value);
             }
             ConfigManager.save();
-            ctx.getSource().sendFeedback(Component.literal("已将 §f" + itemName + "§r 加入 §e" + title));
+            ctx.getSource().sendFeedback(Component.literal("已将 §f" + shown + "§r 加入 §e" + title));
         } else {
-            if (type.equalsIgnoreCase("whitelist")) {
-                bwList.removeFromWhitelist(item);
+            if (white) {
+                target.list.removeFromWhitelist(value);
             } else {
-                bwList.removeFromBlacklist(item);
+                target.list.removeFromBlacklist(value);
             }
             ConfigManager.save();
-            ctx.getSource().sendFeedback(Component.literal("已将 §f" + itemName + "§r 从 §e" + title + "§r 移除"));
+            ctx.getSource().sendFeedback(Component.literal("已将 §f" + shown + "§r 从 §e" + title + "§r 移除"));
         }
         return 1;
     }
@@ -247,14 +257,62 @@ public class SymAutoCommand {
         return null;
     }
 
-    private static BWList<Item> getBWList(String featureId) {
-        if (OneClickDiscardItems.INSTANCE.getBW_LIST().getFeatureId().equalsIgnoreCase(featureId)) {
-            return OneClickDiscardItems.INSTANCE.getBW_LIST();
+    private static String safeFeature(CommandContext<FabricClientCommandSource> context) {
+        try {
+            return StringArgumentType.getString(context, "feature");
+        } catch (IllegalArgumentException e) {
+            return null;
         }
-        if (AutoEatFunction.INSTANCE.getBW_LISTED_FOOD().getFeatureId().equalsIgnoreCase(featureId)) {
-            return AutoEatFunction.INSTANCE.getBW_LISTED_FOOD();
+    }
+
+    private static boolean isEntityFeature(String featureId) {
+        return featureId != null
+                && featureId.equalsIgnoreCase(AutoAttackSafetyFunction.INSTANCE.getBLACK_LIST().getFeatureId());
+    }
+
+    /** 泛型目标：BWList + 其序列化/解析适配器 + 名词标签。 */
+    private static final class BWTarget<T> {
+        final BWList<T> list;
+        final Function<T, String> toId;
+        final Function<String, T> parser;
+        final String noun;
+
+        BWTarget(BWList<T> list, Function<T, String> toId, Function<String, T> parser, String noun) {
+            this.list = list;
+            this.toId = toId;
+            this.parser = parser;
+            this.noun = noun;
+        }
+    }
+
+    private static BWTarget<?> resolveTarget(String featureId) {
+        BWList<Item> oneClick = OneClickDiscardItems.INSTANCE.getBW_LIST();
+        if (featureId.equalsIgnoreCase(oneClick.getFeatureId())) {
+            return itemTarget(oneClick);
+        }
+        BWList<Item> autoEat = AutoEatFunction.INSTANCE.getBW_LISTED_FOOD();
+        if (featureId.equalsIgnoreCase(autoEat.getFeatureId())) {
+            return itemTarget(autoEat);
+        }
+        BWList<EntityType<?>> safety = AutoAttackSafetyFunction.INSTANCE.getBLACK_LIST();
+        if (featureId.equalsIgnoreCase(safety.getFeatureId())) {
+            return entityTarget(safety);
         }
         return null;
+    }
+
+    private static BWTarget<Item> itemTarget(BWList<Item> list) {
+        return new BWTarget<>(list,
+                item -> BuiltInRegistries.ITEM.getKey(item).toString(),
+                SymAutoCommand::parseItem,
+                "物品");
+    }
+
+    private static BWTarget<EntityType<?>> entityTarget(BWList<EntityType<?>> list) {
+        return new BWTarget<>(list,
+                type -> BuiltInRegistries.ENTITY_TYPE.getKey(type).toString(),
+                SymAutoCommand::parseEntityType,
+                "实体类型");
     }
 
     private static Item parseItem(String id) {
@@ -263,5 +321,13 @@ public class SymAutoCommand {
             return null;
         }
         return BuiltInRegistries.ITEM.getOptional(identifier).orElse(null);
+    }
+
+    private static EntityType<?> parseEntityType(String id) {
+        Identifier identifier = Identifier.tryParse(id);
+        if (identifier == null) {
+            return null;
+        }
+        return BuiltInRegistries.ENTITY_TYPE.getOptional(identifier).orElse(null);
     }
 }

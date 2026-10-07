@@ -7,11 +7,13 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.FormattedCharSequence;
 import org.jspecify.annotations.NonNull;
 
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 
 public class UpdateLogScreen extends Screen {
@@ -62,10 +64,22 @@ public class UpdateLogScreen extends Screen {
 
         List<UpdateMessage> messages = UpdateMessageManager.INSTANCE.getUpdateMessages();
         int contentBottom = this.height - LIST_BOTTOM_MARGIN;
+        int maxWidth = this.width - 2 * SIDE_PAD;
 
-        // 计算滚动范围
+        // 按可用宽度自动换行，并展平为“视觉行”（保留每段颜色）
+        List<FormattedCharSequence> allLines = new ArrayList<>();
+        for (UpdateMessage m : messages) {
+            String time = DATE_FMT.format(
+                    Instant.ofEpochMilli(m.getCreateTime()).atZone(ZoneId.systemDefault()));
+            Component line = Component.literal("[" + time + "] ").withStyle(ChatFormatting.GRAY)
+                    .append(Component.literal(m.getVersion() + " ").withStyle(ChatFormatting.GOLD))
+                    .append(Component.literal(m.getMessage()).withStyle(ChatFormatting.WHITE));
+            allLines.addAll(this.font.split(line, maxWidth));
+        }
+
+        // 滚动范围以“视觉行”为单位计算
         int visibleRows = Math.max(1, (contentBottom - LIST_TOP) / ROW_H);
-        maxScroll = Math.max(0, messages.size() - visibleRows);
+        maxScroll = Math.max(0, allLines.size() - visibleRows);
         scrollOffset = Math.clamp(scrollOffset, 0, maxScroll);
 
         // 列表背景
@@ -77,19 +91,11 @@ public class UpdateLogScreen extends Screen {
         }
 
         int y = LIST_TOP;
-        for (int i = scrollOffset; i < messages.size(); i++) {
+        for (int i = scrollOffset; i < allLines.size(); i++) {
             if (y + ROW_H > contentBottom) {
                 break;
             }
-            UpdateMessage m = messages.get(i);
-            String time = DATE_FMT.format(
-                    Instant.ofEpochMilli(m.getCreateTime()).atZone(ZoneId.systemDefault()));
-
-            Component line = Component.literal("[" + time + "] ").withStyle(ChatFormatting.GRAY)
-                    .append(Component.literal(m.getVersion() + " ").withStyle(ChatFormatting.GOLD))
-                    .append(Component.literal(m.getMessage()).withStyle(ChatFormatting.WHITE));
-
-            graphics.text(this.font, line, SIDE_PAD, y, 0xFFFFFFFF, false);
+            graphics.text(this.font, allLines.get(i), SIDE_PAD, y, 0xFFFFFFFF, false);
             y += ROW_H;
         }
 
