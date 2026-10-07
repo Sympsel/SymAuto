@@ -68,16 +68,29 @@ public class FeatureMenuScreen extends Screen {
             this.addRenderableWidget(btn);
         }
 
+        int rows = (functions.size() + columns - 1) / columns;
+        int nextY = startY + rows * (BTN_H + GAP_Y) + GAP_Y;
+
+        // 更新日志按钮
+        this.addRenderableWidget(
+                Button.builder(Component.literal("更新日志"), b ->
+                                this.minecraft.gui.setScreen(new UpdateLogScreen(this)))
+                        .bounds(startX, nextY, gridWidth, BTN_H)
+                        .build()
+        );
+        nextY += BTN_H + GAP_Y;
+
+        // 返回按钮（仅从模组菜单等带 parent 进入时显示），自动排在更新日志下方
         if (parent != null) {
-            int rows = (functions.size() + columns - 1) / columns;
-            int backY = startY + rows * (BTN_H + GAP_Y) + 6;
             this.addRenderableWidget(
                     Button.builder(Component.literal("返回"), b -> this.minecraft.gui.setScreen(parent))
-                            .bounds(startX, backY, gridWidth, BTN_H)
+                            .bounds(startX, nextY, gridWidth, BTN_H)
                             .build()
             );
         }
     }
+
+
 
     // 根据可用宽度自适应列数（1 ~ MAX_COLUMNS）
     private int computeColumns() {

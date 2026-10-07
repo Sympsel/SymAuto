@@ -1,5 +1,7 @@
 package com.symauto.update;
 
+import lombok.Getter;
+
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -10,6 +12,7 @@ import java.util.regex.Pattern;
 public class UpdateMessageManager {
     public static final UpdateMessageManager INSTANCE = new UpdateMessageManager();
 
+    @Getter
     private final List<UpdateMessage> updateMessages;
 
     private void addUpdateMessage(String formatedText) {
@@ -37,10 +40,12 @@ public class UpdateMessageManager {
 
     private void setUpdateMessages() {
         updateMessages.clear();
-        addUpdateMessage("[2026-10-07 11:14:00][v26.2-2.8.2] 添加了更新日志模块；");
+        addUpdateMessage("[2026-10-07 11:14:00][v26.2-2.8.2] 添加了更新日志模块");
+        addUpdateMessage("[2026-10-07 12:28:00][v26.2-2.8.3] 自动钓鱼：对未落水或非开发水域做了检测，未在水中的会10秒后重新抛竿");
     }
 
     private UpdateMessageManager() {
         updateMessages = new ArrayList<>();
+        setUpdateMessages();
     }
 }
