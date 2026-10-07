@@ -1,5 +1,7 @@
 package com.symauto;
 
+import com.betterbundle.gui.BundlePanelInteraction;
+import com.betterbundle.gui.BundlePanelRenderer;
 import com.betterbundle.mixin.AbstractContainerScreenAccessor;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.symauto.command.SymAutoCommand;
@@ -80,6 +82,13 @@ public class SymautoClient implements ClientModInitializer {
                     boolean outside = mouseX < xo || mouseY < yo
                             || mouseX >= xo + imgW || mouseY >= yo + imgH;
                     if (!outside) return true;
+
+                    // 兼容便捷收纳袋：拖到收纳袋界面不丢弃
+                    if (FeatureConfig.BETTER_BUNDLE_FUNCTION.isEnable()
+                    && BundlePanelRenderer.visible
+                    && BundlePanelInteraction.isInsidePanel(mouseX, mouseY, xo, yo, imgH)) {
+                        return true;
+                    }
 
                     ItemStack target = carried.copy();
 
