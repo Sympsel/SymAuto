@@ -1,5 +1,6 @@
 package com.symauto.function.abstracts;
 
+import com.symauto.entity.TagList;
 import com.symauto.function.FeatureConfig;
 import lombok.Getter;
 import lombok.Setter;
@@ -25,6 +26,10 @@ public abstract class SymAbstractFunction {
     private String tooltip;
     @Getter
     private boolean enable = false;
+
+    // 标签 - 用于分类
+    @Getter
+    protected TagList tags = new TagList();
 
     protected  SymAbstractFunction(String id, String name, String tooltip) {
         this.id = id;
@@ -88,5 +93,14 @@ public abstract class SymAbstractFunction {
                 other.setEnable(false);
             }
         }
+    }
+
+    public SymAbstractFunction addTag(int tag) {
+        tags.addTag(tag);
+        return this;
+    }
+
+    public boolean hasTag(int tag) {
+        return tags.has(tag);
     }
 }

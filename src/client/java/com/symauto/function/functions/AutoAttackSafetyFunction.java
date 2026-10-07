@@ -1,6 +1,7 @@
 package com.symauto.function.functions;
 
 import com.symauto.entity.BWList;
+import com.symauto.entity.SymFunctionTags;
 import com.symauto.function.FeatureConfig;
 import com.symauto.function.abstracts.SymAbstractFunction;
 import com.symauto.mixin.MinecraftInvoker;
@@ -10,6 +11,8 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EntityTypes;
+
+import java.util.Set;
 
 public class AutoAttackSafetyFunction extends SymAbstractFunction {
     public static final AutoAttackSafetyFunction INSTANCE = new AutoAttackSafetyFunction();
@@ -72,5 +75,12 @@ public class AutoAttackSafetyFunction extends SymAbstractFunction {
     private boolean isAutoEatActive() {
         SymAbstractFunction autoEat = FeatureConfig.AUTO_EAT_FUNCTION;
         return autoEat.isEnable() && autoEat instanceof AutoEatFunction f && f.isEating();
+    }
+
+    @Override
+    public Set<Class<? extends SymAbstractFunction>> getConflicts() {
+        return Set.of(
+                AutoAttackFunction.INSTANCE.getClass()
+        );
     }
 }

@@ -3,6 +3,7 @@ package com.symauto.function.functions;
 import com.betterbundle.gui.BundleCategory;
 import com.betterbundle.gui.BundlePanelRenderer;
 import com.betterbundle.sort.exec.SortStateMachine;
+import com.symauto.entity.SymFunctionTags;
 import com.symauto.function.abstracts.SymAbstractFunction;
 import net.minecraft.client.Minecraft;
 

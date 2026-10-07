@@ -1,5 +1,6 @@
 package com.symauto.function.functions;
 
+import com.symauto.entity.SymFunctionTags;
 import com.symauto.function.abstracts.SymAbstractFunction;
 import lombok.Getter;
 import lombok.Setter;

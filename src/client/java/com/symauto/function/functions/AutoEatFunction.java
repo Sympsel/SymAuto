@@ -1,6 +1,7 @@
 package com.symauto.function.functions;
 
 import com.symauto.entity.BWList;
+import com.symauto.entity.SymFunctionTags;
 import com.symauto.function.abstracts.SymAbstractFunction;
 import lombok.Getter;
 import net.minecraft.client.Minecraft;

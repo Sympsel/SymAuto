@@ -1,5 +1,6 @@
 package com.symauto.function;
 
+import com.symauto.entity.SymFunctionTags;
 import com.symauto.function.abstracts.SymAbstractFunction;
 import com.symauto.function.functions.*;
 
@@ -14,6 +15,7 @@ public class FeatureConfig {
     public static final SymAbstractFunction AUTO_LOOT_CONTAINER_FUNCTION = AutoLootContainerFunction.INSTANCE;
     public static final SymAbstractFunction AUTO_SWIFT_SAME_ITEMS_TO_CONTAINER_FUNCTION = AutoSwiftSameItemsToContainerFunction.INSTANCE;
     public static final SymAbstractFunction AUTO_SWIFT_SAME_ITEMS_TO_INVENTORY_FUNCTION = AutoSwiftSameItemsToInventoryFunction.INSTANCE;
+    public static final SymAbstractFunction AUTO_FILL_ITEM_CLASSIFICATION_MACHINE_FUNCTION = AutoFillItemClassificationMachine.INSTANCE;
     public static final SymAbstractFunction ONE_CLICK_DISCARD_ITEMS_FUNCTION = OneClickDiscardItems.INSTANCE;
     public static final SymAbstractFunction ONE_CLICK_DISCARD_SAME_ITEMS_FUNCTION = OneClickDiscardSameItems.INSTANCE;
     public static final SymAbstractFunction FIX_Y_PLACE_OR_DESTROY_FUNCTION = FixYPlaceOrDestroyFunction.INSTANCE;
@@ -29,10 +31,34 @@ public class FeatureConfig {
             AUTO_LOOT_CONTAINER_FUNCTION,
             AUTO_SWIFT_SAME_ITEMS_TO_CONTAINER_FUNCTION,
             AUTO_SWIFT_SAME_ITEMS_TO_INVENTORY_FUNCTION,
+            AUTO_FILL_ITEM_CLASSIFICATION_MACHINE_FUNCTION,
             ONE_CLICK_DISCARD_ITEMS_FUNCTION,
             ONE_CLICK_DISCARD_SAME_ITEMS_FUNCTION,
             FIX_Y_PLACE_OR_DESTROY_FUNCTION,
             AUTO_SELL_EMC_FUNCTION,
             BETTER_BUNDLE_FUNCTION
     );
+
+    static {
+        AUTO_ATTACK_FUNCTION.addTag(SymFunctionTags.IDLE);
+        AUTO_ATTACK_SAFETY_FUNCTION.addTag(SymFunctionTags.IDLE);
+        AUTO_FISHING_FUNCTION.addTag(SymFunctionTags.IDLE);
+        AUTO_EAT_FUNCTION.addTag(SymFunctionTags.IDLE);
+        AUTO_SWIFT_TOOLS_FUNCTION.
+                addTag(SymFunctionTags.BUILDING_AND_DESTROYING)
+                .addTag(SymFunctionTags.CONVENIENCE_OPERATION);
+        AUTO_LOOT_CONTAINER_FUNCTION.addTag(SymFunctionTags.CONVENIENCE_OPERATION);
+        AUTO_SWIFT_SAME_ITEMS_TO_CONTAINER_FUNCTION.addTag(SymFunctionTags.CONVENIENCE_OPERATION);
+        AUTO_SWIFT_SAME_ITEMS_TO_INVENTORY_FUNCTION.addTag(SymFunctionTags.CONVENIENCE_OPERATION);
+
+        AUTO_FILL_ITEM_CLASSIFICATION_MACHINE_FUNCTION
+                .addTag(SymFunctionTags.PRODUCING)
+                .addTag(SymFunctionTags.CONVENIENCE_OPERATION);
+
+        ONE_CLICK_DISCARD_ITEMS_FUNCTION.addTag(SymFunctionTags.CONVENIENCE_OPERATION);
+        ONE_CLICK_DISCARD_SAME_ITEMS_FUNCTION.addTag(SymFunctionTags.CONVENIENCE_OPERATION);
+        FIX_Y_PLACE_OR_DESTROY_FUNCTION.addTag(SymFunctionTags.BUILDING_AND_DESTROYING);
+        AUTO_SELL_EMC_FUNCTION.addTag(SymFunctionTags.OTHER);
+        BETTER_BUNDLE_FUNCTION.addTag(SymFunctionTags.CONVENIENCE_OPERATION);
+    }
 }

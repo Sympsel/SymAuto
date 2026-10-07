@@ -40,6 +40,8 @@ public class UpdateMessageManager {
 
     private void setUpdateMessages() {
         updateMessages.clear();
+        addUpdateMessage("[2026-10-07][v26.2-2.9.2] 对菜单的功能进行了分类");
+        addUpdateMessage("[2026-10-07][v26.2-2.9.1] 添加新功能：自动填充物品分类机");
         addUpdateMessage("[2026-10-07][v26.2-2.8.6] 菜单添加了\"指令用法\"");
         addUpdateMessage("[2026-10-07][v26.2-2.8.5] 为自动攻击配置了黑名单机制（默认为展示框、画、村民、玩家，可通过指令\"/sa bwlist auto_attack_safety_blacklist blacklist add/remove\"配置）；重构了部分显示效果");
         addUpdateMessage("[2026-10-07][v26.2-2.8.4] 在菜单新增了更新日志按钮，可以便捷查阅；优化了菜单界面");

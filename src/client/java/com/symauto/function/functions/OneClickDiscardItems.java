@@ -5,6 +5,7 @@ import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.platform.Window;
 import com.symauto.entity.BWList;
 import com.symauto.entity.KeyCombination;
+import com.symauto.entity.SymFunctionTags;
 import com.symauto.function.FeatureConfig;
 import com.symauto.function.abstracts.SymAbstractFunction;
 import lombok.Getter;

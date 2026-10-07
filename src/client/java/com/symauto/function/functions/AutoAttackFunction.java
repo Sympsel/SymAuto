@@ -1,9 +1,12 @@
 package com.symauto.function.functions;
 
+import com.symauto.entity.SymFunctionTags;
 import com.symauto.function.FeatureConfig;
 import com.symauto.function.abstracts.SymAbstractFunction;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
+
+import java.util.Set;
 
 
 public class AutoAttackFunction extends SymAbstractFunction {
@@ -43,5 +46,12 @@ public class AutoAttackFunction extends SymAbstractFunction {
     private boolean isAutoEatActive() {
         SymAbstractFunction autoEat = FeatureConfig.AUTO_EAT_FUNCTION;
         return autoEat.isEnable() && autoEat instanceof AutoEatFunction f && f.isEating();
+    }
+
+    @Override
+    public Set<Class<? extends SymAbstractFunction>> getConflicts() {
+        return Set.of(
+                AutoAttackSafetyFunction.INSTANCE.getClass()
+        );
     }
 }
