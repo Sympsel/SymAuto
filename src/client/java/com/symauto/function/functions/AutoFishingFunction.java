@@ -73,7 +73,7 @@ public class AutoFishingFunction extends SymAbstractFunction {
                     if (notInWater) {
                         client.player.sendOverlayMessage(
                                 Component.literal("⚠ 鱼漂未落入水中，" + NOT_IN_WATER_RECAST_TICKS / 20 + " 秒后自动重抛")
-                                        .withStyle(ChatFormatting.GOLD)
+                                        .withStyle(ChatFormatting.RED)
                         );
                     } else {
                         judgeIsInOpenWater(client);
@@ -184,7 +184,7 @@ public class AutoFishingFunction extends SymAbstractFunction {
         }
         if (!isManuallyInOpenWater(client.level, hook)) {
             client.player.sendOverlayMessage(
-                    Component.literal("⚠ 非开放水域，无法钓到宝藏").withStyle(ChatFormatting.RED)
+                    Component.literal("⚠ 非开放水域，无法钓到宝藏").withStyle(ChatFormatting.GOLD)
             );
         }
     }
