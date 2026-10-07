@@ -100,10 +100,18 @@ public class FeatureMenuScreen extends Screen {
         // 底部按钮：自适应追加，共享游标 nextY
         int nextY = listTop + listHeight + GAP_Y;
 
+        // 更新日志 + 指令用法
+        int halfW = (listWidth - GAP_X) / 2;
         this.addRenderableWidget(
                 Button.builder(Component.literal("更新日志"), b ->
-                        this.minecraft.gui.setScreen(new UpdateLogScreen(this)))
-                        .bounds(listLeft, nextY, listWidth, BTN_H)
+                                this.minecraft.gui.setScreen(new UpdateLogScreen(this)))
+                        .bounds(listLeft, nextY, halfW, BTN_H)
+                        .build()
+        );
+        this.addRenderableWidget(
+                Button.builder(Component.literal("指令用法"), b ->
+                                this.minecraft.gui.setScreen(new CommandUsageScreen(this)))
+                        .bounds(listLeft + halfW + GAP_X, nextY, halfW, BTN_H)
                         .build()
         );
         nextY += step;
