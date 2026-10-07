@@ -124,6 +124,9 @@ public final class BundlePanelRenderer {
                 }
             }
         }
+        groups.sort(Comparator.comparing(
+                (FlatItem g) -> BuiltInRegistries.ITEM.getKey(g.stack().getItem()).toString()
+        ));
         return groups;
     }
 
