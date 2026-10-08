@@ -11,6 +11,7 @@ public class FeatureConfig {
     public static final SymAbstractFunction AUTO_ATTACK_SAFETY_FUNCTION = AutoAttackSafetyFunction.INSTANCE;
     public static final SymAbstractFunction AUTO_FISHING_FUNCTION = AutoFishingFunction.INSTANCE;
     public static final SymAbstractFunction AUTO_EAT_FUNCTION = AutoEatFunction.INSTANCE;
+    public static final SymAbstractFunction AUTO_RUN_FUNCTION = AutoRun.INSTANCE;
     public static final SymAbstractFunction AUTO_SWIFT_TOOLS_FUNCTION = AutoSwiftToolsFunction.INSTANCE;
     public static final SymAbstractFunction AUTO_LOOT_CONTAINER_FUNCTION = AutoLootContainerFunction.INSTANCE;
     public static final SymAbstractFunction AUTO_SWIFT_SAME_ITEMS_TO_CONTAINER_FUNCTION = AutoSwiftSameItemsToContainerFunction.INSTANCE;
@@ -30,6 +31,7 @@ public class FeatureConfig {
             AUTO_ATTACK_SAFETY_FUNCTION,
             AUTO_FISHING_FUNCTION,
             AUTO_EAT_FUNCTION,
+            AUTO_RUN_FUNCTION,
             AUTO_SWIFT_TOOLS_FUNCTION,
             AUTO_LOOT_CONTAINER_FUNCTION,
             AUTO_SWIFT_SAME_ITEMS_TO_CONTAINER_FUNCTION,
@@ -50,6 +52,7 @@ public class FeatureConfig {
         AUTO_ATTACK_SAFETY_FUNCTION.addTag(SymFunctionTags.IDLE);
         AUTO_FISHING_FUNCTION.addTag(SymFunctionTags.IDLE);
         AUTO_EAT_FUNCTION.addTag(SymFunctionTags.IDLE);
+        AUTO_RUN_FUNCTION.addTag(SymFunctionTags.IDLE);
         AUTO_SWIFT_TOOLS_FUNCTION.
                 addTag(SymFunctionTags.BUILDING_AND_DESTROYING)
                 .addTag(SymFunctionTags.CONVENIENCE_OPERATION);
