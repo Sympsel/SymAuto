@@ -4,7 +4,10 @@ import com.symauto.entity.TagList;
 import com.symauto.function.FeatureConfig;
 import lombok.Getter;
 import lombok.Setter;
+import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.Map;
@@ -31,7 +34,13 @@ public abstract class SymAbstractFunction {
     @Getter
     protected TagList tags = new TagList();
 
-    protected  SymAbstractFunction(String id, String name, String tooltip) {
+    public enum ScreenContext {
+        NO_SCREEN, //无界面
+        ANY_SCREEN, // 任意 Screen
+        CONTAINER_SCREEN // 抽象容器界面
+    }
+
+    protected SymAbstractFunction(String id, String name, String tooltip) {
         this.id = id;
         this.name = name;
         this.tooltip = tooltip;
@@ -52,6 +61,48 @@ public abstract class SymAbstractFunction {
 
     protected abstract void onTrigger(Minecraft client);
 
+    public @Nullable KeyMapping getKeyMapping() {
+        return null;
+    }
+
+    public boolean requireCtrl() {
+        return false;
+    }
+
+    public boolean requireShift() {
+        return false;
+    }
+
+    public ScreenContext requireScreenContext() {
+        return ScreenContext.NO_SCREEN;
+    }
+
+    public void onKeyAction(Minecraft client) {
+        onTrigger(client);
+    }
+
+    /**
+     * 容器界面鼠标点击拦截
+     * @param client
+     * @param screen
+     * @param mouseX
+     * @param mouseY
+     * @param button
+     * @return 是否放行其余逻辑
+     */
+    public boolean allowContainerMouseClick(Minecraft client,
+                                            AbstractContainerScreen<?> screen,
+                                            double mouseX, double mouseY, int button) {
+        return true;
+    }
+
+    public boolean allowContainerKeyPress(Minecraft client,
+                                          AbstractContainerScreen<?> screen,
+                                          int keyCode, int scanCode, int modifiers) {
+        return true;
+    }
+
+
     public void tick() {
         if (!enable) return;
         onTrigger(Minecraft.getInstance());
@@ -65,7 +116,8 @@ public abstract class SymAbstractFunction {
         return Collections.emptySet();
     }
 
-    protected void onDisable() {}
+    protected void onDisable() {
+    }
 
     public void setEnable(boolean enable) {
         if (this.enable && !enable) {

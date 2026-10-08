@@ -5,13 +5,12 @@ import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.platform.Window;
 import com.symauto.entity.BWList;
 import com.symauto.entity.KeyCombination;
-import com.symauto.entity.SymFunctionTags;
 import com.symauto.function.FeatureConfig;
 import com.symauto.function.abstracts.SymAbstractFunction;
+import com.symauto.function.utils.KeyUtils;
 import lombok.Getter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientPacketListener;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.protocol.game.ServerboundSelectBundleItemPacket;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -28,7 +27,6 @@ import java.util.Set;
 
 public class OneClickDiscardItems extends SymAbstractFunction {
     public static final OneClickDiscardItems INSTANCE = new OneClickDiscardItems();
-    private static String TOOLTIP_BASE = "Alt + Q 一键丢弃白名单内（70+小垃圾）物品，包括收纳袋里的";
     // 边沿触发检测
     private boolean wasDown = false;
 
@@ -40,7 +38,7 @@ public class OneClickDiscardItems extends SymAbstractFunction {
     private OneClickDiscardItems() {
         String id = "one_click_discard_items_whitelist";
         BW_LIST = new BWList<>(id);
-        super(id, "一键丢弃垃圾物品", TOOLTIP_BASE);
+        super(id, "一键丢弃垃圾物品", "Alt + Q 一键丢弃白名单内物品");
         BW_LIST.withDefaultsApplier(
                 OneClickDiscardItems::applyDefaults
         );
@@ -206,7 +204,9 @@ public class OneClickDiscardItems extends SymAbstractFunction {
      * 多次按 Alt+Q 可逐层清理。
      */
     private void extractFromBundles(Minecraft client, AbstractContainerMenu menu, int containerId) {
-        if (client.player == null) return;
+        if (client.player == null || client.gameMode == null) {
+            return;
+        }
         ClientPacketListener connection = client.getConnection();
         if (connection == null) return;
 
@@ -231,11 +231,12 @@ public class OneClickDiscardItems extends SymAbstractFunction {
             }
             if (emptySlot < 0) continue;
 
-            for (int iter = 0; iter < items.size(); iter++) {
+            for (ItemStack item : items) {
                 // 按客户端顺序检查，遇到非白名单就停止
-                if (!BW_LIST.isWhitelisted(items.get(iter).getItem())) break;
+                if (!BW_LIST.isWhitelisted(item.getItem())) {
+                    break;
+                }
 
-                // Select(-1) + Select(0)：服务端每次移除后下一个自动成为 0
                 connection.send(new ServerboundSelectBundleItemPacket(slot.index, -1));
                 connection.send(new ServerboundSelectBundleItemPacket(slot.index, 0));
                 client.gameMode.handleContainerInput(
@@ -263,35 +264,26 @@ public class OneClickDiscardItems extends SymAbstractFunction {
         }
         int mods = KEY_COMBINATION.modifiers();
         if ((mods & GLFW.GLFW_MOD_SHIFT) != 0
-                && !isAnyDown(window, GLFW.GLFW_KEY_LEFT_SHIFT, GLFW.GLFW_KEY_RIGHT_SHIFT)) {
+                && !KeyUtils.isAnyDown(client, GLFW.GLFW_KEY_LEFT_SHIFT, GLFW.GLFW_KEY_RIGHT_SHIFT)) {
             return false;
         }
         if ((mods & GLFW.GLFW_MOD_CONTROL) != 0
-                && !isAnyDown(window, GLFW.GLFW_KEY_LEFT_CONTROL, GLFW.GLFW_KEY_RIGHT_CONTROL)) {
+                && !KeyUtils.isAnyDown(client, GLFW.GLFW_KEY_LEFT_CONTROL, GLFW.GLFW_KEY_RIGHT_CONTROL)) {
             return false;
         }
         if ((mods & GLFW.GLFW_MOD_ALT) != 0
-                && !isAnyDown(window, GLFW.GLFW_KEY_LEFT_ALT, GLFW.GLFW_KEY_RIGHT_ALT)) {
+                && !KeyUtils.isAnyDown(client, GLFW.GLFW_KEY_LEFT_ALT, GLFW.GLFW_KEY_RIGHT_ALT)) {
             return false;
         }
         if ((mods & GLFW.GLFW_MOD_SUPER) != 0
-                && !isAnyDown(window, GLFW.GLFW_KEY_LEFT_SUPER, GLFW.GLFW_KEY_RIGHT_SUPER)) {
+                && !KeyUtils.isAnyDown(client, GLFW.GLFW_KEY_LEFT_SUPER, GLFW.GLFW_KEY_RIGHT_SUPER)) {
             return false;
         }
         return true;
     }
 
-    private static boolean isAnyDown(Window window, int... keys) {
-        for (int key : keys) {
-            if (InputConstants.isKeyDown(window, key)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     /**
-     * 供 Mixin 调用：启用本功能且按下的键命中组合键时，返回 true 表示应拦截原版按键。
+     * 供 Mixin 调用：启用本功能且按下的键命中组合键时，返回 true 表示应拦截原版按键
      *
      * @param glfwKey       GLFW 物理键码
      * @param glfwModifiers GLFW 修饰键位掩码（GLFW_MOD_*）
