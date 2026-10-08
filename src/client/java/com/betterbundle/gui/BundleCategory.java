@@ -1,5 +1,6 @@
 package com.betterbundle.gui;
 
+import lombok.Getter;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -16,6 +17,7 @@ public enum BundleCategory {
     MISC("杂物", Items.LEATHER),
     MINERALS("矿物", Items.DIAMOND);
 
+    @Getter
     private final String displayName;
     private final Item iconItem;
     private Set<String> itemIds;
@@ -26,7 +28,6 @@ public enum BundleCategory {
         this.itemIds = Set.of();
     }
 
-    public String getDisplayName() { return displayName; }
     public ItemStack getIcon() { return new ItemStack(iconItem); }
     public void setItemIds(Set<String> ids) { this.itemIds = Set.copyOf(ids); }
     public boolean matches(String registryKey) {

@@ -18,9 +18,12 @@ public class FeatureConfig {
     public static final SymAbstractFunction AUTO_FILL_ITEM_CLASSIFICATION_MACHINE_FUNCTION = AutoFillItemClassificationMachine.INSTANCE;
     public static final SymAbstractFunction ONE_CLICK_DISCARD_ITEMS_FUNCTION = OneClickDiscardItems.INSTANCE;
     public static final SymAbstractFunction ONE_CLICK_DISCARD_SAME_ITEMS_FUNCTION = OneClickDiscardSameItems.INSTANCE;
+    public static final SymAbstractFunction ONE_CLICK_FLAT_ITEMS_FUNCTION = OneClickFlatItems.INSTANCE;
     public static final SymAbstractFunction FIX_Y_PLACE_OR_DESTROY_FUNCTION = FixYPlaceOrDestroyFunction.INSTANCE;
     public static final SymAbstractFunction AUTO_SELL_EMC_FUNCTION = AutoSellEmcFunction.INSTANCE;
     public static final SymAbstractFunction BETTER_BUNDLE_FUNCTION = BetterBundleFunction.INSTANCE;
+    public static final SymAbstractFunction BUNDLE_QUICK_OPEN_FUNCTION = BundleQuickOpenFunction.INSTANCE;
+    public static final SymAbstractFunction SPEED_BRIDGE_FUNCTION = SpeedBridgeFunction.INSTANCE;
 
     public static final List<SymAbstractFunction> AUTO_ALL = List.of(
             AUTO_ATTACK_FUNCTION,
@@ -34,9 +37,12 @@ public class FeatureConfig {
             AUTO_FILL_ITEM_CLASSIFICATION_MACHINE_FUNCTION,
             ONE_CLICK_DISCARD_ITEMS_FUNCTION,
             ONE_CLICK_DISCARD_SAME_ITEMS_FUNCTION,
+            ONE_CLICK_FLAT_ITEMS_FUNCTION,
             FIX_Y_PLACE_OR_DESTROY_FUNCTION,
             AUTO_SELL_EMC_FUNCTION,
-            BETTER_BUNDLE_FUNCTION
+            BETTER_BUNDLE_FUNCTION,
+            BUNDLE_QUICK_OPEN_FUNCTION,
+            SPEED_BRIDGE_FUNCTION
     );
 
     static {
@@ -57,8 +63,13 @@ public class FeatureConfig {
 
         ONE_CLICK_DISCARD_ITEMS_FUNCTION.addTag(SymFunctionTags.CONVENIENCE_OPERATION);
         ONE_CLICK_DISCARD_SAME_ITEMS_FUNCTION.addTag(SymFunctionTags.CONVENIENCE_OPERATION);
+        ONE_CLICK_FLAT_ITEMS_FUNCTION.addTag(SymFunctionTags.CONVENIENCE_OPERATION);
         FIX_Y_PLACE_OR_DESTROY_FUNCTION.addTag(SymFunctionTags.BUILDING_AND_DESTROYING);
         AUTO_SELL_EMC_FUNCTION.addTag(SymFunctionTags.OTHER);
         BETTER_BUNDLE_FUNCTION.addTag(SymFunctionTags.CONVENIENCE_OPERATION);
+        BUNDLE_QUICK_OPEN_FUNCTION.addTag(SymFunctionTags.CONVENIENCE_OPERATION);
+        SPEED_BRIDGE_FUNCTION
+                .addTag(SymFunctionTags.CONVENIENCE_OPERATION)
+                .addTag(SymFunctionTags.BUILDING_AND_DESTROYING);
     }
 }

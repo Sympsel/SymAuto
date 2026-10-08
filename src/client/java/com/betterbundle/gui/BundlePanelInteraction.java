@@ -89,14 +89,22 @@ public final class BundlePanelInteraction {
         if (hoveredSlot == null || !hoveredSlot.hasItem()) return false;
 
         Minecraft client = Minecraft.getInstance();
-        if (client.player == null || client.getWindow() == null) return false;
+        if (client.player == null) return false;
 
         long window = client.getWindow().handle();
         if (GLFW.glfwGetKey(window, GLFW.GLFW_KEY_SPACE) != GLFW.GLFW_PRESS) return false;
 
         Player player = client.player;
         ItemStack stack = hoveredSlot.getItem();
-        if (stack.isEmpty() || BundleContentsHelper.isNonEmptyBundle(stack)) return false;
+        if (stack.isEmpty() || BundleContentsHelper.isNonEmptyBundle(stack)) {
+            return  false;
+        }
+
+        // 不可堆叠物品禁止放入
+        if (stack.getMaxStackSize() <= 1) {
+            sendQuickMove(player.containerMenu.containerId, hoveredSlot.index);
+            return true;
+        }
 
         List<BundlePanelRenderer.BundleSlotEntry> bundles = BundlePanelRenderer.getAllBundles();
         List<Integer> targets = buildInsertTargets(bundles, stack, hoveredSlot.index);
@@ -116,6 +124,14 @@ public final class BundlePanelInteraction {
         sendClick(containerId, itemSlot, 0);
 
         return true;
+    }
+
+    private static void sendQuickMove(int containerId, int slot) {
+        Minecraft client = Minecraft.getInstance();
+        if (client.gameMode != null && client.player != null) {
+            client.gameMode.handleContainerInput(
+                    containerId, slot, 0, ContainerInput.QUICK_MOVE, client.player);
+        }
     }
 
     /**
@@ -267,7 +283,7 @@ public final class BundlePanelInteraction {
         sortedSources.sort(Comparator.comparingInt(BundlePanelRenderer.SourceEntry::itemCount));
 
         // 在提取前缓存物品类型（bundle 提取后内容会变空）
-        ItemStack sampleItem = getItemFromSource(player, sortedSources.get(0));
+        ItemStack sampleItem = getItemFromSource(player, sortedSources.getFirst());
 
         List<Integer> emptySlots = findAllEmptyPlayerSlots(player);
         int emptyIdx = 0;

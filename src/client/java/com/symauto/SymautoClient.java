@@ -3,6 +3,7 @@ package com.symauto;
 import com.betterbundle.gui.BundlePanelInteraction;
 import com.betterbundle.gui.BundlePanelRenderer;
 import com.betterbundle.mixin.AbstractContainerScreenAccessor;
+import com.betterbundle.util.BundleContentsHelper;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.symauto.command.SymAutoCommand;
 import com.symauto.config.ConfigManager;
@@ -10,8 +11,10 @@ import com.symauto.function.FeatureConfig;
 import com.symauto.function.abstracts.SymAbstractFunction;
 import com.symauto.function.functions.AutoSwiftToolsFunction;
 import com.symauto.function.functions.FixYPlaceOrDestroyFunction;
+import com.symauto.function.functions.OneClickFlatItems;
 import com.symauto.function.utils.Constants;
 import com.symauto.function.utils.ItemUtils;
+import com.symauto.gui.BundleQuickViewScreen;
 import com.symauto.gui.FeatureMenuScreen;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
@@ -31,6 +34,11 @@ import org.lwjgl.glfw.GLFW;
 public class SymautoClient implements ClientModInitializer {
 
     private KeyMapping openMenuKey;
+    private KeyMapping bundleQuickOpenKey;
+    private KeyMapping oneClickFlatItems;
+    private boolean flatComboWasDown = false;
+
+
 
     @Override
     public void onInitializeClient() {
@@ -45,7 +53,22 @@ public class SymautoClient implements ClientModInitializer {
                 category
         );
 
-        KeyMappingHelper.registerKeyMapping(openMenuKey);
+        bundleQuickOpenKey = new KeyMapping(
+                "key.symauto.bundle_quick_open",
+                InputConstants.Type.MOUSE,
+                GLFW.GLFW_MOUSE_BUTTON_MIDDLE,
+                category
+        );
+
+        oneClickFlatItems = new KeyMapping(
+                "key.symauto.one_click_flat_items",
+                InputConstants.Type.KEYSYM,
+                GLFW.GLFW_KEY_A,
+                category
+        );
+
+        registerKeyMapping();
+
 
         // 客户端停止时禁用所有功能
         ClientLifecycleEvents.CLIENT_STOPPING.register(client -> {
@@ -133,6 +156,9 @@ public class SymautoClient implements ClientModInitializer {
 
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            if (client.level == null || client.gameMode == null || client.player == null) {
+                return;
+            }
             if (FixYPlaceOrDestroyFunction.isHolding() && !client.options.keyUse.isDown()) {
                 FixYPlaceOrDestroyFunction.endHold();
             }
@@ -153,8 +179,44 @@ public class SymautoClient implements ClientModInitializer {
                     f.tick();
                 }
             }
+
+            if (FeatureConfig.BUNDLE_QUICK_OPEN_FUNCTION.isEnable()
+                    && client.gui.screen() == null
+                    && bundleQuickOpenKey.isDown()
+                    && BundleContentsHelper.isNonEmptyBundle(client.player.getMainHandItem())) {
+                int bundleSlot = 36 + client.player.getInventory().getSelectedSlot();
+                client.gui.setScreen(new BundleQuickViewScreen(bundleSlot));
+            }
+
+            if (FeatureConfig.ONE_CLICK_FLAT_ITEMS_FUNCTION.isEnable()
+                    && client.gui.screen() instanceof AbstractContainerScreen<?>
+            ) {
+                int bindKey = oneClickFlatItems.getDefaultKey().getValue();
+                boolean keyDown = bindKey != GLFW.GLFW_KEY_UNKNOWN
+                        && InputConstants.isKeyDown(client.getWindow(), bindKey);
+                boolean ctrlDown = InputConstants.isKeyDown(client.getWindow(), GLFW.GLFW_KEY_LEFT_CONTROL)
+                        || InputConstants.isKeyDown(client.getWindow(), GLFW.GLFW_KEY_RIGHT_CONTROL);
+                boolean comboDown = keyDown && ctrlDown;
+
+                // 上升沿触发一次；松手后重置
+                if (comboDown && !flatComboWasDown) {
+                    ((OneClickFlatItems) FeatureConfig.ONE_CLICK_FLAT_ITEMS_FUNCTION).trigger(client);
+                }
+                flatComboWasDown = comboDown;
+
+                // 把 KeyMapping 的 clickCount 排空，防止它污染其它逻辑
+                while (oneClickFlatItems.consumeClick()) {}
+            } else {
+                flatComboWasDown = false;
+            }
         });
         ConfigManager.load();
         SymAutoCommand.register();
+    }
+
+    private void registerKeyMapping() {
+        KeyMappingHelper.registerKeyMapping(openMenuKey);
+        KeyMappingHelper.registerKeyMapping(bundleQuickOpenKey);
+        KeyMappingHelper.registerKeyMapping(oneClickFlatItems);
     }
 }
