@@ -4,12 +4,14 @@ import com.mojang.blaze3d.platform.InputConstants;
 import com.symauto.command.SymAutoCommand;
 import com.symauto.config.ConfigManager;
 import com.symauto.config.SymAutoKeys;
+import com.symauto.config.VillagerTradeStore;
 import com.symauto.function.FeatureConfig;
 import com.symauto.function.abstracts.SymAbstractFunction;
 import com.symauto.function.functions.AutoSwiftToolsFunction;
 import com.symauto.function.functions.FixYPlaceOrDestroyFunction;
 import com.symauto.function.utils.KeyUtils;
 import com.symauto.function.utils.ScreenUtils;
+import com.symauto.function.utils.TradeCapture;
 import com.symauto.gui.FeatureMenuScreen;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
@@ -44,6 +46,7 @@ public class SymautoClient implements ClientModInitializer {
 
         ClientLifecycleEvents.CLIENT_STOPPING.register(client -> {
             for (SymAbstractFunction f : FeatureConfig.AUTO_ALL) f.setEnable(false);
+            VillagerTradeStore.saveIfDirty();
         });
 
         // 容器界面事件分发：鼠标点击
@@ -68,6 +71,7 @@ public class SymautoClient implements ClientModInitializer {
         });
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            TradeCapture.tick(client);
             if (client.level == null || client.gameMode == null || client.player == null) {
                 return;
             }
@@ -79,7 +83,7 @@ public class SymautoClient implements ClientModInitializer {
                 FixYPlaceOrDestroyFunction.endMining();
             }
 
-            // 主菜单入口（元操作）
+            // 主菜单入口
             if (openMenuKey.isDown()
                     && KeyUtils.isShiftDown(client)
                     && ScreenUtils.isNoScreen(client)) {
@@ -95,10 +99,13 @@ public class SymautoClient implements ClientModInitializer {
         });
 
         ConfigManager.load();
+        VillagerTradeStore.load();
         SymAutoCommand.register();
     }
 
-    /** 快捷键分发：边沿触发 + 修饰键 + 界面上下文过滤 */
+    /**
+     * 快捷键分发：边沿触发 修饰键 界面上下文过滤
+     */
     private static void dispatchKey(Minecraft client, SymAbstractFunction f) {
         KeyMapping km = f.getKeyMapping();
         if (km == null) return;
@@ -106,7 +113,8 @@ public class SymautoClient implements ClientModInitializer {
         if (f.requireCtrl() && !KeyUtils.isCtrlDown(client)) return;
         if (f.requireShift() && !KeyUtils.isShiftDown(client)) return;
         if (!ScreenUtils.screenContextMatches(client, f.requireScreenContext())) return;
-        while (km.consumeClick()) {}
+        while (km.consumeClick()) {
+        }
         f.onKeyAction(client);
     }
 }

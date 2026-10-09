@@ -1,5 +1,6 @@
 package com.symauto.function.functions;
 
+import com.symauto.function.FeatureConfig;
 import com.symauto.function.abstracts.SymAbstractFunction;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
@@ -41,6 +42,9 @@ public class SpeedBridgeFunction extends SymAbstractFunction {
         if (client.player.isCreative()) {
             return;
         }
+        if (isAutoEatActive(client)) {
+            return;
+        }
         if (!(client.player.getMainHandItem().getItem() instanceof BlockItem blockItem)) {
             return;
         }
@@ -54,6 +58,13 @@ public class SpeedBridgeFunction extends SymAbstractFunction {
             placeFullBlock(client);
         }
     }
+
+    private boolean isAutoEatActive(Minecraft client) {
+        SymAbstractFunction autoEat = FeatureConfig.AUTO_EAT_FUNCTION;
+        return (autoEat instanceof AutoEatFunction f && f.isEating())
+                || (client.player != null && client.player.isUsingItem());
+    }
+
 
     private static BlockHitResult buildFullBlockHit(Minecraft client, BlockPos target, double reach) {
         if (client.level == null) {

@@ -5,11 +5,9 @@ import com.symauto.config.SymAutoKeys;
 import com.symauto.function.abstracts.SymAbstractFunction;
 import com.symauto.function.utils.Constants;
 import com.symauto.function.utils.ScreenUtils;
-import com.symauto.mixin.AbstractContainerScreenAccessor;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.resources.Identifier;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.Slot;
@@ -18,12 +16,12 @@ import org.lwjgl.glfw.GLFW;
 import java.util.ArrayList;
 import java.util.List;
 
-public class OneClickFlatItems extends SymAbstractFunction {
-    public static final OneClickFlatItems INSTANCE = new OneClickFlatItems();
+public class OneClickFlatItemsFunction extends SymAbstractFunction {
+    public static final OneClickFlatItemsFunction INSTANCE = new OneClickFlatItemsFunction();
 
     private final KeyMapping key;
 
-    private OneClickFlatItems() {
+    private OneClickFlatItemsFunction() {
         String tooltip = "鼠标悬浮在要平铺的物品上，按下 Ctrl + A 进行平铺\n如果指针在容器界面则铺满容器\n如果在背包界面则平涂背包";
         super("one_click_flat_items", "一键平铺物品", tooltip);
         this.key = new KeyMapping(

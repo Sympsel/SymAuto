@@ -40,6 +40,8 @@ public class UpdateMessageManager {
 
     private void setUpdateMessages() {
         updateMessages.clear();
+        addUpdateMessage("[2026-10-08][v26.2-2.12.1] 添加新功能：高亮显示当前卖手持物品可附魔的附魔书的村民，需要手动打开一遍村民交易列表记录数据");
+        addUpdateMessage("[2026-10-08][v26.2-2.11.2] 添加新功能：快速跑路（Ctrl + W 激活，再按取消激活，支持八向防偏航，建议搭配自动搭路使用）");
         addUpdateMessage("[2026-10-08][v26.2-2.10.1] 添加新功能：快速搭路（目前不支持下半砖）、鼠标悬浮物品时 Ctrl + A 平铺物品");
         addUpdateMessage("[2026-10-07][v26.2-2.9.2] 对菜单的功能进行了分类");
         addUpdateMessage("[2026-10-07][v26.2-2.9.1] 添加新功能：自动填充物品分类机");

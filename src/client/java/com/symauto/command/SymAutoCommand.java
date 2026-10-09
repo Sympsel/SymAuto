@@ -6,12 +6,13 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.symauto.config.ConfigManager;
+import com.symauto.config.VillagerTradeStore;
 import com.symauto.entity.BWList;
 import com.symauto.function.FeatureConfig;
 import com.symauto.function.abstracts.SymAbstractFunction;
 import com.symauto.function.functions.AutoAttackSafetyFunction;
 import com.symauto.function.functions.AutoEatFunction;
-import com.symauto.function.functions.OneClickDiscardItems;
+import com.symauto.function.functions.OneClickDiscardItemsFunction;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -38,7 +39,7 @@ public class SymAutoCommand {
 
     private static final SuggestionProvider<FabricClientCommandSource> BW_FEATURES =
             (context, builder) -> {
-                builder.suggest(OneClickDiscardItems.INSTANCE.getBW_LIST().getFeatureId());
+                builder.suggest(OneClickDiscardItemsFunction.INSTANCE.getBW_LIST().getFeatureId());
                 builder.suggest(AutoEatFunction.INSTANCE.getBW_LISTED_FOOD().getFeatureId());
                 builder.suggest(AutoAttackSafetyFunction.INSTANCE.getBLACK_LIST().getFeatureId());
                 return builder.buildFuture();
@@ -81,6 +82,9 @@ public class SymAutoCommand {
                         .then(argument("feature", StringArgumentType.word())
                                 .suggests(FEATURE_IDS)
                                 .executes(SymAutoCommand::toggleFeature)))
+                .then(literal("trades")
+                        .then(literal("count").executes(SymAutoCommand::showTradeCount))
+                        .then(literal("clear").executes(SymAutoCommand::clearTrades)))
                 .then(literal("bwlist")
                         .then(argument("feature", StringArgumentType.word())
                                 .suggests(BW_FEATURES)
@@ -95,7 +99,7 @@ public class SymAutoCommand {
     }
 
     private static int showUsage(CommandContext<FabricClientCommandSource> ctx) {
-        ctx.getSource().sendFeedback(Component.literal("用法：/symauto <list|info|enable|toggle|bwlist>"));
+        ctx.getSource().sendFeedback(Component.literal("用法：/symauto <list|info|enable|toggle|trades|bwlist>"));
         return 1;
     }
 
@@ -152,6 +156,18 @@ public class SymAutoCommand {
         String result = f.isEnable() ? "§a已开启§r" : "§c已关闭§r";
         ctx.getSource().sendFeedback(Component.literal("§e" + f.getName() + "§r " + result));
         return 1;
+    }
+
+    private static int showTradeCount(CommandContext<FabricClientCommandSource> ctx) {
+        int size = VillagerTradeStore.size();
+        ctx.getSource().sendFeedback(Component.literal("§e村民交易缓存§r 共 " + size + " 条"));
+        return size;
+    }
+
+    private static int clearTrades(CommandContext<FabricClientCommandSource> ctx) {
+        int removed = VillagerTradeStore.clear();
+        ctx.getSource().sendFeedback(Component.literal("已清空村民交易缓存（移除 §f" + removed + "§r 条）"));
+        return removed;
     }
 
     private static int handleBWList(CommandContext<FabricClientCommandSource> ctx) {
@@ -286,7 +302,7 @@ public class SymAutoCommand {
     }
 
     private static BWTarget<?> resolveTarget(String featureId) {
-        BWList<Item> oneClick = OneClickDiscardItems.INSTANCE.getBW_LIST();
+        BWList<Item> oneClick = OneClickDiscardItemsFunction.INSTANCE.getBW_LIST();
         if (featureId.equalsIgnoreCase(oneClick.getFeatureId())) {
             return itemTarget(oneClick);
         }

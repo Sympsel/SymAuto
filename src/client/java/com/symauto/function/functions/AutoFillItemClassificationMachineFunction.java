@@ -1,6 +1,5 @@
 package com.symauto.function.functions;
 
-import com.symauto.entity.SymFunctionTags;
 import com.symauto.function.abstracts.SymAbstractFunction;
 import com.symauto.function.utils.Constants;
 import net.minecraft.ChatFormatting;
@@ -14,13 +13,13 @@ import net.minecraft.world.item.ItemStack;
 
 import java.util.Set;
 
-public class AutoFillItemClassificationMachine extends SymAbstractFunction {
-    public static final AutoFillItemClassificationMachine INSTANCE = new AutoFillItemClassificationMachine();
+public class AutoFillItemClassificationMachineFunction extends SymAbstractFunction {
+    public static final AutoFillItemClassificationMachineFunction INSTANCE = new AutoFillItemClassificationMachineFunction();
 
     // 每次打开漏斗界面只尝试填充一次
     private boolean executed = false;
 
-    private AutoFillItemClassificationMachine() {
+    private AutoFillItemClassificationMachineFunction() {
         super("auto_fill_item_classification_machine", "自动填充物品分类机", "自动将手持物品填充到漏斗对应格子，目前仅支持64堆叠");
     }
 

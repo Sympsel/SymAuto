@@ -98,12 +98,11 @@ public class CommandUsageScreen extends Screen {
         this.minecraft.gui.setScreen(parent);
     }
 
-    // ===== 指令内容 =====
 
     private static List<Component> buildEntries() {
         List<Component> lines = new ArrayList<>();
         lines.add(section("—— 客户端命令（前缀 /symauto，简写 /sa）——"));
-        lines.add(plain("均为客户端命令，单人/联机均可使用；<feature> 与条目 id 支持 Tab 自动补全。", ChatFormatting.GRAY));
+        lines.add(plain("均为客户端命令，单人/联机均可使用", ChatFormatting.GRAY));
         lines.add(spacer());
 
         lines.add(section("功能管理"));
@@ -123,6 +122,11 @@ public class CommandUsageScreen extends Screen {
         lines.add(plain("  · auto_eat（黑名单，物品）", ChatFormatting.DARK_GRAY));
         lines.add(plain("  · one_click_discard_items_whitelist（白名单，物品）", ChatFormatting.DARK_GRAY));
         lines.add(plain("  · auto_attack_safety_blacklist（黑名单，实体类型）", ChatFormatting.DARK_GRAY));
+        lines.add(spacer());
+
+        lines.add(section("村民交易缓存"));
+        lines.add(cmd("/sa trades count", "查看已缓存的村民交易条数"));
+        lines.add(cmd("/sa trades clear", "清空全部村民交易缓存（清空后需重新打开交易列表才会再次高亮）"));
         return lines;
     }
 

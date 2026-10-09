@@ -9,12 +9,12 @@ import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import org.lwjgl.glfw.GLFW;
 
-public class AutoRun extends SymAbstractFunction {
-    public static final AutoRun INSTANCE = new AutoRun();
+public class AutoRunFunction extends SymAbstractFunction {
+    public static final AutoRunFunction INSTANCE = new AutoRunFunction();
     private final KeyMapping toggleKey;
     @Getter
     private boolean isActive = false;
-    private AutoRun() {
+    private AutoRunFunction() {
         super("auto_run", "自动跑路", "按下 Ctrl + W 激活，并自动八向校正视角，再次按下取消，建议搭配自动搭路实现挂机");
         this.toggleKey = new KeyMapping(
                 "key.symauto.auto_run",

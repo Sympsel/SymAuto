@@ -1,11 +1,15 @@
 package com.symauto.function.utils;
 
+import net.minecraft.core.HolderSet;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ItemContainerContents;
+import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.level.block.ShulkerBoxBlock;
 
 public class ItemUtils {
@@ -94,5 +98,17 @@ public class ItemUtils {
             }
         }
         return false;
+    }
+
+    /**
+     * 判断附魔是否可以应用在物品上
+     */
+    public static boolean isEnchantmentCanBeAppliedToItem(Enchantment enchantment, Item item) {
+        if (item == null) {
+            return false;
+        }
+        Enchantment.EnchantmentDefinition def = enchantment.definition();
+        HolderSet<Item> supportedItem = def.supportedItems();
+        return supportedItem.contains(BuiltInRegistries.ITEM.wrapAsHolder(item));
     }
 }

@@ -25,8 +25,8 @@ import org.lwjgl.glfw.GLFW;
 import java.util.List;
 import java.util.Set;
 
-public class OneClickDiscardItems extends SymAbstractFunction {
-    public static final OneClickDiscardItems INSTANCE = new OneClickDiscardItems();
+public class OneClickDiscardItemsFunction extends SymAbstractFunction {
+    public static final OneClickDiscardItemsFunction INSTANCE = new OneClickDiscardItemsFunction();
     // 边沿触发检测
     private boolean wasDown = false;
 
@@ -35,12 +35,12 @@ public class OneClickDiscardItems extends SymAbstractFunction {
     private static final KeyCombination KEY_COMBINATION =
             new KeyCombination("key.keyboard.q", GLFW.GLFW_MOD_ALT);
 
-    private OneClickDiscardItems() {
+    private OneClickDiscardItemsFunction() {
         String id = "one_click_discard_items_whitelist";
         BW_LIST = new BWList<>(id);
         super(id, "一键丢弃垃圾物品", "Alt + Q 一键丢弃白名单内物品");
         BW_LIST.withDefaultsApplier(
-                OneClickDiscardItems::applyDefaults
+                OneClickDiscardItemsFunction::applyDefaults
         );
     }
 

@@ -8,7 +8,8 @@
     "FishingHookAccessor",
     "MinecraftInvoker",
     "InterceptDropKeyMixin",
-    "AbstractContainerScreenAccessor"
+    "AbstractContainerScreenAccessor",
+    "EntityGlowMixin"
   ],
   "injectors": {
     "defaultRequire": 1

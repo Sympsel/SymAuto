@@ -1,6 +1,6 @@
 package com.symauto.mixin;
 
-import com.symauto.function.functions.OneClickDiscardItems;
+import com.symauto.function.functions.OneClickDiscardItemsFunction;
 import net.minecraft.client.KeyboardHandler;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.input.KeyEvent;
@@ -25,7 +25,7 @@ public class InterceptDropKeyMixin {
             return;
         }
         // 从 KeyEvent 里取 key 和 modifiers
-        if (OneClickDiscardItems.shouldInterceptVanillaKey(event.key(), event.modifiers())) {
+        if (OneClickDiscardItemsFunction.shouldInterceptVanillaKey(event.key(), event.modifiers())) {
             ci.cancel();
         }
     }

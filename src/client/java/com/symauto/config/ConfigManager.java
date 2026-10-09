@@ -7,7 +7,7 @@ import com.symauto.function.FeatureConfig;
 import com.symauto.function.abstracts.SymAbstractFunction;
 import com.symauto.function.functions.AutoAttackSafetyFunction;
 import com.symauto.function.functions.AutoEatFunction;
-import com.symauto.function.functions.OneClickDiscardItems;
+import com.symauto.function.functions.OneClickDiscardItemsFunction;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
@@ -23,73 +23,12 @@ import java.util.function.Function;
 
 public class ConfigManager {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-    private static final Path CONFIG_PATH = FabricLoader.getInstance().getConfigDir().resolve("symauto.json");
 
-
-    public static void load() {
-        if (!Files.exists(CONFIG_PATH)) {
-            ModConfig config = new ModConfig();
-            applyFeatures(config);
-            applyBWLists(config);
-            save(config);
-            return;
-        }
-
-        try {
-            String json = Files.readString(CONFIG_PATH);
-            ModConfig config = GSON.fromJson(json, ModConfig.class);
-            if (config == null) {
-                config = new ModConfig();
-            }
-            applyFeatures(config);
-            boolean merged = applyBWLists(config);
-            if (merged) {
-                save(config);
-            }
-        } catch (IOException e) {
-            System.err.println("[SymAuto] 读取配置失败: " + e.getMessage());
-        }
-    }
-
-    public static void save() {
-        ModConfig config = new ModConfig();
-        captureFeatures(config);
-        captureBWLists(config);
-        save(config);
-    }
-
-    private static void save(ModConfig config) {
-        try {
-            Files.createDirectories(CONFIG_PATH.getParent());
-            Files.writeString(CONFIG_PATH, GSON.toJson(config));
-        } catch (IOException e) {
-            System.err.println("[SymAuto] 保存配置失败: " + e.getMessage());
-        }
-    }
-
-    /**
-     * 捕获所有功能的启用状态
-     */
-    private static void captureFeatures(ModConfig config) {
-        for (SymAbstractFunction f : FeatureConfig.AUTO_ALL) {
-            config.features.put(f.getId(), f.isEnable());
-        }
-    }
-
-    /**
-     * 将配置中的功能开关应用到所有已注册的功能实例上
-     */
-    private static void applyFeatures(ModConfig config) {
-        for (SymAbstractFunction f : FeatureConfig.AUTO_ALL) {
-            Boolean enabled = config.features.get(f.getId());
-            if (enabled != null) {
-                f.setEnable(enabled);
-            } else {
-                config.features.put(f.getId(), f.isEnable());
-            }
-
-        }
-    }
+    private static final Path BASE_DIR = FabricLoader.getInstance().getConfigDir().resolve("symauto");
+    private static final Path CONFIG_PATH = BASE_DIR.resolve("symauto.json");
+    private static final Path BWLIST_DIR = BASE_DIR.resolve("bwlists");
+    private static final Path LEGACY_ROOT_CONFIG =
+            FabricLoader.getInstance().getConfigDir().resolve("symauto.json");
 
     private static final Function<Item, String> ITEM_TO_ID =
             item -> BuiltInRegistries.ITEM.getKey(item).toString();
@@ -99,56 +38,126 @@ public class ConfigManager {
             type -> BuiltInRegistries.ENTITY_TYPE.getKey(type).toString();
     private static final Function<String, EntityType<?>> ENTITY_FROM_ID = ConfigManager::parseEntityType;
 
-    private static boolean applyBWLists(ModConfig config) {
-        boolean merged = false;
-        merged |= applyBWList(config, OneClickDiscardItems.INSTANCE.getBW_LIST(), ITEM_TO_ID, ITEM_FROM_ID);
-        merged |= applyBWList(config, AutoEatFunction.INSTANCE.getBW_LISTED_FOOD(), ITEM_TO_ID, ITEM_FROM_ID);
-        merged |= applyBWList(config, AutoAttackSafetyFunction.INSTANCE.getBLACK_LIST(), ENTITY_TO_ID, ENTITY_FROM_ID);
-        return merged;
-    }
-
-    private static void captureBWLists(ModConfig config) {
-        captureBWList(config, OneClickDiscardItems.INSTANCE.getBW_LIST(), ITEM_TO_ID);
-        captureBWList(config, AutoEatFunction.INSTANCE.getBW_LISTED_FOOD(), ITEM_TO_ID);
-        captureBWList(config, AutoAttackSafetyFunction.INSTANCE.getBLACK_LIST(), ENTITY_TO_ID);
-    }
-
-    private static <T> boolean applyBWList(ModConfig config, BWList<T> bwList,
-                                           Function<T, String> toId, Function<String, T> fromId) {
-        String featureId = bwList.getFeatureId();
-        ModConfig.BWListConfig cfg = config.bwlists.get(featureId);
-        if (cfg == null) {
-            // 配置缺失才触发默认值
-            bwList.applyDefaults();
-            cfg = new ModConfig.BWListConfig();
-            for (T value : bwList.getBlacklist()) {
-                cfg.blacklist.add(toId.apply(value));
-            }
-            for (T value : bwList.getWhitelist()) {
-                cfg.whitelist.add(toId.apply(value));
-            }
-            config.bwlists.put(featureId, cfg);
-            return true;
+    /** 描述一个黑白名单如何与磁盘上的独立 JSON 文件互转 */
+    private record BWListHandle<T>(BWList<T> list, Function<T, String> toId, Function<String, T> fromId) {
+        String featureId() {
+            return list.getFeatureId();
         }
-
-        // 配置文件里有，就按配置应用
-        bwList.getBlacklist().clear();
-        bwList.getWhitelist().clear();
-        loadIds(cfg.blacklist, bwList::addToBlacklist, fromId);
-        loadIds(cfg.whitelist, bwList::addToWhitelist, fromId);
-        return false;
     }
 
-    private static void loadItems(List<String> ids, Consumer<Item> adder) {
-        if (ids == null) {
+    private static final List<BWListHandle<?>> BW_LISTS = List.of(
+            new BWListHandle<>(OneClickDiscardItemsFunction.INSTANCE.getBW_LIST(), ITEM_TO_ID, ITEM_FROM_ID),
+            new BWListHandle<>(AutoEatFunction.INSTANCE.getBW_LISTED_FOOD(), ITEM_TO_ID, ITEM_FROM_ID),
+            new BWListHandle<>(AutoAttackSafetyFunction.INSTANCE.getBLACK_LIST(), ENTITY_TO_ID, ENTITY_FROM_ID)
+    );
+
+    public static void load() {
+        ModConfig config;
+        if (!Files.exists(CONFIG_PATH)) {
+            config = new ModConfig();
+        } else {
+            try {
+                String json = Files.readString(CONFIG_PATH);
+                config = GSON.fromJson(json, ModConfig.class);
+                if (config == null) {
+                    config = new ModConfig();
+                }
+            } catch (Exception e) {
+                System.err.println("[SymAuto] 读取配置失败: " + e.getMessage());
+                config = new ModConfig();
+            }
+        }
+        applyFeatures(config);
+        saveConfig(config);
+
+        for (BWListHandle<?> handle : BW_LISTS) {
+            try {
+                loadBwList(handle);
+            } catch (Exception e) {
+                System.err.println("[SymAuto] 读取黑白名单失败(" + handle.featureId() + "): " + e.getMessage());
+            }
+        }
+        deleteLegacyRootFiles();
+    }
+
+    /**
+     * 删除旧版本配置
+     */
+    private static void deleteLegacyRootFiles() {
+        if (!Files.exists(CONFIG_PATH)) {
             return;
         }
-        for (String id : ids) {
-            Item item = parseItem(id);
-            if (item != null) {
-                adder.accept(item);
+        deleteQuietly();
+    }
+
+    public static void save() {
+        ModConfig config = new ModConfig();
+        captureFeatures(config);
+        saveConfig(config);
+        for (BWListHandle<?> handle : BW_LISTS) {
+            try {
+                saveBwList(handle);
+            } catch (IOException e) {
+                System.err.println("[SymAuto] 保存黑白名单失败(" + handle.featureId() + "): " + e.getMessage());
             }
         }
+    }
+
+    private static void saveConfig(ModConfig config) {
+        try {
+            Files.createDirectories(CONFIG_PATH.getParent());
+            Files.writeString(CONFIG_PATH, GSON.toJson(config));
+        } catch (IOException e) {
+            System.err.println("[SymAuto] 保存配置失败: " + e.getMessage());
+        }
+    }
+
+    private static void captureFeatures(ModConfig config) {
+        for (SymAbstractFunction f : FeatureConfig.AUTO_ALL) {
+            config.features.put(f.getId(), f.isEnable());
+        }
+    }
+
+    private static void applyFeatures(ModConfig config) {
+        for (SymAbstractFunction f : FeatureConfig.AUTO_ALL) {
+            Boolean enabled = config.features.get(f.getId());
+            if (enabled != null) {
+                f.setEnable(enabled);
+            } else {
+                config.features.put(f.getId(), f.isEnable());
+            }
+        }
+    }
+
+    private static <T> void loadBwList(BWListHandle<T> handle) throws IOException {
+        Path path = BWLIST_DIR.resolve(handle.featureId() + ".json");
+        BWList<T> bwList = handle.list();
+        if (!Files.exists(path)) {
+            bwList.applyDefaults();
+            saveBwList(handle);
+            return;
+        }
+        String json = Files.readString(path);
+        ModConfig.BWListConfig cfg = GSON.fromJson(json, ModConfig.BWListConfig.class);
+        if (cfg == null) {
+            cfg = new ModConfig.BWListConfig();
+        }
+        bwList.getBlacklist().clear();
+        bwList.getWhitelist().clear();
+        loadIds(cfg.blacklist, bwList::addToBlacklist, handle.fromId());
+        loadIds(cfg.whitelist, bwList::addToWhitelist, handle.fromId());
+    }
+
+    private static <T> void saveBwList(BWListHandle<T> handle) throws IOException {
+        ModConfig.BWListConfig cfg = new ModConfig.BWListConfig();
+        for (T value : handle.list().getBlacklist()) {
+            cfg.blacklist.add(handle.toId().apply(value));
+        }
+        for (T value : handle.list().getWhitelist()) {
+            cfg.whitelist.add(handle.toId().apply(value));
+        }
+        Files.createDirectories(BWLIST_DIR);
+        Files.writeString(BWLIST_DIR.resolve(handle.featureId() + ".json"), GSON.toJson(cfg));
     }
 
     private static <T> void loadIds(List<String> ids, Consumer<T> adder, Function<String, T> fromId) {
@@ -163,31 +172,6 @@ public class ConfigManager {
         }
     }
 
-    /**
-     * 将当前所有功能的黑白名单状态抓取到配置对象中
-     */
-    private static <T> void captureBWList(ModConfig config, BWList<T> bwList, Function<T, String> toId) {
-        ModConfig.BWListConfig cfg = new ModConfig.BWListConfig();
-        for (T value : bwList.getBlacklist()) {
-            cfg.blacklist.add(toId.apply(value));
-        }
-        for (T value : bwList.getWhitelist()) {
-            cfg.whitelist.add(toId.apply(value));
-        }
-        config.bwlists.put(bwList.getFeatureId(), cfg);
-    }
-
-    private static void captureBWLists(ModConfig config, String featureId, BWList<Item> bwList) {
-        ModConfig.BWListConfig cfg = new ModConfig.BWListConfig();
-        for (Item item : bwList.getBlacklist()) {
-            cfg.blacklist.add(BuiltInRegistries.ITEM.getKey(item).toString());
-        }
-        for (Item item : bwList.getWhitelist()) {
-            cfg.whitelist.add(BuiltInRegistries.ITEM.getKey(item).toString());
-        }
-        config.bwlists.put(featureId, cfg);
-    }
-
     private static Item parseItem(String id) {
         Identifier identifier = Identifier.tryParse(id);
         if (identifier == null) {
@@ -196,12 +180,21 @@ public class ConfigManager {
         return BuiltInRegistries.ITEM.getOptional(identifier).orElse(null);
     }
 
-
-private static EntityType<?> parseEntityType(String id) {
-    Identifier identifier = Identifier.tryParse(id);
-    if (identifier == null) {
-        return null;
+    private static EntityType<?> parseEntityType(String id) {
+        Identifier identifier = Identifier.tryParse(id);
+        if (identifier == null) {
+            return null;
+        }
+        return BuiltInRegistries.ENTITY_TYPE.getOptional(identifier).orElse(null);
     }
-    return BuiltInRegistries.ENTITY_TYPE.getOptional(identifier).orElse(null);
-}
+
+    private static void deleteQuietly() {
+        try {
+            if (Files.deleteIfExists(ConfigManager.LEGACY_ROOT_CONFIG)) {
+                System.out.println("[SymAuto] 已删除旧配置文件: " + ConfigManager.LEGACY_ROOT_CONFIG.getFileName());
+            }
+        } catch (IOException e) {
+            System.err.println("[SymAuto] 删除旧配置文件失败(" + ConfigManager.LEGACY_ROOT_CONFIG.getFileName() + "): " + e.getMessage());
+        }
+    }
 }
