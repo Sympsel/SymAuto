@@ -24,11 +24,12 @@ public abstract class SymAbstractFunction {
     private final String id;
     @Getter
     private final String name;
-    @Getter
     @Setter
-    private String tooltip;
+    private String baseToolTip;
     @Getter
     private boolean enable = false;
+    @Getter
+    private final boolean isConfigurable;
 
     // 标签 - 用于分类
     @Getter
@@ -41,9 +42,14 @@ public abstract class SymAbstractFunction {
     }
 
     protected SymAbstractFunction(String id, String name, String tooltip) {
+        this(id, name, false, tooltip);
+    }
+
+    protected SymAbstractFunction(String id, String name, boolean isConfigurable, String baseToolTip) {
         this.id = id;
         this.name = name;
-        this.tooltip = tooltip;
+        this.baseToolTip = baseToolTip;
+        this.isConfigurable = isConfigurable;
         if (REGISTRY.putIfAbsent(getClass(), this) != null) {
             throw new IllegalStateException(
                     getClass().getName() + "已存在实例");
@@ -83,11 +89,6 @@ public abstract class SymAbstractFunction {
 
     /**
      * 容器界面鼠标点击拦截
-     * @param client
-     * @param screen
-     * @param mouseX
-     * @param mouseY
-     * @param button
      * @return 是否放行其余逻辑
      */
     public boolean allowContainerMouseClick(Minecraft client,
@@ -154,5 +155,21 @@ public abstract class SymAbstractFunction {
 
     public boolean hasTag(int tag) {
         return tags.has(tag);
+    }
+
+    public String tooltipLineIfConfigurable() {
+        if (isConfigurable) {
+            return "§6左键切换开启状态，右键进入配置菜单\n";
+        }
+        return "§6左键切换开启状态\n";
+    }
+
+    public final String getTooltip() {
+        String desc = describe();
+        return (desc == null ? "" : desc) + tooltipLineIfConfigurable();
+    }
+
+    protected String describe() {
+        return baseToolTip;
     }
 }

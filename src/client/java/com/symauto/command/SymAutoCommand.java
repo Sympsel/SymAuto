@@ -41,7 +41,7 @@ public class SymAutoCommand {
             (context, builder) -> {
                 builder.suggest(OneClickDiscardItemsFunction.INSTANCE.getBW_LIST().getFeatureId());
                 builder.suggest(AutoEatFunction.INSTANCE.getBW_LISTED_FOOD().getFeatureId());
-                builder.suggest(AutoAttackSafetyFunction.INSTANCE.getBLACK_LIST().getFeatureId());
+                builder.suggest(AutoAttackSafetyFunction.INSTANCE.getBW_LIST().getFeatureId());
                 return builder.buildFuture();
             };
 
@@ -283,7 +283,7 @@ public class SymAutoCommand {
 
     private static boolean isEntityFeature(String featureId) {
         return featureId != null
-                && featureId.equalsIgnoreCase(AutoAttackSafetyFunction.INSTANCE.getBLACK_LIST().getFeatureId());
+                && featureId.equalsIgnoreCase(AutoAttackSafetyFunction.INSTANCE.getBW_LIST().getFeatureId());
     }
 
     /** 泛型目标：BWList + 其序列化/解析适配器 + 名词标签。 */
@@ -310,7 +310,7 @@ public class SymAutoCommand {
         if (featureId.equalsIgnoreCase(autoEat.getFeatureId())) {
             return itemTarget(autoEat);
         }
-        BWList<EntityType<?>> safety = AutoAttackSafetyFunction.INSTANCE.getBLACK_LIST();
+        BWList<EntityType<?>> safety = AutoAttackSafetyFunction.INSTANCE.getBW_LIST();
         if (featureId.equalsIgnoreCase(safety.getFeatureId())) {
             return entityTarget(safety);
         }

@@ -1,6 +1,7 @@
 package com.symauto.entity;
 
 import lombok.Getter;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -87,6 +88,17 @@ public class BWList<T> {
         }
         return sb.toString();
     }
+
+    public String displayBlacklist(Function<T, String> toLabel) {
+
+        return "§1黑名单\n" + displayBlacklist("\n §7", toLabel, "\n §7无");
+    }
+
+    public String displayWhitelist(Function<T, String> toLabel) {
+
+        return "§2白名单\n" + displayWhitelist("\n §7", toLabel, "\n §7无");
+    }
+
 
     /**
      * 白名单展示接口

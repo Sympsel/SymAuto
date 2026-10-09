@@ -19,10 +19,7 @@ import net.minecraft.world.item.trading.MerchantOffer;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 public class TradeCapture {
     private TradeCapture() {
@@ -53,7 +50,8 @@ public class TradeCapture {
             return;
         }
 
-        Set<String> enchantIds = new LinkedHashSet<>();
+        Map<String, Integer> enchantLevels = new LinkedHashMap<>();
+
         for (MerchantOffer offer : offers) {
             ItemStack result = offer.getResult();
             if (!result.is(Items.ENCHANTED_BOOK)) {
@@ -64,12 +62,14 @@ public class TradeCapture {
                 continue;
             }
             for (Holder<Enchantment> holder : enchantments.keySet()) {
-                holder.unwrapKey().ifPresent(key -> enchantIds.add(key.identifier().toString()));
+                int level = enchantments.getLevel(holder);
+                holder.unwrapKey().ifPresent(key ->
+                        enchantLevels.merge(key.identifier().toString(), level, Math::max));
             }
         }
 
-        if (!enchantIds.isEmpty()) {
-            VillagerTradeStore.record(lockedVillagerId, enchantIds);
+        if (!enchantLevels.isEmpty()) {
+            VillagerTradeStore.record(lockedVillagerId, enchantLevels);
         }
     }
 

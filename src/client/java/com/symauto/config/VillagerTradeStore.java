@@ -9,13 +9,7 @@ import net.fabricmc.loader.api.FabricLoader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 
@@ -31,17 +25,16 @@ public final class VillagerTradeStore {
     }
 
     static class Entry {
-        List<String> enchantments = new ArrayList<>();
+        Map<String, Integer> enchantments = new TreeMap<>();
         long updated;
     }
 
     /**
      * 记录某村民的附魔书报价
      */
-    public static void record(UUID villagerId, Set<String> enchantIds) {
+    public static void record(UUID villagerId, Map<String, Integer> enchantLevels) {
         String key = villagerId.toString();
-        List<String> sorted = new ArrayList<>(enchantIds);
-        Collections.sort(sorted);
+        Map<String, Integer> sorted = new TreeMap<>(enchantLevels);
 
         Entry existing = DATA.get(key);
         if (existing != null && existing.enchantments.equals(sorted)) {
@@ -57,11 +50,11 @@ public final class VillagerTradeStore {
     }
 
     /**
-     * 返回该村民缓存的附魔 ID 集合；从未记录过则返回 null
+     * 返回该村民缓存的附魔 ID -> 等级；从未记录过则返回 null
      */
-    public static Set<String> getEnchantments(UUID villagerId) {
+    public static Map<String, Integer> getEnchantments(UUID villagerId) {
         Entry entry = DATA.get(villagerId.toString());
-        return entry == null ? null : new HashSet<>(entry.enchantments);
+        return entry == null ? null : new HashMap<>(entry.enchantments);
     }
 
     public static boolean has(UUID villagerId) {

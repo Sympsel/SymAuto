@@ -1,7 +1,6 @@
 package com.symauto.function.functions;
 
 import com.mojang.blaze3d.platform.InputConstants;
-import com.symauto.entity.SymFunctionTags;
 import com.symauto.function.abstracts.SymAbstractFunction;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;

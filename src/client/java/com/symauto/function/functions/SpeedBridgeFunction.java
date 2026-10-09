@@ -26,7 +26,6 @@ public class SpeedBridgeFunction extends SymAbstractFunction {
     private static final SlabType DESIRED_SLAB = SlabType.TOP;
     private int tickCounter = 0;
     private final int placeInterval = 1;
-    private int lockedSupportY = Integer.MIN_VALUE;
 
     private SpeedBridgeFunction() {
         super("speed_bridge", "水平跑搭",
@@ -187,10 +186,5 @@ public class SpeedBridgeFunction extends SymAbstractFunction {
         InteractionHand hand = InteractionHand.MAIN_HAND;
         client.gameMode.useItemOn(client.player, hand, hit);
         client.player.swing(hand);
-    }
-
-    @Override
-    protected void onDisable() {
-        lockedSupportY = Integer.MIN_VALUE;
     }
 }

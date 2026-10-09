@@ -1,6 +1,5 @@
 package com.symauto.function.functions;
 
-import com.symauto.entity.SymFunctionTags;
 import com.symauto.function.FeatureConfig;
 import com.symauto.function.abstracts.SymAbstractFunction;
 import net.minecraft.client.Minecraft;
@@ -13,7 +12,7 @@ public class AutoAttackFunction extends SymAbstractFunction {
     public static final AutoAttackFunction INSTANCE = new AutoAttackFunction();
 
     private AutoAttackFunction() {
-        super("auto_attack", "自动攻击§c(危险)",
+        super("auto_attack", "自动攻击§c(危险)", false,
                 "§c⚠ 警告：此版本直接为了可以后台挂机，没有封包，会被反作弊检测！\n§c⚠ 请改用「自动攻击(安全版)」或者仅在单人游戏下使用");
     }
 

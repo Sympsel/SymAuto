@@ -45,7 +45,7 @@ public class OneClickDiscardItemsFunction extends SymAbstractFunction {
     }
 
     @Override
-    public String getTooltip() {
+    public String describe() {
         return "Alt + Q 一键丢弃白名单内（" + BW_LIST.getWhitelistSize() + "垃圾）物品，包括收纳袋里的";
 
     }

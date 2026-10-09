@@ -1,6 +1,5 @@
 package com.symauto.function.functions;
 
-import com.symauto.entity.SymFunctionTags;
 import com.symauto.function.abstracts.SymAbstractFunction;
 import com.symauto.mixin.FishingHookAccessor;
 import net.minecraft.ChatFormatting;

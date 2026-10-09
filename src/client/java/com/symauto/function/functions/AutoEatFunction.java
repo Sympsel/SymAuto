@@ -19,7 +19,12 @@ public class AutoEatFunction extends SymAbstractFunction {
     public static final AutoEatFunction INSTANCE = new AutoEatFunction();
     private static final int HUNGER_THRESHOLD = 16;
     private static final String TOOLTIP_BASE =
-            "饥饿值低于阈值（" + HUNGER_THRESHOLD + "）时自动进食（仅主副手）";
+            "饥饿值低于阈值（" + HUNGER_THRESHOLD + "）时自动进食（仅主副手）\n";
+    @Getter
+    private boolean eating = false;
+
+    @Getter
+    private final BWList<Item> BW_LISTED_FOOD;
 
 
     // 主手拿着这些物品时，禁止自动进食（避免右键误触发）
@@ -29,19 +34,12 @@ public class AutoEatFunction extends SymAbstractFunction {
     );
 
     @Override
-    public String getTooltip() {
-        return TOOLTIP_BASE + "\n黑名单：" + BW_LISTED_FOOD.displayBlacklist(
-                "\n §7",
-                item -> BuiltInRegistries.ITEM.getKey(item).toString(),
-                "\n §7（空）"
+    public String describe() {
+        return TOOLTIP_BASE + BW_LISTED_FOOD.displayBlacklist(
+                item -> BuiltInRegistries.ITEM.getKey(item).toString()
         );
     }
 
-    @Getter
-    private boolean eating = false;
-
-    @Getter
-    private final BWList<Item> BW_LISTED_FOOD;
 
     private InteractionHand eatingHand = InteractionHand.MAIN_HAND;
     private int initialFoodCount = 0;
