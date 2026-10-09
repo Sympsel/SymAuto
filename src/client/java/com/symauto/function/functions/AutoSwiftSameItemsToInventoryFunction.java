@@ -4,6 +4,7 @@ import com.symauto.entity.SymFunctionTags;
 import com.symauto.function.abstracts.SymAbstractFunction;
 import com.symauto.function.utils.Constants;
 import com.symauto.function.utils.ItemUtils;
+import com.symauto.function.utils.Tooltip;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerInput;
@@ -18,7 +19,10 @@ public class AutoSwiftSameItemsToInventoryFunction extends SymAbstractFunction {
 
     private AutoSwiftSameItemsToInventoryFunction() {
         super("auto_swift_same_items_to_inventory",
-                "自动转移相同物品到背包", "打开容器会将容器内的而且存在于背包的物品尽可能填满背包\n对于潜影盒，当盒内只有一种物品且两盒物品相同时视作同一物品");
+                "自动转移相同物品到背包", Tooltip.create()
+                        .line("打开容器会将容器内的而且存在于背包的物品尽可能填满背包")
+                        .line("对于潜影盒，当盒内只有一种物品且两盒物品种类相同时视作同一物品").toString()
+        );
     }
 
     @Override

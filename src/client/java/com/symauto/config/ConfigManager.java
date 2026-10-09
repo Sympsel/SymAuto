@@ -47,7 +47,7 @@ public class ConfigManager {
 
     private static final List<BWListHandle<?>> BW_LISTS = List.of(
             new BWListHandle<>(OneClickDiscardItemsFunction.INSTANCE.getBW_LIST(), ITEM_TO_ID, ITEM_FROM_ID),
-            new BWListHandle<>(AutoEatFunction.INSTANCE.getBW_LISTED_FOOD(), ITEM_TO_ID, ITEM_FROM_ID),
+            new BWListHandle<>(AutoEatFunction.INSTANCE.getFOOD_BLACKLIST(), ITEM_TO_ID, ITEM_FROM_ID),
             new BWListHandle<>(AutoAttackSafetyFunction.INSTANCE.getBW_LIST(), ENTITY_TO_ID, ENTITY_FROM_ID)
     );
 

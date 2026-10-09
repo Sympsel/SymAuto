@@ -5,6 +5,8 @@ import com.symauto.entity.BWList;
 import com.symauto.function.abstracts.SymAbstractFunction;
 import com.symauto.function.utils.EntityGlowRegistry;
 import com.symauto.function.utils.ItemUtils;
+import com.symauto.function.utils.Tooltip;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderLookup;
@@ -52,15 +54,13 @@ public class HighLightSpecificVillagersFunction extends SymAbstractFunction {
     }
 
     @Override
-    public String describe() {
-        TOOLTIP = "主手持可附魔物品时，高亮扫描范围（边长" + SCAN_RADIUS * 2
-                + "格）内、你曾打开过交易且出售相关附魔书的村民\n";
-        TOOLTIP += "§1仅高亮拥有更高相关附魔村民：" + (ONLY_NEED_BETTER_ENCHANTMENT ? "是\n" : "否\n");
-        TOOLTIP += "§1非创造模式下排除带有冲突附魔的村民：" + (INTERCEPTING_CONFLICT_ENCHANTMENT ? "是\n" : "否\n");
-        TOOLTIP += ENCHANTMENT_BLACKLIST.displayBlacklist(
-                enhancement -> enhancement.identifier().toString()
-        );
-        return TOOLTIP;
+    protected String describe() {
+        return Tooltip.create()
+                .line("主手持可附魔物品时，高亮扫描范围（边长" + SCAN_RADIUS * 2 + "格）内、你曾打开过交易且出售相关附魔书的村民")
+                .line(ChatFormatting.DARK_BLUE, "仅高亮拥有更高相关附魔村民：" + (ONLY_NEED_BETTER_ENCHANTMENT ? "是" : "否"))
+                .line(ChatFormatting.DARK_BLUE, "非创造模式下排除带有冲突附魔的村民：" + (INTERCEPTING_CONFLICT_ENCHANTMENT ? "是" : "否"))
+                .line(ENCHANTMENT_BLACKLIST.displayBlacklist(enhancement -> enhancement.identifier().toString()))
+                .toString();
     }
 
     @Override

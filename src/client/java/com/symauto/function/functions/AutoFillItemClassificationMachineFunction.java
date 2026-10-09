@@ -2,6 +2,7 @@ package com.symauto.function.functions;
 
 import com.symauto.function.abstracts.SymAbstractFunction;
 import com.symauto.function.utils.Constants;
+import com.symauto.function.utils.Tooltip;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.HopperScreen;
@@ -20,7 +21,7 @@ public class AutoFillItemClassificationMachineFunction extends SymAbstractFuncti
     private boolean executed = false;
 
     private AutoFillItemClassificationMachineFunction() {
-        super("auto_fill_item_classification_machine", "自动填充物品分类机", "自动将手持物品填充到漏斗对应格子，目前仅支持64堆叠");
+        super("auto_fill_item_classification_machine", "自动填充物品分类机", Tooltip.create().line( "自动将手持物品填充到漏斗对应格子，目前仅支持64堆叠").toString());
     }
 
     @Override

@@ -5,6 +5,7 @@ import com.symauto.config.SymAutoKeys;
 import com.symauto.function.abstracts.SymAbstractFunction;
 import com.symauto.function.utils.Constants;
 import com.symauto.function.utils.ScreenUtils;
+import com.symauto.function.utils.Tooltip;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -22,8 +23,12 @@ public class OneClickFlatItemsFunction extends SymAbstractFunction {
     private final KeyMapping key;
 
     private OneClickFlatItemsFunction() {
-        String tooltip = "鼠标悬浮在要平铺的物品上，按下 Ctrl + A 进行平铺\n如果指针在容器界面则铺满容器\n如果在背包界面则平涂背包";
-        super("one_click_flat_items", "一键平铺物品", tooltip);
+        super("one_click_flat_items", "一键平铺物品",
+                Tooltip.create()
+                        .line("鼠标悬浮在要平铺的物品上，按下 Ctrl + A 进行平铺")
+                        .line("如果指针在容器界面则铺满容器\\n如果在背包界面则平涂背包")
+                        .toString()
+        );
         this.key = new KeyMapping(
                 "key.symauto.one_click_flat_items",
                 InputConstants.Type.KEYSYM,

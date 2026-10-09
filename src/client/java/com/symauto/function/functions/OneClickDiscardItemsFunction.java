@@ -8,6 +8,7 @@ import com.symauto.entity.KeyCombination;
 import com.symauto.function.FeatureConfig;
 import com.symauto.function.abstracts.SymAbstractFunction;
 import com.symauto.function.utils.KeyUtils;
+import com.symauto.function.utils.Tooltip;
 import lombok.Getter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientPacketListener;
@@ -38,7 +39,7 @@ public class OneClickDiscardItemsFunction extends SymAbstractFunction {
     private OneClickDiscardItemsFunction() {
         String id = "one_click_discard_items_whitelist";
         BW_LIST = new BWList<>(id);
-        super(id, "一键丢弃垃圾物品", "Alt + Q 一键丢弃白名单内物品");
+        super(id, "一键丢弃垃圾物品", Tooltip.create().line( "Alt + Q 一键丢弃白名单内物品").toString());
         BW_LIST.withDefaultsApplier(
                 OneClickDiscardItemsFunction::applyDefaults
         );

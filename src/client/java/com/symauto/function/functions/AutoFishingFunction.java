@@ -1,6 +1,7 @@
 package com.symauto.function.functions;
 
 import com.symauto.function.abstracts.SymAbstractFunction;
+import com.symauto.function.utils.Tooltip;
 import com.symauto.mixin.FishingHookAccessor;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
@@ -30,7 +31,13 @@ public class AutoFishingFunction extends SymAbstractFunction {
     private boolean notInWater = false;
 
     private AutoFishingFunction() {
-        super("auto_fishing","自动钓鱼", "手持钓鱼杆时自动甩杆收杆\n等待期间：\n2秒后检测是否在水中和开放水域\n如果不在水中10秒后重新抛竿\n兜底45秒没有鱼会超时重新抛竿");
+        Tooltip tooltip = Tooltip.create()
+                .line("手持钓鱼杆时自动甩杆收杆")
+                .line("等待期间：")
+                .line("2秒后检测是否在水中和开放水域")
+                .line("如果不在水中10秒后重新抛竿")
+                .line("兜底45秒没有鱼会超时重新抛竿");
+        super("auto_fishing", "自动钓鱼", tooltip.toString());
     }
 
     @Override

@@ -2,6 +2,7 @@ package com.symauto.function.functions;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import com.symauto.function.abstracts.SymAbstractFunction;
+import com.symauto.function.utils.Tooltip;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -32,6 +33,7 @@ public class AutoSellEmcFunction extends SymAbstractFunction {
         // 出售菜单已打开，循环点 49 号槽
         SELL_MENU
     }
+
     // 步骤间等待
     private static final int STEP_DELAY_TICKS = 6;
     // 出售循环间隔 10s
@@ -58,7 +60,7 @@ public class AutoSellEmcFunction extends SymAbstractFunction {
 
     private AutoSellEmcFunction() {
         super("auto_sell_emc", "自动 EMC 出售",
-                "小水果服务器专用，Shift + F 打开商店后，自动进入 EMC 出售并每 10 秒出售一次");
+                Tooltip.create().line("小水果服务器专用，Shift + F 打开商店后，自动进入 EMC 出售并每 10 秒出售一次").toString());
     }
 
     @Override
@@ -104,7 +106,7 @@ public class AutoSellEmcFunction extends SymAbstractFunction {
     }
 
     /**
-     *  等待某个菜单打开，超时则重置
+     * 等待某个菜单打开，超时则重置
      */
     private void waitForMenu(Minecraft client, State next) {
         menuTimer++;
@@ -119,7 +121,9 @@ public class AutoSellEmcFunction extends SymAbstractFunction {
         }
     }
 
-    /** 延迟后点击指定槽位，然后跳转到下一状态 */
+    /**
+     * 延迟后点击指定槽位，然后跳转到下一状态
+     */
     private void doStep(Minecraft client, int slot, State next) {
         if (delay > 0) {
             delay--;
@@ -130,7 +134,9 @@ public class AutoSellEmcFunction extends SymAbstractFunction {
         menuTimer = 0;
     }
 
-    /** 出售循环：每 SELL_INTERVAL_TICKS 点一次 49 号槽 */
+    /**
+     * 出售循环：每 SELL_INTERVAL_TICKS 点一次 49 号槽
+     */
     private void tickSell(Minecraft client) {
         // 出售界面若被关闭，直接结束
         if (!isShopMenuOpen(client)) {

@@ -4,6 +4,7 @@ import com.betterbundle.util.BundleContentsHelper;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.symauto.config.SymAutoKeys;
 import com.symauto.function.abstracts.SymAbstractFunction;
+import com.symauto.function.utils.Tooltip;
 import com.symauto.gui.BundleQuickViewScreen;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
@@ -16,7 +17,7 @@ public class BundleQuickOpenFunction extends SymAbstractFunction {
 
     private BundleQuickOpenFunction() {
         super("bundle_quick_open", "中键快速查看收纳袋",
-                "手持收纳袋时按中键弹出纯客户端的袋内物品界面（自适应条数）");
+                Tooltip.create().line("手持收纳袋时按中键弹出袋内物品界面").toString());
         this.key = new KeyMapping(
                 "key.symauto.bundle_quick_open",
                 InputConstants.Type.MOUSE,
@@ -29,8 +30,13 @@ public class BundleQuickOpenFunction extends SymAbstractFunction {
     }
 
 
-    @Override public KeyMapping getKeyMapping() { return key; }
-    @Override public ScreenContext requireScreenContext() {
+    @Override
+    public KeyMapping getKeyMapping() {
+        return key;
+    }
+
+    @Override
+    public ScreenContext requireScreenContext() {
         return super.requireScreenContext();
     }
 

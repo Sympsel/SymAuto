@@ -2,8 +2,10 @@ package com.symauto.function.abstracts;
 
 import com.symauto.entity.TagList;
 import com.symauto.function.FeatureConfig;
+import com.symauto.function.utils.Tooltip;
 import lombok.Getter;
 import lombok.Setter;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -158,15 +160,19 @@ public abstract class SymAbstractFunction {
     }
 
     public String tooltipLineIfConfigurable() {
-        if (isConfigurable) {
-            return "§6左键切换开启状态，右键进入配置菜单\n";
-        }
-        return "§6左键切换开启状态\n";
+        return isConfigurable
+                ? "左键切换开启状态，右键进入配置菜单"
+                : "左键切换开启状态";
     }
 
     public final String getTooltip() {
+        Tooltip tooltip = Tooltip.create()
+                .line(ChatFormatting.GOLD, tooltipLineIfConfigurable());
         String desc = describe();
-        return (desc == null ? "" : desc) + tooltipLineIfConfigurable();
+        if (desc != null && !desc.isBlank()) {
+            tooltip.line(desc);
+        }
+        return tooltip.toString();
     }
 
     protected String describe() {

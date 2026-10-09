@@ -2,7 +2,9 @@ package com.symauto.function.functions;
 
 import com.symauto.function.abstracts.SymAbstractFunction;
 import com.symauto.function.utils.Constants;
+import com.symauto.function.utils.Tooltip;
 import lombok.Getter;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
@@ -29,7 +31,12 @@ public class AutoSwiftToolsFunction extends SymAbstractFunction {
     private float floatFactor = 0.1f;
 
     private AutoSwiftToolsFunction() {
-        super("auto_swift_tools", "自动切换破坏工具", "自动切换破坏工具\n优先级：\n 快捷栏工具 > 精准采集工具优先 > 挖掘速度");
+        super("auto_swift_tools", "自动切换破坏工具", Tooltip.create()
+                .line( "自动切换破坏工具")
+                .line(ChatFormatting.BLUE, "优先级：")
+                .line(1, "快捷栏工具 > 精准采集工具优先 > 挖掘速度")
+                .toString()
+        );
         setIntervalMs(50);
         setFloatFactor(0.1f);
     }

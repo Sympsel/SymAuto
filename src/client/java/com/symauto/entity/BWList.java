@@ -1,6 +1,8 @@
 package com.symauto.entity;
 
+import com.symauto.function.utils.Tooltip;
 import lombok.Getter;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.registries.BuiltInRegistries;
 
 import java.util.HashSet;
@@ -89,33 +91,33 @@ public class BWList<T> {
         return sb.toString();
     }
 
+    /**
+     * 黑名单展示接口：逐行拼接，标题着色、条目灰色缩进，空集显示“无”；颜色由 ChatFormatting 自动闭合。
+     */
     public String displayBlacklist(Function<T, String> toLabel) {
-
-        return "§1黑名单\n" + displayBlacklist("\n §7", toLabel, "\n §7无");
+        return render(ChatFormatting.DARK_BLUE, "\n黑名单", blacklist, toLabel);
     }
-
-    public String displayWhitelist(Function<T, String> toLabel) {
-
-        return "§2白名单\n" + displayWhitelist("\n §7", toLabel, "\n §7无");
-    }
-
 
     /**
-     * 白名单展示接口
-     *
-     * @param linePrefix 每行前缀（如换行+缩进+颜色码，例："\n\t§7"）
-     * @param toLabel 单个条目的展示文本转换
-     * @param emptyText 黑名单为空时返回的文本（不含 linePrefix）
+     * 白名单展示接口：逐行拼接，标题着色、条目灰色缩进，空集显示“无”；颜色由 ChatFormatting 自动闭合。
      */
-    public String displayWhitelist(String linePrefix, Function<T, String> toLabel, String emptyText) {
-        if (whitelist.isEmpty()) {
-            return emptyText;
+    public String displayWhitelist(Function<T, String> toLabel) {
+        return render(ChatFormatting.DARK_GREEN, "\n白名单", whitelist, toLabel);
+    }
+
+    private String render(ChatFormatting titleColor,
+                          String title,
+                          Set<T> values,
+                          Function<T, String> toLabel) {
+        Tooltip tooltip = Tooltip.create().line(titleColor, title);
+        if (values.isEmpty()) {
+            tooltip.line(ChatFormatting.GRAY, " 无");
+        } else {
+            for (T value : values) {
+                tooltip.line(ChatFormatting.GRAY, " " + toLabel.apply(value));
+            }
         }
-        StringBuilder sb = new StringBuilder();
-        for (T value : whitelist) {
-            sb.append(linePrefix).append(toLabel.apply(value));
-        }
-        return sb.toString();
+        return tooltip.toString();
     }
 
     public int getBlacklistSize() {

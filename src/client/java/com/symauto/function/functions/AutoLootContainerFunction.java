@@ -3,6 +3,7 @@ package com.symauto.function.functions;
 import com.symauto.entity.SymFunctionTags;
 import com.symauto.function.abstracts.SymAbstractFunction;
 import com.symauto.function.utils.Constants;
+import com.symauto.function.utils.Tooltip;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerInput;
@@ -13,7 +14,8 @@ public class AutoLootContainerFunction extends SymAbstractFunction {
     private boolean executed = false;
 
     private AutoLootContainerFunction() {
-        super("auto_loot_container", "自动拿取容器物品", "打开容器会将容器内物品尽可能填满背包");
+        Tooltip tooltip = Tooltip.create().line("打开容器会将容器内物品尽可能填满背包");
+        super("auto_loot_container", "自动拿取容器物品", tooltip.toString());
     }
 
     @Override

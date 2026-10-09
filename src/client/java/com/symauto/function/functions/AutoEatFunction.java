@@ -1,8 +1,8 @@
 package com.symauto.function.functions;
 
 import com.symauto.entity.BWList;
-import com.symauto.entity.SymFunctionTags;
 import com.symauto.function.abstracts.SymAbstractFunction;
+import com.symauto.function.utils.Tooltip;
 import lombok.Getter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.component.DataComponents;
@@ -18,13 +18,12 @@ import java.util.Set;
 public class AutoEatFunction extends SymAbstractFunction {
     public static final AutoEatFunction INSTANCE = new AutoEatFunction();
     private static final int HUNGER_THRESHOLD = 16;
-    private static final String TOOLTIP_BASE =
-            "饥饿值低于阈值（" + HUNGER_THRESHOLD + "）时自动进食（仅主副手）\n";
+    private static String TOOLTIP_BASE;
     @Getter
     private boolean eating = false;
 
     @Getter
-    private final BWList<Item> BW_LISTED_FOOD;
+    private final BWList<Item> FOOD_BLACKLIST;
 
 
     // 主手拿着这些物品时，禁止自动进食（避免右键误触发）
@@ -35,7 +34,7 @@ public class AutoEatFunction extends SymAbstractFunction {
 
     @Override
     public String describe() {
-        return TOOLTIP_BASE + BW_LISTED_FOOD.displayBlacklist(
+        return TOOLTIP_BASE + FOOD_BLACKLIST.displayBlacklist(
                 item -> BuiltInRegistries.ITEM.getKey(item).toString()
         );
     }
@@ -46,11 +45,11 @@ public class AutoEatFunction extends SymAbstractFunction {
     private boolean startedUsingItem = false;
 
     private AutoEatFunction() {
+        TOOLTIP_BASE = Tooltip.create().line("饥饿值低于阈值（" + HUNGER_THRESHOLD + "）时自动进食").toString();
         String id = "auto_eat";
-        String tooltips = "饥饿值低于阈值（" + HUNGER_THRESHOLD + "）时自动进食";
-        BW_LISTED_FOOD = new BWList<>(id);
-        super(id, "自动吃食物", tooltips);
-        BW_LISTED_FOOD.withDefaultsApplier(
+        FOOD_BLACKLIST = new BWList<>(id);
+        super(id, "自动吃食物", TOOLTIP_BASE);
+        FOOD_BLACKLIST.withDefaultsApplier(
                 AutoEatFunction::applyDefaults
         );
     }
@@ -168,11 +167,11 @@ public class AutoEatFunction extends SymAbstractFunction {
         if (stack.isEmpty()) return false;
         if (!stack.has(DataComponents.FOOD)) return false;
         if (BLOCKED_MAIN_HAND_USABLES.contains(stack.getItem())) return false;
-        return !BW_LISTED_FOOD.isBlacklisted(stack.getItem());
+        return !FOOD_BLACKLIST.isBlacklisted(stack.getItem());
     }
 
     public static void applyDefaults() {
-        INSTANCE.BW_LISTED_FOOD.addAllToBlacklist(Set.of(
+        INSTANCE.FOOD_BLACKLIST.addAllToBlacklist(Set.of(
                 Items.GOLDEN_APPLE,
                 Items.ENCHANTED_GOLDEN_APPLE,
                 Items.ROTTEN_FLESH,

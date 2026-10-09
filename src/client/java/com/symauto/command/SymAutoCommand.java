@@ -40,7 +40,7 @@ public class SymAutoCommand {
     private static final SuggestionProvider<FabricClientCommandSource> BW_FEATURES =
             (context, builder) -> {
                 builder.suggest(OneClickDiscardItemsFunction.INSTANCE.getBW_LIST().getFeatureId());
-                builder.suggest(AutoEatFunction.INSTANCE.getBW_LISTED_FOOD().getFeatureId());
+                builder.suggest(AutoEatFunction.INSTANCE.getFOOD_BLACKLIST().getFeatureId());
                 builder.suggest(AutoAttackSafetyFunction.INSTANCE.getBW_LIST().getFeatureId());
                 return builder.buildFuture();
             };
@@ -306,7 +306,7 @@ public class SymAutoCommand {
         if (featureId.equalsIgnoreCase(oneClick.getFeatureId())) {
             return itemTarget(oneClick);
         }
-        BWList<Item> autoEat = AutoEatFunction.INSTANCE.getBW_LISTED_FOOD();
+        BWList<Item> autoEat = AutoEatFunction.INSTANCE.getFOOD_BLACKLIST();
         if (featureId.equalsIgnoreCase(autoEat.getFeatureId())) {
             return itemTarget(autoEat);
         }

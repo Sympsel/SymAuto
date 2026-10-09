@@ -3,8 +3,10 @@ package com.symauto.function.functions;
 import com.symauto.entity.BWList;
 import com.symauto.function.FeatureConfig;
 import com.symauto.function.abstracts.SymAbstractFunction;
+import com.symauto.function.utils.Tooltip;
 import com.symauto.mixin.MinecraftInvoker;
 import lombok.Getter;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.entity.Entity;
@@ -17,9 +19,12 @@ public class AutoAttackSafetyFunction extends SymAbstractFunction {
     public static final AutoAttackSafetyFunction INSTANCE = new AutoAttackSafetyFunction();
     @Getter
     private final BWList<EntityType<?>> BW_LIST = new BWList<>("auto_attack_safety_blacklist");
-    private static final String TOOLTIP_BASE = "§a自适应攻速，防检测\n§e推荐使用此版本\n";
+    private static String TOOLTIP_BASE;
 
     private AutoAttackSafetyFunction() {
+        TOOLTIP_BASE = Tooltip.create()
+                .line(ChatFormatting.GREEN, "自适应攻速，防检测")
+                .line(ChatFormatting.GRAY, "推荐使用此版本").toString();
         super("auto_attack_safety", "自动攻击(安全版)",
                 TOOLTIP_BASE);
         BW_LIST.withDefaultsApplier(() -> {

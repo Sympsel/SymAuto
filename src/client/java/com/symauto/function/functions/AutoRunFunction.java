@@ -3,6 +3,7 @@ package com.symauto.function.functions;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.symauto.config.SymAutoKeys;
 import com.symauto.function.abstracts.SymAbstractFunction;
+import com.symauto.function.utils.Tooltip;
 import lombok.Getter;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.KeyMapping;
@@ -15,7 +16,7 @@ public class AutoRunFunction extends SymAbstractFunction {
     @Getter
     private boolean isActive = false;
     private AutoRunFunction() {
-        super("auto_run", "自动跑路", "按下 Ctrl + W 激活，并自动八向校正视角，再次按下取消，建议搭配自动搭路实现挂机");
+        super("auto_run", "自动跑路", Tooltip.create().line( "按下 Ctrl + W 激活，并自动八向校正视角，再次按下取消，建议搭配自动搭路实现挂机").toString());
         this.toggleKey = new KeyMapping(
                 "key.symauto.auto_run",
                 InputConstants.Type.KEYSYM,

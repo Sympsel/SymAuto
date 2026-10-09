@@ -2,8 +2,10 @@ package com.symauto.function.functions;
 
 import com.symauto.entity.SymFunctionTags;
 import com.symauto.function.abstracts.SymAbstractFunction;
+import com.symauto.function.utils.Tooltip;
 import lombok.Getter;
 import lombok.Setter;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 
 public class FixYPlaceOrDestroyFunction extends SymAbstractFunction {
@@ -21,7 +23,11 @@ public class FixYPlaceOrDestroyFunction extends SymAbstractFunction {
 
     private FixYPlaceOrDestroyFunction() {
         super("fix_y_place_or_destroy", "锁定 Y 轴放置/破坏",
-                "每次长按破坏/放置按键会阻止影响首次破坏/放置的Y轴之外的方块\n如果与投影的轻松放置冲突，需要启用“轻松放置-重写后（Easy Place - Easy Place Post Rewrite）");
+                Tooltip.create()
+                        .line("每次长按破坏/放置按键会阻止影响首次破坏/放置的Y轴之外的方块")
+                        .line(ChatFormatting.YELLOW, "如果与投影的轻松放置冲突，需要启用“轻松放置-重写后（Easy Place - Easy Place Post Rewrite）")
+                        .toString()
+        );
     }
 
     @Override

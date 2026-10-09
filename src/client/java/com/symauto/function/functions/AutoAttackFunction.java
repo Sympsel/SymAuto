@@ -2,6 +2,8 @@ package com.symauto.function.functions;
 
 import com.symauto.function.FeatureConfig;
 import com.symauto.function.abstracts.SymAbstractFunction;
+import com.symauto.function.utils.Tooltip;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
 
@@ -12,8 +14,11 @@ public class AutoAttackFunction extends SymAbstractFunction {
     public static final AutoAttackFunction INSTANCE = new AutoAttackFunction();
 
     private AutoAttackFunction() {
+        Tooltip tooltip = Tooltip.create().line(ChatFormatting.RED, "⚠ 警告")
+                .line(ChatFormatting.WHITE, "此版本直接为了可以后台挂机，没有封包，会被反作弊检测！");
+        tooltip.line(ChatFormatting.YELLOW, "请改用「自动攻击(安全版)」或者仅在单人游戏下使用");
         super("auto_attack", "自动攻击§c(危险)", false,
-                "§c⚠ 警告：此版本直接为了可以后台挂机，没有封包，会被反作弊检测！\n§c⚠ 请改用「自动攻击(安全版)」或者仅在单人游戏下使用");
+                tooltip.toString());
     }
 
     @Override
