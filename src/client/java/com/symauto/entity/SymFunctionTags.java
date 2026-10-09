@@ -20,7 +20,7 @@ public class SymFunctionTags {
     public static final int HUD = 6;
 
     public static final String[] LABELS = {
-            "其它", "挂机", "生电", "建筑和破坏", "便捷操作", "HUD"
+            "其它", "挂机", "生电", "建筑和破坏", "便捷操作", "计算", "HUD"
     };
     // 标签数量
     public static final int COUNT = LABELS.length;
