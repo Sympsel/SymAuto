@@ -1,6 +1,7 @@
 package com.symauto.function.functions;
 
 import com.symauto.config.VillagerTradeStore;
+import com.symauto.config.option.BooleanOption;
 import com.symauto.config.option.IntOption;
 import com.symauto.entity.BWList;
 import com.symauto.function.abstracts.HighLightFunction;
@@ -37,7 +38,7 @@ public class HighLightSpecificVillagersFunction extends HighLightFunction {
     // 配置项：是否仅高亮拥有更高相关附魔村民
     @Getter
     @Setter
-    private boolean onlyNeedBetterEnchantment = true;
+    private boolean onlyNeedBetterEnchantment;
     // 配置项：是否在非创造模式下排除带有冲突附魔的村民
     @Getter
     @Setter
@@ -65,6 +66,10 @@ public class HighLightSpecificVillagersFunction extends HighLightFunction {
         ));
         addOption(new IntOption("scan_radius", "扫描半径",
                 this::getScanRadius, this::setScanRadius, 1, 50, 1));
+        addOption(new BooleanOption("only_need_better_enchantment", "仅高亮拥有更高相关附魔村民",
+                this::isOnlyNeedBetterEnchantment, this::setOnlyNeedBetterEnchantment, true));
+        addOption(new BooleanOption("intercepting_conflicting_enchantment", "非创造模式下排除带有冲突附魔的村民",
+                this::isInterceptingConflictingEnchantment, this::setInterceptingConflictingEnchantment, true));
     }
 
     @Override

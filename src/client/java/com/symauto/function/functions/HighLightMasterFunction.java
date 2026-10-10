@@ -1,5 +1,6 @@
 package com.symauto.function.functions;
 
+import com.symauto.config.option.BooleanOption;
 import com.symauto.config.option.IntOption;
 import com.symauto.entity.BWList;
 import com.symauto.function.abstracts.HighLightFunction;
@@ -27,7 +28,9 @@ import java.util.UUID;
 public class HighLightMasterFunction extends HighLightFunction {
     public static final HighLightMasterFunction INSTANCE = new HighLightMasterFunction();
     // 配置项：是否仅在主手持有武器时才高亮
-    private static final boolean ONLY_WHEN_HOLDING_WEAPON = true;
+    @Getter
+    @Setter
+    private boolean onlyWhenHoldingWeapon;
 
     private static final Set<TagKey<Item>> WEAPON_TAGS = Set.of(
             ItemTags.SWORDS,
@@ -64,6 +67,8 @@ public class HighLightMasterFunction extends HighLightFunction {
         });
         addOption(new IntOption("scan_radius", "扫描半径",
                 this::getScanRadius, this::setScanRadius, 1, 50, 1));
+        addOption(new BooleanOption("only_when_holding_weapon", "仅在主手持有武器时高亮",
+                this::isOnlyWhenHoldingWeapon, this::setOnlyWhenHoldingWeapon, false));
     }
 
     @Override
@@ -71,7 +76,7 @@ public class HighLightMasterFunction extends HighLightFunction {
         int diameter = getScanRadius() * 2;
         String tooltip = Tooltip.create()
                 .line("高亮扫描范围（边长" + diameter + "格）内、分类为敌对的怪物")
-                .keyValueLine(ChatFormatting.YELLOW, "仅在主手持有武器时高亮", ChatFormatting.GRAY, ONLY_WHEN_HOLDING_WEAPON ? "是" : "否")
+                .keyValueLine(ChatFormatting.YELLOW, "仅在主手持有武器时高亮", ChatFormatting.GRAY, onlyWhenHoldingWeapon ? "是" : "否")
                 .toString();
         tooltip += BW_LIST.displayBlacklist(type -> BuiltInRegistries.ENTITY_TYPE.getKey(type).toString());
         tooltip += BW_LIST.displayWhitelist(type -> BuiltInRegistries.ENTITY_TYPE.getKey(type).toString());
@@ -83,7 +88,7 @@ public class HighLightMasterFunction extends HighLightFunction {
         if (client.player == null) {
             return Set.of();
         }
-        if (ONLY_WHEN_HOLDING_WEAPON && !isHoldingWeapon(client.player.getMainHandItem())) {
+        if (onlyWhenHoldingWeapon && !isHoldingWeapon(client.player.getMainHandItem())) {
             return Set.of();
         }
         return scan(client, Mob.class, this::shouldHighlight);
