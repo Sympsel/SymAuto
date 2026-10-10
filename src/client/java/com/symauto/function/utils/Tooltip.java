@@ -61,6 +61,13 @@ public class Tooltip {
         return this;
     }
 
+    /**
+     * 追加一行着色的键值对文本
+     */
+    public Tooltip keyValueLine(ChatFormatting keyColor, String key, ChatFormatting valueColor, String value) {
+        return line(keyColor.toString() + key + ChatFormatting.RESET + ": " + valueColor.toString() + value + ChatFormatting.RESET);
+    }
+
     public boolean isEmpty() {
         return lines.isEmpty();
     }

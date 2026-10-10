@@ -4,6 +4,7 @@ import com.symauto.function.utils.EntityGlowRegistry;
 import com.symauto.function.utils.GlowTeam;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.scores.PlayerTeam;
+import net.minecraft.world.scores.TeamColor;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -24,9 +25,12 @@ public class EntityGlowMixin {
     private void symauto$glowTeam(CallbackInfoReturnable<PlayerTeam> cir) {
         Entity self = (Entity) (Object) this;
         if (EntityGlowRegistry.isGlowing(self.getUUID())) {
-            PlayerTeam team = GlowTeam.get();
-            if (team != null) {
-                cir.setReturnValue(team);
+            TeamColor color = EntityGlowRegistry.colorOf(self.getUUID());
+            if (color != null) {
+                PlayerTeam team = GlowTeam.get(color);
+                if (team != null) {
+                    cir.setReturnValue(team);
+                }
             }
         }
     }

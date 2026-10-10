@@ -9,7 +9,8 @@
     "MinecraftInvoker",
     "InterceptDropKeyMixin",
     "AbstractContainerScreenAccessor",
-    "EntityGlowMixin"
+    "EntityGlowMixin",
+    "MerchantScreenAccessor"
   ],
   "injectors": {
     "defaultRequire": 1

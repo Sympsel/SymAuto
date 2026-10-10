@@ -26,7 +26,8 @@ public class OneClickFlatItemsFunction extends SymAbstractFunction {
         super("one_click_flat_items", "一键平铺物品",
                 Tooltip.create()
                         .line("鼠标悬浮在要平铺的物品上，按下 Ctrl + A 进行平铺")
-                        .line("如果指针在容器界面则铺满容器\\n如果在背包界面则平涂背包")
+                        .line("在容器界面则铺满容器")
+                        .line("在背包界面则铺满背包")
                         .toString()
         );
         this.key = new KeyMapping(

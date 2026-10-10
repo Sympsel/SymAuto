@@ -40,6 +40,7 @@ public class UpdateMessageManager {
 
     private void setUpdateMessages() {
         updateMessages.clear();
+        addUpdateMessage("[2026-10-10][v26.2-2.13.1] 添加新功能：手持武器时高亮周围怪物");
         addUpdateMessage("[2026-10-09][v26.2-2.12.2] 重写了tooltip的格式");
         addUpdateMessage("[2026-10-09][v26.2-2.12.1] 添加新功能：高亮显示当前卖手持物品可附魔的附魔书的村民，需要手动打开一遍村民交易列表记录数据");
         addUpdateMessage("[2026-10-08][v26.2-2.11.2] 添加新功能：快速跑路（Ctrl + W 激活，再按取消激活，支持八向防偏航，建议搭配自动搭路使用）");

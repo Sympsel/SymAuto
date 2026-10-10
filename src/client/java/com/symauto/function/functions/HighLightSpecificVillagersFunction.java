@@ -2,7 +2,7 @@ package com.symauto.function.functions;
 
 import com.symauto.config.VillagerTradeStore;
 import com.symauto.entity.BWList;
-import com.symauto.function.abstracts.SymAbstractFunction;
+import com.symauto.function.abstracts.HighLightFunction;
 import com.symauto.function.utils.EntityGlowRegistry;
 import com.symauto.function.utils.ItemUtils;
 import com.symauto.function.utils.Tooltip;
@@ -19,19 +19,22 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.Enchantments;
+import net.minecraft.world.scores.TeamColor;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-public class HighLightSpecificVillagersFunction extends SymAbstractFunction {
+public class HighLightSpecificVillagersFunction extends HighLightFunction {
     public static final HighLightSpecificVillagersFunction INSTANCE = new HighLightSpecificVillagersFunction();
     private static final int SCAN_RADIUS = 30;
-    private static String TOOLTIP = "高亮曾交易过、且出售与主手物品相关附魔书的村民\n";
+    private static final String GLOW_SOURCE = "high_light_specific_villagers";
+
 
     // 配置项：是否仅高亮拥有更高相关附魔村民
     private static final boolean ONLY_NEED_BETTER_ENCHANTMENT = true;
+    // 配置项：是否在非创造模式下排除带有冲突附魔的村民
     private static final boolean INTERCEPTING_CONFLICT_ENCHANTMENT = true;
 
     // 原版附魔互斥集
@@ -44,7 +47,11 @@ public class HighLightSpecificVillagersFunction extends SymAbstractFunction {
 
     private HighLightSpecificVillagersFunction() {
         String id = "high_light_specific_villagers";
-        super(id, "高亮特定村民", true, TOOLTIP);
+        super("high_light_specific_villagers",
+                "高亮特定村民",
+                true,
+                SCAN_RADIUS,
+                Tooltip.create().line("高亮曾交易过、且出售与主手物品相关附魔书的村民").toString());
         ENCHANTMENT_BLACKLIST = new BWList<>(id);
         // 绑定诅咒、消失诅咒
         ENCHANTMENT_BLACKLIST.addAllToBlacklist(Set.of(
@@ -55,36 +62,33 @@ public class HighLightSpecificVillagersFunction extends SymAbstractFunction {
 
     @Override
     protected String describe() {
+        int diameter = getScanRadius() * 2;
         return Tooltip.create()
-                .line("主手持可附魔物品时，高亮扫描范围（边长" + SCAN_RADIUS * 2 + "格）内、你曾打开过交易且出售相关附魔书的村民")
-                .line(ChatFormatting.DARK_BLUE, "仅高亮拥有更高相关附魔村民：" + (ONLY_NEED_BETTER_ENCHANTMENT ? "是" : "否"))
-                .line(ChatFormatting.DARK_BLUE, "非创造模式下排除带有冲突附魔的村民：" + (INTERCEPTING_CONFLICT_ENCHANTMENT ? "是" : "否"))
+                .line("主手持可附魔物品时，高亮扫描范围（边长" + diameter + "格）内、你曾打开过交易且出售相关附魔书的村民")
+                .keyValueLine(ChatFormatting.YELLOW, "仅高亮拥有更高等级相关附魔村民", ChatFormatting.GRAY, ONLY_NEED_BETTER_ENCHANTMENT ? "是" : "否")
+                .keyValueLine(ChatFormatting.YELLOW, "非创造模式下排除带有冲突附魔的村民", ChatFormatting.GRAY, INTERCEPTING_CONFLICT_ENCHANTMENT ? "是" : "否")
                 .line(ENCHANTMENT_BLACKLIST.displayBlacklist(enhancement -> enhancement.identifier().toString()))
                 .toString();
     }
 
     @Override
-    protected void onTrigger(Minecraft client) {
-        if (client.player == null || client.level == null) {
-            EntityGlowRegistry.clear();
-            return;
+    protected @Nullable Set<UUID> collectGlowIds(Minecraft client) {
+        if (client.player == null || client.level == null || client.gameMode == null) {
+            return Set.of();
         }
         ItemStack stack = client.player.getMainHandItem();
-        Item mainHandItem = stack.isEmpty() ? null : stack.getItem();
-
-        Set<UUID> glowIds = new HashSet<>();
-        if (mainHandItem != null) {
-            // 从世界的 RegistryAccess 获取附魔的动态注册表
-            HolderLookup.RegistryLookup<Enchantment> enchantmentRegistry =
-                    client.level.registryAccess().lookupOrThrow(Registries.ENCHANTMENT);
-            for (Villager villager : client.level.getEntitiesOfClass(
-                    Villager.class, client.player.getBoundingBox().inflate(SCAN_RADIUS))) {
-                if (hasCachedRelevantTrade(enchantmentRegistry, villager.getUUID(), stack, client.player.isCreative())) {
-                    glowIds.add(villager.getUUID());
-                }
-            }
+        if (stack.isEmpty()) {
+            return Set.of();
         }
-        EntityGlowRegistry.replace(glowIds);
+        HolderLookup.RegistryLookup<Enchantment> enchantments =
+                client.level.registryAccess().lookupOrThrow(Registries.ENCHANTMENT);
+        boolean isCreative = client.player.isCreative();
+        return scan(client, Villager.class, villager -> hasCachedRelevantTrade(enchantments, villager.getUUID(), stack, isCreative));
+    }
+
+    @Override
+    protected TeamColor glowColor() {
+        return TeamColor.AQUA;
     }
 
     private boolean hasCachedRelevantTrade(HolderLookup.RegistryLookup<Enchantment> enchantmentRegistry,
@@ -150,6 +154,6 @@ public class HighLightSpecificVillagersFunction extends SymAbstractFunction {
 
     @Override
     protected void onDisable() {
-        EntityGlowRegistry.clear();
+        EntityGlowRegistry.clear(GLOW_SOURCE);
     }
 }

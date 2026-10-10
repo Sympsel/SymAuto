@@ -118,15 +118,16 @@ public class CommandUsageScreen extends Screen {
         lines.add(cmd("/sa bwlist <feature> <blacklist|whitelist> add|remove <id>", "增删一个条目（id 为物品或实体类型）"));
         lines.add(spacer());
 
+        lines.add(section("村民交易缓存"));
+        lines.add(cmd("/sa trades count", "查看已缓存的村民交易条数"));
+        lines.add(cmd("/sa trades clear", "清空全部村民交易缓存（清空后需重新打开交易列表才会再次高亮）"));
+
         lines.add(plain("可管理的名单 feature：", ChatFormatting.YELLOW));
         lines.add(plain("  · auto_eat（黑名单，物品）", ChatFormatting.DARK_GRAY));
         lines.add(plain("  · one_click_discard_items_whitelist（白名单，物品）", ChatFormatting.DARK_GRAY));
         lines.add(plain("  · auto_attack_safety_blacklist（黑名单，实体类型）", ChatFormatting.DARK_GRAY));
         lines.add(spacer());
 
-        lines.add(section("村民交易缓存"));
-        lines.add(cmd("/sa trades count", "查看已缓存的村民交易条数"));
-        lines.add(cmd("/sa trades clear", "清空全部村民交易缓存（清空后需重新打开交易列表才会再次高亮）"));
         return lines;
     }
 
