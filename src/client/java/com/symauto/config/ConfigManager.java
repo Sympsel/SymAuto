@@ -5,9 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.symauto.entity.BWList;
 import com.symauto.function.FeatureConfig;
 import com.symauto.function.abstracts.SymAbstractFunction;
-import com.symauto.function.functions.AutoAttackSafetyFunction;
-import com.symauto.function.functions.AutoEatFunction;
-import com.symauto.function.functions.OneClickDiscardItemsFunction;
+import com.symauto.function.functions.*;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
@@ -38,7 +36,9 @@ public class ConfigManager {
             type -> BuiltInRegistries.ENTITY_TYPE.getKey(type).toString();
     private static final Function<String, EntityType<?>> ENTITY_FROM_ID = ConfigManager::parseEntityType;
 
-    /** 描述一个黑白名单如何与磁盘上的独立 JSON 文件互转 */
+    /**
+     * 描述一个黑白名单如何与磁盘上的独立 JSON 文件互转
+     */
     private record BWListHandle<T>(BWList<T> list, Function<T, String> toId, Function<String, T> fromId) {
         String featureId() {
             return list.getFeatureId();
@@ -48,7 +48,9 @@ public class ConfigManager {
     private static final List<BWListHandle<?>> BW_LISTS = List.of(
             new BWListHandle<>(OneClickDiscardItemsFunction.INSTANCE.getBW_LIST(), ITEM_TO_ID, ITEM_FROM_ID),
             new BWListHandle<>(AutoEatFunction.INSTANCE.getFOOD_BLACKLIST(), ITEM_TO_ID, ITEM_FROM_ID),
-            new BWListHandle<>(AutoAttackSafetyFunction.INSTANCE.getBW_LIST(), ENTITY_TO_ID, ENTITY_FROM_ID)
+            new BWListHandle<>(HighLightItemDropFunction.INSTANCE.getWHITE_LIST(), ITEM_TO_ID, ITEM_FROM_ID),
+            new BWListHandle<>(AutoAttackSafetyFunction.INSTANCE.getBW_LIST(), ENTITY_TO_ID, ENTITY_FROM_ID),
+            new BWListHandle<>(HighLightMasterFunction.INSTANCE.getBW_LIST(), ENTITY_TO_ID, ENTITY_FROM_ID)
     );
 
     public static void load() {

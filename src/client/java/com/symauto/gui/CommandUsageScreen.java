@@ -1,5 +1,6 @@
 package com.symauto.gui;
 
+import com.symauto.command.SymAutoCommand;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
@@ -56,7 +57,7 @@ public class CommandUsageScreen extends Screen {
         int maxWidth = this.width - 2 * SIDE_PAD;
 
         List<FormattedCharSequence> allLines = new ArrayList<>();
-        for (Component entry : buildEntries()) {
+        for (Component entry : SymAutoCommand.usageLines()) {
             List<FormattedCharSequence> wrapped = this.font.split(entry, maxWidth);
             if (wrapped.isEmpty()) {
                 allLines.add(Component.literal(" ").getVisualOrderText());
@@ -96,55 +97,5 @@ public class CommandUsageScreen extends Screen {
     @Override
     public void onClose() {
         this.minecraft.gui.setScreen(parent);
-    }
-
-
-    private static List<Component> buildEntries() {
-        List<Component> lines = new ArrayList<>();
-        lines.add(section("—— 客户端命令（前缀 /symauto，简写 /sa）——"));
-        lines.add(plain("均为客户端命令，单人/联机均可使用", ChatFormatting.GRAY));
-        lines.add(spacer());
-
-        lines.add(section("功能管理"));
-        lines.add(cmd("/sa list", "列出全部功能及其开关状态"));
-        lines.add(cmd("/sa info <feature>", "查看指定功能的详细信息与说明"));
-        lines.add(cmd("/sa enable <feature> [true|false]", "查询或设置某功能的开关；不带参数则查询"));
-        lines.add(cmd("/sa toggle <feature>", "切换某功能的开关状态"));
-        lines.add(spacer());
-
-        lines.add(section("黑白名单"));
-        lines.add(cmd("/sa bwlist <feature> <blacklist|whitelist> list", "查看指定名单的全部条目"));
-        lines.add(cmd("/sa bwlist <feature> <blacklist|whitelist> clear", "清空指定名单"));
-        lines.add(cmd("/sa bwlist <feature> <blacklist|whitelist> add|remove <id>", "增删一个条目（id 为物品或实体类型）"));
-        lines.add(spacer());
-
-        lines.add(section("村民交易缓存"));
-        lines.add(cmd("/sa trades count", "查看已缓存的村民交易条数"));
-        lines.add(cmd("/sa trades clear", "清空全部村民交易缓存（清空后需重新打开交易列表才会再次高亮）"));
-
-        lines.add(plain("可管理的名单 feature：", ChatFormatting.YELLOW));
-        lines.add(plain("  · auto_eat（黑名单，物品）", ChatFormatting.DARK_GRAY));
-        lines.add(plain("  · one_click_discard_items_whitelist（白名单，物品）", ChatFormatting.DARK_GRAY));
-        lines.add(plain("  · auto_attack_safety_blacklist（黑名单，实体类型）", ChatFormatting.DARK_GRAY));
-        lines.add(spacer());
-
-        return lines;
-    }
-
-    private static Component section(String text) {
-        return Component.literal(text).withStyle(ChatFormatting.BOLD, ChatFormatting.GREEN);
-    }
-
-    private static Component plain(String text, ChatFormatting color) {
-        return Component.literal(text).withStyle(color);
-    }
-
-    private static Component cmd(String usage, String desc) {
-        return Component.literal(usage).withStyle(ChatFormatting.YELLOW)
-                .append(Component.literal("  " + desc).withStyle(ChatFormatting.WHITE));
-    }
-
-    private static Component spacer() {
-        return Component.literal(" ");
     }
 }

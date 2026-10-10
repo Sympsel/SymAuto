@@ -10,17 +10,18 @@ import com.symauto.config.VillagerTradeStore;
 import com.symauto.entity.BWList;
 import com.symauto.function.FeatureConfig;
 import com.symauto.function.abstracts.SymAbstractFunction;
-import com.symauto.function.functions.AutoAttackSafetyFunction;
-import com.symauto.function.functions.AutoEatFunction;
-import com.symauto.function.functions.OneClickDiscardItemsFunction;
+import com.symauto.function.functions.*;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.Item;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 
@@ -29,6 +30,25 @@ import static net.fabricmc.fabric.api.client.command.v2.ClientCommands.literal;
 
 
 public class SymAutoCommand {
+    /**
+     * 泛型目标：BWList + 其序列化/解析适配器 + 名词标签。
+     */
+    private record BWTarget<T>(BWList<T> list, Function<T, String> toId, Function<String, T> parser, String noun, boolean isEntity) {
+
+        String featureId() {
+            return list.getFeatureId();
+        }
+    }
+
+    // 黑白名单数据源
+    private static final List<BWTarget<?>> BW_TARGETS = List.of(
+            itemTarget(OneClickDiscardItemsFunction.INSTANCE.getBW_LIST()),
+            itemTarget(AutoEatFunction.INSTANCE.getFOOD_BLACKLIST()),
+            itemTarget(HighLightItemDropFunction.INSTANCE.getWHITE_LIST()),
+            entityTarget(AutoAttackSafetyFunction.INSTANCE.getBW_LIST()),
+            entityTarget(HighLightMasterFunction.INSTANCE.getBW_LIST())
+    );
+
     private static final SuggestionProvider<FabricClientCommandSource> FEATURE_IDS =
             (context, builder) -> {
                 for (SymAbstractFunction f : FeatureConfig.AUTO_ALL) {
@@ -39,9 +59,9 @@ public class SymAutoCommand {
 
     private static final SuggestionProvider<FabricClientCommandSource> BW_FEATURES =
             (context, builder) -> {
-                builder.suggest(OneClickDiscardItemsFunction.INSTANCE.getBW_LIST().getFeatureId());
-                builder.suggest(AutoEatFunction.INSTANCE.getFOOD_BLACKLIST().getFeatureId());
-                builder.suggest(AutoAttackSafetyFunction.INSTANCE.getBW_LIST().getFeatureId());
+                for (BWTarget<?> t : BW_TARGETS) {
+                    builder.suggest(t.featureId());
+                }
                 return builder.buildFuture();
             };
 
@@ -282,37 +302,25 @@ public class SymAutoCommand {
     }
 
     private static boolean isEntityFeature(String featureId) {
-        return featureId != null
-                && featureId.equalsIgnoreCase(AutoAttackSafetyFunction.INSTANCE.getBW_LIST().getFeatureId());
-    }
-
-    /** 泛型目标：BWList + 其序列化/解析适配器 + 名词标签。 */
-    private static final class BWTarget<T> {
-        final BWList<T> list;
-        final Function<T, String> toId;
-        final Function<String, T> parser;
-        final String noun;
-
-        BWTarget(BWList<T> list, Function<T, String> toId, Function<String, T> parser, String noun) {
-            this.list = list;
-            this.toId = toId;
-            this.parser = parser;
-            this.noun = noun;
+        if (featureId == null) {
+            return false;
         }
+        for (BWTarget<?> t : BW_TARGETS) {
+            if (t.featureId().equalsIgnoreCase(featureId)) {
+                return t.isEntity;
+            }
+        }
+        return false;
     }
+
+
+
 
     private static BWTarget<?> resolveTarget(String featureId) {
-        BWList<Item> oneClick = OneClickDiscardItemsFunction.INSTANCE.getBW_LIST();
-        if (featureId.equalsIgnoreCase(oneClick.getFeatureId())) {
-            return itemTarget(oneClick);
-        }
-        BWList<Item> autoEat = AutoEatFunction.INSTANCE.getFOOD_BLACKLIST();
-        if (featureId.equalsIgnoreCase(autoEat.getFeatureId())) {
-            return itemTarget(autoEat);
-        }
-        BWList<EntityType<?>> safety = AutoAttackSafetyFunction.INSTANCE.getBW_LIST();
-        if (featureId.equalsIgnoreCase(safety.getFeatureId())) {
-            return entityTarget(safety);
+        for (BWTarget<?> t : BW_TARGETS) {
+            if (t.featureId().equalsIgnoreCase(featureId)) {
+                return t;
+            }
         }
         return null;
     }
@@ -321,14 +329,18 @@ public class SymAutoCommand {
         return new BWTarget<>(list,
                 item -> BuiltInRegistries.ITEM.getKey(item).toString(),
                 SymAutoCommand::parseItem,
-                "物品");
+                "物品",
+                false
+        );
     }
 
     private static BWTarget<EntityType<?>> entityTarget(BWList<EntityType<?>> list) {
         return new BWTarget<>(list,
                 type -> BuiltInRegistries.ENTITY_TYPE.getKey(type).toString(),
                 SymAutoCommand::parseEntityType,
-                "实体类型");
+                "实体类型",
+                true
+        );
     }
 
     private static Item parseItem(String id) {
@@ -346,4 +358,52 @@ public class SymAutoCommand {
         }
         return BuiltInRegistries.ENTITY_TYPE.getOptional(identifier).orElse(null);
     }
+
+    // 供 CommandUsageScreen 渲染
+    public static List<Component> usageLines() {
+        List<Component> lines = new ArrayList<>();
+        lines.add(section("—— 客户端命令（前缀 /symauto，简写 /sa）——"));
+        lines.add(plain("均为客户端命令，单人/联机均可使用", ChatFormatting.GRAY));
+        lines.add(spacer());
+
+        lines.add(section("功能管理"));
+        lines.add(cmd("/sa list", "列出全部功能及其开关状态"));
+        lines.add(cmd("/sa info <feature>", "查看指定功能的详细信息与说明"));
+        lines.add(cmd("/sa enable <feature> [true|false]", "查询或设置某功能的开关；不带参数则查询"));
+        lines.add(cmd("/sa toggle <feature>", "切换某功能的开关状态"));
+        lines.add(spacer());
+
+        lines.add(section("黑白名单"));
+        lines.add(cmd("/sa bwlist <feature> <blacklist|whitelist> list", "查看指定名单的全部条目"));
+        lines.add(cmd("/sa bwlist <feature> <blacklist|whitelist> clear", "清空指定名单"));
+        lines.add(cmd("/sa bwlist <feature> <blacklist|whitelist> add|remove <id>", "增删一个条目（id 为物品或实体类型）"));
+        lines.add(plain("可管理的名单 feature（由命令注册自动列出）：", ChatFormatting.YELLOW));
+        for (BWTarget<?> t : BW_TARGETS) {
+            lines.add(plain("  · " + t.featureId() + "（" + t.noun + "）", ChatFormatting.DARK_GRAY));
+        }
+        lines.add(spacer());
+
+        lines.add(section("村民交易缓存"));
+        lines.add(cmd("/sa trades count", "查看已缓存的村民交易条数"));
+        lines.add(cmd("/sa trades clear", "清空全部村民交易缓存（清空后需重新打开交易列表才会再次高亮）"));
+        return lines;
+    }
+
+    private static Component section(String text) {
+        return Component.literal(text).withStyle(ChatFormatting.BOLD, ChatFormatting.GREEN);
+    }
+
+    private static Component plain(String text, ChatFormatting color) {
+        return Component.literal(text).withStyle(color);
+    }
+
+    private static Component cmd(String usage, String desc) {
+        return Component.literal(usage).withStyle(ChatFormatting.YELLOW)
+                .append(Component.literal("  " + desc).withStyle(ChatFormatting.WHITE));
+    }
+
+    private static Component spacer() {
+        return Component.literal(" ");
+    }
+
 }

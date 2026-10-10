@@ -3,7 +3,6 @@ package com.symauto.entity;
 import com.symauto.function.utils.Tooltip;
 import lombok.Getter;
 import net.minecraft.ChatFormatting;
-import net.minecraft.core.registries.BuiltInRegistries;
 
 import java.util.HashSet;
 import java.util.Set;
