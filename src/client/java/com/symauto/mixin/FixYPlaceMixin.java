@@ -20,8 +20,6 @@ public class FixYPlaceMixin {
     private void onUseItemOn(LocalPlayer player, InteractionHand hand,
                              BlockHitResult blockHit,
                              CallbackInfoReturnable<InteractionResult> cir) {
-        System.out.println("[SymAuto] onUseItemOn fired, enable="
-                + FeatureConfig.FIX_Y_PLACE_OR_DESTROY_FUNCTION.isEnable());
         if (!FeatureConfig.FIX_Y_PLACE_OR_DESTROY_FUNCTION.isEnable()) {
             return;
         }

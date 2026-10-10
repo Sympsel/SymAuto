@@ -3,14 +3,21 @@ package com.symauto.function.utils;
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ItemContainerContents;
+import net.minecraft.world.item.crafting.*;
 import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.ShulkerBoxBlock;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class ItemUtils {
     private ItemUtils() {
@@ -110,5 +117,68 @@ public class ItemUtils {
         Enchantment.EnchantmentDefinition def = enchantment.definition();
         HolderSet<Item> supportedItem = def.supportedItems();
         return supportedItem.contains(BuiltInRegistries.ITEM.wrapAsHolder(item));
+    }
+
+    public static boolean hasMaterialsToCraft(Player player, ItemStack stack) {
+        if (player == null || stack.isEmpty()) {
+            return false;
+        }
+        Level level = player.level();
+        RecipeAccess access = level.recipeAccess();
+        for (RecipeHolder<?> holder : access.getSynchronizedRecipes().recipes()) {
+            if (!(holder.value() instanceof CraftingRecipe recipe)) {
+                continue;
+            }
+            ItemStack result = recipe.assemble(CraftingInput.EMPTY);
+            if (result.isEmpty() || !ItemStack.isSameItem(result, stack)) {
+                continue;
+            }
+            int perCraft = Math.max(1, result.getCount());
+            int crafts = (stack.getCount() + perCraft - 1) / perCraft;
+            if (hasIngredientsFor(recipe.placementInfo().ingredients(), player, crafts)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // craftingTimes 模拟合成次数
+    private static boolean hasIngredientsFor(List<Ingredient> ingredients, Player player, int craftingTimes) {
+        List<Ingredient> demands = new ArrayList<>();
+        for (Ingredient ingredient : ingredients) {
+            if (ingredient.isEmpty()) {
+                continue;
+            }
+            for (int i = 0; i < craftingTimes; i++) {
+                demands.add(ingredient);
+            }
+        }
+        if (demands.isEmpty()) {
+            return false;
+        }
+
+        Inventory inventory = player.getInventory();
+        int size = inventory.getContainerSize();
+        ItemStack[] stacks = new ItemStack[size];
+        int[] remaining = new int[size];
+        for (int i = 0; i < size; i++) {
+            ItemStack slotStack = inventory.getItem(i);
+            stacks[i] = slotStack;
+            remaining[i] = slotStack.isEmpty() ? 0 : slotStack.getCount();
+        }
+
+        for (Ingredient need : demands) {
+            boolean satisfied = false;
+            for (int i = 0; i < size && !satisfied; i++) {
+                if (remaining[i] > 0 && need.test(stacks[i])) {
+                    remaining[i]--;
+                    satisfied = true;
+                }
+            }
+            if (!satisfied) {
+                return false;
+            }
+        }
+        return true;
     }
 }

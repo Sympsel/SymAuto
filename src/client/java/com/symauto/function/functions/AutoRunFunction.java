@@ -18,7 +18,7 @@ public class AutoRunFunction extends SymAbstractFunction {
     public static final AutoRunFunction INSTANCE = new AutoRunFunction();
     @Getter
     @Setter
-    private boolean autoFixedScreen = false;
+    private boolean autoFixedScreen = true;
     private final KeyMapping toggleKey;
     @Getter
     private boolean isActive = false;

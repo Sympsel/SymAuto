@@ -29,6 +29,9 @@ public class FeatureConfig {
     public static final SymAbstractFunction AUTO_FILL_ITEM_CLASSIFICATION_MACHINE_FUNCTION = AutoFillItemClassificationMachineFunction.INSTANCE
             .addTag(SymFunctionTags.CONVENIENCE_OPERATION)
             .addTag(SymFunctionTags.PRODUCING);
+    public static final SymAbstractFunction AUTO_CRAFT_TRANSMITTER_FUNCTION = AutoCraftTransmitterFunction.INSTANCE
+            .addTag(SymFunctionTags.CONVENIENCE_OPERATION)
+            .addTag(SymFunctionTags.PRODUCING);
     public static final SymAbstractFunction ONE_CLICK_DISCARD_ITEMS_FUNCTION = OneClickDiscardItemsFunction.INSTANCE
             .addTag(SymFunctionTags.CONVENIENCE_OPERATION);
     public static final SymAbstractFunction ONE_CLICK_DISCARD_SAME_ITEMS_FUNCTION = OneClickDiscardSameItemsFunction.INSTANCE
@@ -66,6 +69,7 @@ public class FeatureConfig {
             AUTO_SWIFT_SAME_ITEMS_TO_CONTAINER_FUNCTION,
             AUTO_SWIFT_SAME_ITEMS_TO_INVENTORY_FUNCTION,
             AUTO_FILL_ITEM_CLASSIFICATION_MACHINE_FUNCTION,
+            AUTO_CRAFT_TRANSMITTER_FUNCTION,
             ONE_CLICK_DISCARD_ITEMS_FUNCTION,
             ONE_CLICK_DISCARD_SAME_ITEMS_FUNCTION,
             ONE_CLICK_FLAT_ITEMS_FUNCTION,

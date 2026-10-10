@@ -6,6 +6,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.CraftingScreen;
 import net.minecraft.world.inventory.CraftingMenu;
 
+@Deprecated
 public class OneClickAggregation extends SymAbstractFunction {
     public static final OneClickAggregation INSTANCE = new OneClickAggregation();
 
