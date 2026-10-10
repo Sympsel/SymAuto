@@ -1,5 +1,6 @@
 package com.symauto.function.abstracts;
 
+import com.symauto.config.option.ConfigOption;
 import com.symauto.entity.TagList;
 import com.symauto.function.FeatureConfig;
 import com.symauto.function.utils.Tooltip;
@@ -11,10 +12,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public abstract class SymAbstractFunction {
@@ -30,12 +28,14 @@ public abstract class SymAbstractFunction {
     private String baseToolTip;
     @Getter
     private boolean enable = false;
-    @Getter
-    private final boolean isConfigurable;
 
     // 标签 - 用于分类
     @Getter
     protected TagList tags = new TagList();
+
+    // 可配置项
+    @Getter
+    private final List<ConfigOption> configOptions = new ArrayList<>();
 
     public enum ScreenContext {
         NO_SCREEN, //无界面
@@ -43,15 +43,10 @@ public abstract class SymAbstractFunction {
         CONTAINER_SCREEN // 抽象容器界面
     }
 
-    protected SymAbstractFunction(String id, String name, String tooltip) {
-        this(id, name, false, tooltip);
-    }
-
-    protected SymAbstractFunction(String id, String name, boolean isConfigurable, String baseToolTip) {
+    protected SymAbstractFunction(String id, String name, String baseToolTip) {
         this.id = id;
         this.name = name;
         this.baseToolTip = baseToolTip;
-        this.isConfigurable = isConfigurable;
         if (REGISTRY.putIfAbsent(getClass(), this) != null) {
             throw new IllegalStateException(
                     getClass().getName() + "已存在实例");
@@ -159,8 +154,17 @@ public abstract class SymAbstractFunction {
         return tags.has(tag);
     }
 
+    protected SymAbstractFunction addOption(ConfigOption option) {
+        configOptions.add(option);
+        return this;
+    }
+
+    public boolean hasConfig() {
+        return !configOptions.isEmpty();
+    }
+
     public String tooltipLineIfConfigurable() {
-        return isConfigurable
+        return hasConfig()
                 ? "左键切换开启状态，右键进入配置菜单"
                 : "左键切换开启状态";
     }

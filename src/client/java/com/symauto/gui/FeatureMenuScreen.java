@@ -9,6 +9,7 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import org.jspecify.annotations.NonNull;
 
@@ -226,6 +227,30 @@ public class FeatureMenuScreen extends Screen {
             return true;
         }
         return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
+    }
+
+    @Override
+    public boolean mouseClicked(@NonNull MouseButtonEvent event, boolean doubleClick) {
+        if (event.button() == 1) {
+            SymAbstractFunction f = findConfigurableAt(event.x(), event.y());
+            if (f != null) {
+                this.minecraft.gui.setScreen(new ConfigMenuScreen(f, this));
+                return true;
+            }
+        }
+        return super.mouseClicked(event, doubleClick);
+    }
+
+    private SymAbstractFunction findConfigurableAt(double mx, double my) {
+        for (int i = 0; i < featureButtons.size() && i < currentFunctions.size(); ++i) {
+            Button b = featureButtons.get(i);
+            if (mx >= b.getX() && mx <= b.getX() + b.getWidth()
+                    && my >= b.getY() && my <= b.getY() + b.getHeight()) {
+                SymAbstractFunction f = currentFunctions.get(i);
+                return f.hasConfig() ? f : null;
+            }
+        }
+        return null;
     }
 
     private void refreshAllButtons() {

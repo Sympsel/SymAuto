@@ -2,6 +2,7 @@ package com.symauto.config;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.symauto.config.option.ConfigOption;
 import com.symauto.entity.BWList;
 import com.symauto.function.FeatureConfig;
 import com.symauto.function.abstracts.SymAbstractFunction;
@@ -15,7 +16,9 @@ import net.minecraft.world.item.Item;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -48,7 +51,7 @@ public class ConfigManager {
     private static final List<BWListHandle<?>> BW_LISTS = List.of(
             new BWListHandle<>(OneClickDiscardItemsFunction.INSTANCE.getBW_LIST(), ITEM_TO_ID, ITEM_FROM_ID),
             new BWListHandle<>(AutoEatFunction.INSTANCE.getFOOD_BLACKLIST(), ITEM_TO_ID, ITEM_FROM_ID),
-            new BWListHandle<>(HighLightItemDropFunction.INSTANCE.getWHITE_LIST(), ITEM_TO_ID, ITEM_FROM_ID),
+            new BWListHandle<>(HighLightItemDropFunction.INSTANCE.getBW_LIST(), ITEM_TO_ID, ITEM_FROM_ID),
             new BWListHandle<>(AutoAttackSafetyFunction.INSTANCE.getBW_LIST(), ENTITY_TO_ID, ENTITY_FROM_ID),
             new BWListHandle<>(HighLightMasterFunction.INSTANCE.getBW_LIST(), ENTITY_TO_ID, ENTITY_FROM_ID)
     );
@@ -117,6 +120,13 @@ public class ConfigManager {
     private static void captureFeatures(ModConfig config) {
         for (SymAbstractFunction f : FeatureConfig.AUTO_ALL) {
             config.features.put(f.getId(), f.isEnable());
+            if (f.hasConfig()) {
+                Map<String, String> opts = new LinkedHashMap<>();
+                for (ConfigOption o : f.getConfigOptions()) {
+                    opts.put(o.getKey(), o.serialize());
+                }
+                config.featureOptions.put(f.getId(), opts);
+            }
         }
     }
 
@@ -127,6 +137,17 @@ public class ConfigManager {
                 f.setEnable(enabled);
             } else {
                 config.features.put(f.getId(), f.isEnable());
+            }
+            if (f.hasConfig()) {
+                Map<String, String> saved = config.featureOptions.get(f.getId());
+                if (saved != null) {
+                    for (ConfigOption o : f.getConfigOptions()) {
+                        String v = saved.get(o.getKey());
+                        if (v != null) {
+                            o.deserialize(v);
+                        }
+                    }
+                }
             }
         }
     }

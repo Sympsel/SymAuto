@@ -17,8 +17,7 @@ public class AutoAttackFunction extends SymAbstractFunction {
         Tooltip tooltip = Tooltip.create().line(ChatFormatting.RED, "⚠ 警告")
                 .line(ChatFormatting.WHITE, "此版本直接为了可以后台挂机，没有封包，会被反作弊检测！");
         tooltip.line(ChatFormatting.YELLOW, "请改用「自动攻击(安全版)」或者仅在单人游戏下使用");
-        super("auto_attack", "自动攻击§c(危险)", false,
-                tooltip.toString());
+        super("auto_attack", "自动攻击§c(危险)", tooltip.toString());
     }
 
     @Override

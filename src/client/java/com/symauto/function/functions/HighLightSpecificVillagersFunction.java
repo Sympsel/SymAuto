@@ -1,11 +1,14 @@
 package com.symauto.function.functions;
 
 import com.symauto.config.VillagerTradeStore;
+import com.symauto.config.option.IntOption;
 import com.symauto.entity.BWList;
 import com.symauto.function.abstracts.HighLightFunction;
 import com.symauto.function.utils.EntityGlowRegistry;
 import com.symauto.function.utils.ItemUtils;
 import com.symauto.function.utils.Tooltip;
+import lombok.Getter;
+import lombok.Setter;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.Holder;
@@ -31,11 +34,14 @@ public class HighLightSpecificVillagersFunction extends HighLightFunction {
     private static final int SCAN_RADIUS = 30;
     private static final String GLOW_SOURCE = "high_light_specific_villagers";
 
-
     // 配置项：是否仅高亮拥有更高相关附魔村民
-    private static final boolean ONLY_NEED_BETTER_ENCHANTMENT = true;
+    @Getter
+    @Setter
+    private boolean onlyNeedBetterEnchantment = true;
     // 配置项：是否在非创造模式下排除带有冲突附魔的村民
-    private static final boolean INTERCEPTING_CONFLICT_ENCHANTMENT = true;
+    @Getter
+    @Setter
+    private boolean interceptingConflictingEnchantment = true;
 
     // 原版附魔互斥集
     private static final Set<TagKey<Enchantment>> EXCLUSIVE_SETS = Set.of(
@@ -49,7 +55,6 @@ public class HighLightSpecificVillagersFunction extends HighLightFunction {
         String id = "high_light_specific_villagers";
         super("high_light_specific_villagers",
                 "高亮特定村民",
-                true,
                 SCAN_RADIUS,
                 Tooltip.create().line("高亮曾交易过、且出售与主手物品相关附魔书的村民").toString());
         ENCHANTMENT_BLACKLIST = new BWList<>(id);
@@ -58,6 +63,8 @@ public class HighLightSpecificVillagersFunction extends HighLightFunction {
                 Enchantments.BINDING_CURSE,
                 Enchantments.VANISHING_CURSE
         ));
+        addOption(new IntOption("scan_radius", "扫描半径",
+                this::getScanRadius, this::setScanRadius, 1, 50, 1));
     }
 
     @Override
@@ -65,8 +72,8 @@ public class HighLightSpecificVillagersFunction extends HighLightFunction {
         int diameter = getScanRadius() * 2;
         return Tooltip.create()
                 .line("主手持可附魔物品时，高亮扫描范围（边长" + diameter + "格）内、你曾打开过交易且出售相关附魔书的村民")
-                .keyValueLine(ChatFormatting.YELLOW, "仅高亮拥有更高等级相关附魔村民", ChatFormatting.GRAY, ONLY_NEED_BETTER_ENCHANTMENT ? "是" : "否")
-                .keyValueLine(ChatFormatting.YELLOW, "非创造模式下排除带有冲突附魔的村民", ChatFormatting.GRAY, INTERCEPTING_CONFLICT_ENCHANTMENT ? "是" : "否")
+                .keyValueLine(ChatFormatting.YELLOW, "仅高亮拥有更高等级相关附魔村民", ChatFormatting.GRAY, onlyNeedBetterEnchantment ? "是" : "否")
+                .keyValueLine(ChatFormatting.YELLOW, "非创造模式下排除带有冲突附魔的村民", ChatFormatting.GRAY, interceptingConflictingEnchantment ? "是" : "否")
                 .line(ENCHANTMENT_BLACKLIST.displayBlacklist(enhancement -> enhancement.identifier().toString()))
                 .toString();
     }
@@ -116,11 +123,11 @@ public class HighLightSpecificVillagersFunction extends HighLightFunction {
                     || !ItemUtils.isEnchantmentCanBeAppliedToItem(holder.value(), mainHandItem)) {
                 continue;
             }
-            if (INTERCEPTING_CONFLICT_ENCHANTMENT && !isCreative && conflictsWithHeldOther(holder, enchantmentKey, heldEnchants.keySet())) {
+            if (interceptingConflictingEnchantment && !isCreative && conflictsWithHeldOther(holder, enchantmentKey, heldEnchants.keySet())) {
                 continue;
             }
 
-            if (!ONLY_NEED_BETTER_ENCHANTMENT) {
+            if (!onlyNeedBetterEnchantment) {
                 return true;
             }
             int currentLevel = heldEnchants.getLevel(holder);

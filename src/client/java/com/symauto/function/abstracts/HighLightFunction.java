@@ -21,9 +21,11 @@ public abstract class HighLightFunction extends SymAbstractFunction {
     @Getter
     @Setter
     private TeamColor color;
+    @Getter
+    protected static final int SCAN_RADIUS = 30;
 
-    protected HighLightFunction(String id, String name, boolean isConfigurable, int scanRadius, String tooltip) {
-        super(id, name, isConfigurable, tooltip);
+    protected HighLightFunction(String id, String name, int scanRadius, String tooltip) {
+        super(id, name, tooltip);
         this.scanRadius = scanRadius;
     }
 

@@ -44,7 +44,7 @@ public class SymAutoCommand {
     private static final List<BWTarget<?>> BW_TARGETS = List.of(
             itemTarget(OneClickDiscardItemsFunction.INSTANCE.getBW_LIST()),
             itemTarget(AutoEatFunction.INSTANCE.getFOOD_BLACKLIST()),
-            itemTarget(HighLightItemDropFunction.INSTANCE.getWHITE_LIST()),
+            itemTarget(HighLightItemDropFunction.INSTANCE.getBW_LIST()),
             entityTarget(AutoAttackSafetyFunction.INSTANCE.getBW_LIST()),
             entityTarget(HighLightMasterFunction.INSTANCE.getBW_LIST())
     );

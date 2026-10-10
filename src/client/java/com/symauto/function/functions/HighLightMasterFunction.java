@@ -1,9 +1,11 @@
 package com.symauto.function.functions;
 
+import com.symauto.config.option.IntOption;
 import com.symauto.entity.BWList;
 import com.symauto.function.abstracts.HighLightFunction;
 import com.symauto.function.utils.Tooltip;
 import lombok.Getter;
+import lombok.Setter;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -24,7 +26,6 @@ import java.util.UUID;
 
 public class HighLightMasterFunction extends HighLightFunction {
     public static final HighLightMasterFunction INSTANCE = new HighLightMasterFunction();
-    private static final int SCAN_RADIUS = 30;
     // 配置项：是否仅在主手持有武器时才高亮
     private static final boolean ONLY_WHEN_HOLDING_WEAPON = true;
 
@@ -47,7 +48,6 @@ public class HighLightMasterFunction extends HighLightFunction {
     private HighLightMasterFunction() {
         super("high_light_master",
                 "高亮周围敌对生物",
-                true,
                 SCAN_RADIUS,
                 Tooltip.create()
                         .line("高亮范围内（边长" + SCAN_RADIUS * 2 + "格）的敌对怪物")
@@ -62,13 +62,15 @@ public class HighLightMasterFunction extends HighLightFunction {
                     EntityTypes.WARDEN // 监守者（不属于怪物分类，强制高亮）
             ));
         });
+        addOption(new IntOption("scan_radius", "扫描半径",
+                this::getScanRadius, this::setScanRadius, 1, 50, 1));
     }
 
     @Override
     protected String describe() {
         int diameter = getScanRadius() * 2;
         String tooltip = Tooltip.create()
-                .line("高亮扫描范围（边长" + diameter + "格）内、分类为敌对（MONSTER）的怪物")
+                .line("高亮扫描范围（边长" + diameter + "格）内、分类为敌对的怪物")
                 .keyValueLine(ChatFormatting.YELLOW, "仅在主手持有武器时高亮", ChatFormatting.GRAY, ONLY_WHEN_HOLDING_WEAPON ? "是" : "否")
                 .toString();
         tooltip += BW_LIST.displayBlacklist(type -> BuiltInRegistries.ENTITY_TYPE.getKey(type).toString());
