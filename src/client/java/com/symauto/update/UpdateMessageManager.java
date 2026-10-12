@@ -40,6 +40,7 @@ public class UpdateMessageManager {
 
     private void setUpdateMessages() {
         updateMessages.clear();
+        addUpdateMessage("[2026-10-10][v26.2-2.15.1] 为\"高亮周围玩家\"添加了是否高亮自己的配置项");
         addUpdateMessage("[2026-10-10][v26.2-2.15.1] 添加新功能：高亮周围玩家，隐身玩家会有单独的HUD显示");
         addUpdateMessage("[2026-10-10][v26.2-2.15.1] 添加新功能：自动记录死亡信息");
         addUpdateMessage("[2026-10-10][v26.2-2.14.1] 添加新功能：自动合成发射器");

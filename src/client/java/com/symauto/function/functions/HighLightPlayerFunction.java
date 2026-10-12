@@ -1,9 +1,11 @@
 package com.symauto.function.functions;
 
+import com.symauto.config.options.BooleanOption;
 import com.symauto.config.options.IntOption;
 import com.symauto.function.abstracts.HighLightFunction;
 import com.symauto.function.utils.Tooltip;
 import lombok.Getter;
+import lombok.Setter;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
@@ -18,7 +20,10 @@ public class HighLightPlayerFunction extends HighLightFunction {
 
     @Getter
     private final TeamColor highlightColor = TeamColor.DARK_GREEN;
-    private static final boolean DEBUG_MODE = false;
+
+    @Getter
+    @Setter
+    private boolean isHighlightSelf = false;
 
     @Getter
     private final Map<UUID, String> revealedIds = new HashMap<>();
@@ -34,6 +39,8 @@ public class HighLightPlayerFunction extends HighLightFunction {
                         .toString());
         addOption(new IntOption("scan_radius", "扫描半径",
                 this::getScanRadius, this::setScanRadius, 1, 50, 1));
+        addOption(new BooleanOption("is_highlight_self", "高亮自己",
+                this::isHighlightSelf, this::setHighlightSelf, false));
     }
 
     @Override
@@ -41,6 +48,8 @@ public class HighLightPlayerFunction extends HighLightFunction {
         int diameter = getScanRadius() * 2;
         return Tooltip.create()
                 .line("高亮范围（边长" + diameter + "格）内，除自己以外的其他玩家")
+                .line(ChatFormatting.GRAY, "可以高亮隐身玩家，并为其单独渲染了HUD")
+                .keyValueLine(ChatFormatting.YELLOW, "高亮自己", ChatFormatting.GRAY, isHighlightSelf ? "是" : "否")
                 .line(ChatFormatting.RED, "有反作弊服务器慎用")
                 .toString();
     }
@@ -57,7 +66,7 @@ public class HighLightPlayerFunction extends HighLightFunction {
         for (Player p : client.level.getEntitiesOfClass(Player.class,
                 client.player.getBoundingBox().inflate(getScanRadius()))) {
             if (!p.isAlive()) continue;
-            if (!DEBUG_MODE && p.getUUID().equals(self)) continue;
+            if (!isHighlightSelf && p.getUUID().equals(self)) continue;
             // 所有玩家都进入高亮集合
             out.add(p.getUUID());
             // 仅隐身玩家额外登记，用于绘制蓝色浮空名字
