@@ -76,7 +76,7 @@ public class HighLightSpecificVillagersFunction extends HighLightFunction {
     protected String describe() {
         int diameter = getScanRadius() * 2;
         return Tooltip.create()
-                .line("主手持可附魔物品时，高亮扫描范围（边长" + diameter + "格）内、你曾打开过交易且出售相关附魔书的村民")
+                .line("主手持可附魔物品时，高亮扫描范围（边长" + diameter + "格）内你曾打开过交易且出售相关附魔书的村民")
                 .keyValueLine(ChatFormatting.YELLOW, "仅高亮拥有更高等级相关附魔村民", ChatFormatting.GRAY, onlyNeedBetterEnchantment ? "是" : "否")
                 .keyValueLine(ChatFormatting.YELLOW, "非创造模式下排除带有冲突附魔的村民", ChatFormatting.GRAY, interceptingConflictingEnchantment ? "是" : "否")
                 .line(ENCHANTMENT_BLACKLIST.displayBlacklist(enhancement -> enhancement.identifier().toString()))

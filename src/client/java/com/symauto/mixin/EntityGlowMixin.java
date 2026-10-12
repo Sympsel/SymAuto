@@ -27,7 +27,7 @@ public class EntityGlowMixin {
         if (EntityGlowRegistry.isGlowing(self.getUUID())) {
             TeamColor color = EntityGlowRegistry.colorOf(self.getUUID());
             if (color != null) {
-                PlayerTeam team = GlowTeam.get(color);
+                PlayerTeam team = GlowTeam.get(color, EntityGlowRegistry.hideNameTag(self.getUUID()));
                 if (team != null) {
                     cir.setReturnValue(team);
                 }

@@ -3,6 +3,7 @@ package com.symauto.function.utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.scores.PlayerTeam;
 import net.minecraft.world.scores.Scoreboard;
+import net.minecraft.world.scores.Team;
 import net.minecraft.world.scores.TeamColor;
 
 import java.util.EnumMap;
@@ -20,7 +21,7 @@ public final class GlowTeam {
     }
 
     // 取得指定颜色的描边队伍
-    public static PlayerTeam get(TeamColor color) {
+    public static PlayerTeam get(TeamColor color, boolean hideNameTag) {
         Minecraft client = Minecraft.getInstance();
         if (client.level == null) {
             return null;
@@ -31,14 +32,16 @@ public final class GlowTeam {
             CACHE.clear();
             owner = scoreboard;
         }
-        return CACHE.computeIfAbsent(color, c -> {
+        PlayerTeam team = CACHE.computeIfAbsent(color, c -> {
             String name = PREFIX + c.name().toLowerCase(Locale.ROOT);
-            PlayerTeam team = scoreboard.getPlayerTeam(name);
-            if (team == null) {
-                team = scoreboard.addPlayerTeam(name);
+            PlayerTeam t = scoreboard.getPlayerTeam(name);
+            if (t == null) {
+                t = scoreboard.addPlayerTeam(name);
             }
-            team.setColor(Optional.of(c));
-            return team;
+            t.setColor(Optional.of(c));
+            return t;
         });
+        team.setNameTagVisibility(hideNameTag ? Team.Visibility.NEVER : Team.Visibility.ALWAYS);
+        return team;
     }
 }

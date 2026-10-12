@@ -57,6 +57,8 @@ public class FeatureConfig {
             .addTag(SymFunctionTags.HUD);
     public static final SymAbstractFunction HIGH_LIGHT_ITEM_DROP_FUNCTION = HighLightItemDropFunction.INSTANCE
             .addTag(SymFunctionTags.HUD);
+    public static final SymAbstractFunction HIGH_LIGHT_PLAYER_FUNCTION = HighLightPlayerFunction.INSTANCE
+            .addTag(SymFunctionTags.HUD);
     public static final SymAbstractFunction AUTO_RECORD_DEATH_INFO_FUNCTION = AutoRecordDeathInfoFunction.INSTANCE
             .addTag(SymFunctionTags.OTHER);
 
@@ -84,6 +86,7 @@ public class FeatureConfig {
             HIGH_LIGHT_SPECIFIC_VILLAGERS_FUNCTION,
             HIGH_LIGHT_MASTER_FUNCTION,
             HIGH_LIGHT_ITEM_DROP_FUNCTION,
+            HIGH_LIGHT_PLAYER_FUNCTION,
             AUTO_RECORD_DEATH_INFO_FUNCTION
     );
 }

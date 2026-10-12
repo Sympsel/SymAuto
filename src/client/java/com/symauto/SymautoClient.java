@@ -14,6 +14,7 @@ import com.symauto.function.utils.KeyUtils;
 import com.symauto.function.utils.ScreenUtils;
 import com.symauto.function.utils.TradeCapture;
 import com.symauto.gui.FeatureMenuScreen;
+import com.symauto.render.PlayerNameRenderer;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -106,6 +107,7 @@ public class SymautoClient implements ClientModInitializer {
         VillagerTradeStore.load();
         DeathInfoStore.load();
         SymAutoCommand.register();
+        PlayerNameRenderer.register();
     }
 
     /**

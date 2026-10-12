@@ -42,8 +42,8 @@ public abstract class HighLightFunction extends SymAbstractFunction {
             return;
         }
         Set<UUID> ids = collectGlowIds(client);
-        EntityGlowRegistry.replace(getId(), glowColor(), ids == null ? Set.of() : ids);
-    }
+        EntityGlowRegistry.replace(getId(), glowColor(), hideNameTag(), ids == null ? Set.of() : ids);
+   }
 
     protected abstract TeamColor glowColor();
 
@@ -59,6 +59,10 @@ public abstract class HighLightFunction extends SymAbstractFunction {
             }
         }
         return ids;
+    }
+
+    protected boolean hideNameTag() {
+        return false;
     }
 
 

@@ -15,17 +15,17 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class EntityGlowRegistry {
     private static final Map<String, Source> SOURCES = new ConcurrentHashMap<>();
 
-    private record Source(TeamColor color, Set<UUID> ids) {
+    private record Source(TeamColor color, boolean hideNameTag, Set<UUID> ids) {
     }
 
     private EntityGlowRegistry() {
     }
 
     /** 用新的集合整体替换当前发光列表 */
-    public static void replace(String source, TeamColor color, Collection<UUID> ids) {
+    public static void replace(String source, TeamColor color, boolean hideNameTag, Collection<UUID> ids) {
         Set<UUID> set = ConcurrentHashMap.newKeySet();
         set.addAll(ids);
-        SOURCES.put(source, new Source(color, set));
+        SOURCES.put(source, new Source(color, hideNameTag, set));
     }
 
     public static @Nullable TeamColor colorOf(UUID id) {
@@ -35,6 +35,15 @@ public final class EntityGlowRegistry {
             }
         }
         return null;
+    }
+
+    public static boolean hideNameTag(UUID id) {
+        for (Source src : SOURCES.values()) {
+            if (src.ids().contains(id)) {
+                return src.hideNameTag();
+            }
+        }
+        return false;
     }
 
     public static boolean isGlowing(UUID id) {

@@ -35,9 +35,11 @@ public class AutoRecordDeathInfoFunction extends SymAbstractFunction {
                 .line("生存模式下死亡时自动记录死亡地点")
                 .line("保存坐标、维度、游戏时间、真实时间戳与死亡原因")
                 .line("最多保留最近" + MAX_SIZE_DEFAULT + "条，超出自动淘汰最旧记录")
+                .line(ChatFormatting.YELLOW, "若服务器不返回死亡原因，则无法记录")
                 .toString();
         super("auto_record_death_info", "自动记录死亡信息", tooltip);
-        addOption(new IntOption("death_info_record_max_size", "最多保存死亡记录的条目数", this::getMaxSize, this::setMaxSize, 0, 200, 10));
+        addOption(new IntOption("death_info_record_max_size", "最多保存死亡记录的条目数",
+                this::getMaxSize, this::setMaxSize, 0, 200, 10));
     }
 
     @Override
@@ -72,7 +74,6 @@ public class AutoRecordDeathInfoFunction extends SymAbstractFunction {
                 notify(client, Component.literal("死亡原因: ").withStyle(ChatFormatting.LIGHT_PURPLE)
                         .append(Component.literal(cause).withStyle(ChatFormatting.RED)));
             }
-            return;
         }
     }
 
@@ -104,34 +105,48 @@ public class AutoRecordDeathInfoFunction extends SymAbstractFunction {
         if (!(screen instanceof DeathScreen deathScreen)) {
             return null;
         }
-        String preferred = findCauseComponent(deathScreen, true);
-        return preferred != null ? preferred : findCauseComponent(deathScreen, false);
-    }
-
-    @Nullable
-    private String findCauseComponent(DeathScreen screen, boolean matchName) {
-        for (Class<?> c = screen.getClass(); c != null && c != Object.class; c = c.getSuperclass()) {
+        // 只从字段名判定死因：cause 优先级高于 death，且排除计分板/标题类字段，
+        // 避免服务器场景把“分数：xxxx”之类的 Component 误当成死因。
+        String byCause = null;
+        String byDeath = null;
+        for (Class<?> c = deathScreen.getClass(); c != null && c != Object.class; c = c.getSuperclass()) {
             for (Field f : c.getDeclaredFields()) {
                 if (Modifier.isStatic(f.getModifiers()) || !Component.class.isAssignableFrom(f.getType())) {
                     continue;
                 }
-                if (matchName) {
-                    String name = f.getName().toLowerCase();
-                    if (!name.contains("cause") && !name.contains("death")) {
-                        continue;
-                    }
+                String name = f.getName().toLowerCase();
+                if (name.contains("score") || name.contains("title") || name.contains("subtitle")) {
+                    continue;
                 }
-                try {
-                    f.setAccessible(true);
-                    if (f.get(screen) instanceof Component comp) {
-                        String text = comp.getString();
-                        if (text != null && !text.isBlank()) {
-                            return text;
-                        }
+                String text = readComponentText(deathScreen, f);
+                if (text == null) {
+                    continue;
+                }
+                if (name.contains("cause")) {
+                    if (byCause == null) {
+                        byCause = text;
                     }
-                } catch (Throwable ignored) {
+                } else if (name.contains("death")) {
+                    if (byDeath == null) {
+                        byDeath = text;
+                    }
                 }
             }
+        }
+        return byCause != null ? byCause : byDeath;
+    }
+
+    @Nullable
+    private String readComponentText(DeathScreen screen, Field f) {
+        try {
+            f.setAccessible(true);
+            if (f.get(screen) instanceof Component comp) {
+                String text = comp.getString();
+                if (!text.isBlank()) {
+                    return text;
+                }
+            }
+        } catch (Throwable ignored) {
         }
         return null;
     }
