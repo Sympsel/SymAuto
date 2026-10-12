@@ -6,6 +6,7 @@ import com.symauto.function.abstracts.SymAbstractFunction;
 import com.symauto.function.utils.Constants;
 import com.symauto.function.utils.ScreenUtils;
 import com.symauto.function.utils.Tooltip;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -28,6 +29,7 @@ public class OneClickFlatItemsFunction extends SymAbstractFunction {
                         .line("鼠标悬浮在要平铺的物品上，按下 Ctrl + A 进行平铺")
                         .line("在容器界面则铺满容器")
                         .line("在背包界面则铺满背包")
+                        .line(ChatFormatting.AQUA, "意外地发现这个功能用来快速合成块状物品很方便")
                         .toString()
         );
         this.key = new KeyMapping(

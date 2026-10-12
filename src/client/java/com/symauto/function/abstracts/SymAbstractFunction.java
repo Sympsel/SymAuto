@@ -1,6 +1,6 @@
 package com.symauto.function.abstracts;
 
-import com.symauto.config.option.ConfigOption;
+import com.symauto.config.options.ConfigOption;
 import com.symauto.entity.TagList;
 import com.symauto.function.FeatureConfig;
 import com.symauto.function.utils.Tooltip;

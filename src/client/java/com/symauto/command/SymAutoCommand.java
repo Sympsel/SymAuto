@@ -6,14 +6,17 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.symauto.config.ConfigManager;
+import com.symauto.config.DeathInfoStore;
 import com.symauto.config.VillagerTradeStore;
 import com.symauto.entity.BWList;
 import com.symauto.function.FeatureConfig;
 import com.symauto.function.abstracts.SymAbstractFunction;
 import com.symauto.function.functions.*;
+import com.symauto.gui.DeathRecordScreen;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
@@ -105,6 +108,11 @@ public class SymAutoCommand {
                 .then(literal("trades")
                         .then(literal("count").executes(SymAutoCommand::showTradeCount))
                         .then(literal("clear").executes(SymAutoCommand::clearTrades)))
+                .then(literal("deaths")
+                        .executes(SymAutoCommand::showDeathList)
+                        .then(literal("gui").executes(SymAutoCommand::openDeathGui))
+                        .then(literal("latest").executes(SymAutoCommand::showLatestDeath))
+                        .then(literal("clear").executes(SymAutoCommand::clearDeaths)))
                 .then(literal("bwlist")
                         .then(argument("feature", StringArgumentType.word())
                                 .suggests(BW_FEATURES)
@@ -119,7 +127,7 @@ public class SymAutoCommand {
     }
 
     private static int showUsage(CommandContext<FabricClientCommandSource> ctx) {
-        ctx.getSource().sendFeedback(Component.literal("用法：/symauto <list|info|enable|toggle|trades|bwlist>"));
+        ctx.getSource().sendFeedback(Component.literal("用法：/symauto <list|info|enable|toggle|trades|deaths|bwlist>"));
         return 1;
     }
 
@@ -187,6 +195,50 @@ public class SymAutoCommand {
     private static int clearTrades(CommandContext<FabricClientCommandSource> ctx) {
         int removed = VillagerTradeStore.clear();
         ctx.getSource().sendFeedback(Component.literal("已清空村民交易缓存（移除 §f" + removed + "§r 条）"));
+        return removed;
+    }
+
+    private static int showDeathList(CommandContext<FabricClientCommandSource> ctx) {
+        List<DeathInfoStore.DeathRecord> records = DeathInfoStore.getRecords();
+        if (records.isEmpty()) {
+            ctx.getSource().sendFeedback(Component.literal("§e死亡记录§r 为空"));
+            return 0;
+        }
+        int total = records.size();
+        ctx.getSource().sendFeedback(Component.literal("§e死亡记录§r 共 " + total + " 条（最新在前）："));
+        for (int i = total - 1; i >= 0; i--) {
+            ctx.getSource().sendFeedback(deathLine(total - i, records.get(i)));
+        }
+        ctx.getSource().sendFeedback(Component.literal("§7输入 /sa deaths gui 打开图形界面查看"));
+        return total;
+    }
+
+    private static Component deathLine(int index, DeathInfoStore.DeathRecord r) {
+        return Component.literal("§7#" + index + " §f" + r.formatWallTime()
+                + " §7| §a" + r.dimension + " §7| §e(" + r.formatCoordinate() + ")"
+                + " §7| §c" + r.formatCause());
+    }
+
+    private static int openDeathGui(CommandContext<FabricClientCommandSource> ctx) {
+        Minecraft client = Minecraft.getInstance();
+        client.execute(() -> client.gui.setScreen(new DeathRecordScreen(null)));
+        return 1;
+    }
+
+    private static int showLatestDeath(CommandContext<FabricClientCommandSource> ctx) {
+        DeathInfoStore.DeathRecord latest = DeathInfoStore.latest();
+        if (latest == null) {
+            ctx.getSource().sendFeedback(Component.literal("§e死亡记录§r 为空"));
+            return 0;
+        }
+        ctx.getSource().sendFeedback(Component.literal("§e最近一次死亡§r（共 " + DeathInfoStore.size() + " 条）："));
+        ctx.getSource().sendFeedback(deathLine(DeathInfoStore.size(), latest));
+        return 1;
+    }
+
+    private static int clearDeaths(CommandContext<FabricClientCommandSource> ctx) {
+        int removed = DeathInfoStore.clear();
+        ctx.getSource().sendFeedback(Component.literal("已清空死亡记录（移除 §f" + removed + "§r 条）"));
         return removed;
     }
 
@@ -377,7 +429,7 @@ public class SymAutoCommand {
         lines.add(cmd("/sa bwlist <feature> <blacklist|whitelist> list", "查看指定名单的全部条目"));
         lines.add(cmd("/sa bwlist <feature> <blacklist|whitelist> clear", "清空指定名单"));
         lines.add(cmd("/sa bwlist <feature> <blacklist|whitelist> add|remove <id>", "增删一个条目（id 为物品或实体类型）"));
-        lines.add(plain("可管理的名单 feature（由命令注册自动列出）：", ChatFormatting.YELLOW));
+        lines.add(plain("可管理的名单 feature：", ChatFormatting.YELLOW));
         for (BWTarget<?> t : BW_TARGETS) {
             lines.add(plain("  · " + t.featureId() + "（" + t.noun + "）", ChatFormatting.DARK_GRAY));
         }
@@ -386,6 +438,12 @@ public class SymAutoCommand {
         lines.add(section("村民交易缓存"));
         lines.add(cmd("/sa trades count", "查看已缓存的村民交易条数"));
         lines.add(cmd("/sa trades clear", "清空全部村民交易缓存（清空后需重新打开交易列表才会再次高亮）"));
+
+        lines.add(section("死亡记录"));
+        lines.add(cmd("/sa deaths", "在聊天框列出全部死亡记录"));
+        lines.add(cmd("/sa deaths gui", "打开死亡记录图形界面"));
+        lines.add(cmd("/sa deaths latest", "仅查看最近一次死亡的详情"));
+        lines.add(cmd("/sa deaths clear", "清空全部死亡记录"));
         return lines;
     }
 

@@ -1,8 +1,8 @@
 package com.symauto.function.functions;
 
 import com.symauto.config.VillagerTradeStore;
-import com.symauto.config.option.BooleanOption;
-import com.symauto.config.option.IntOption;
+import com.symauto.config.options.BooleanOption;
+import com.symauto.config.options.IntOption;
 import com.symauto.entity.BWList;
 import com.symauto.function.abstracts.HighLightFunction;
 import com.symauto.function.utils.EntityGlowRegistry;

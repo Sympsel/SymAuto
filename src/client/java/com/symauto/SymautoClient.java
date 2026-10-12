@@ -3,6 +3,7 @@ package com.symauto;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.symauto.command.SymAutoCommand;
 import com.symauto.config.ConfigManager;
+import com.symauto.config.DeathInfoStore;
 import com.symauto.config.SymAutoKeys;
 import com.symauto.config.VillagerTradeStore;
 import com.symauto.function.FeatureConfig;
@@ -45,8 +46,11 @@ public class SymautoClient implements ClientModInitializer {
         }
 
         ClientLifecycleEvents.CLIENT_STOPPING.register(client -> {
-            for (SymAbstractFunction f : FeatureConfig.AUTO_ALL) f.setEnable(false);
+            for (SymAbstractFunction f : FeatureConfig.AUTO_ALL) {
+                f.setEnable(false);
+            }
             VillagerTradeStore.saveIfDirty();
+            DeathInfoStore.saveIfDirty();
         });
 
         // 容器界面事件分发：鼠标点击
@@ -100,6 +104,7 @@ public class SymautoClient implements ClientModInitializer {
 
         ConfigManager.load();
         VillagerTradeStore.load();
+        DeathInfoStore.load();
         SymAutoCommand.register();
     }
 

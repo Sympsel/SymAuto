@@ -57,6 +57,8 @@ public class FeatureConfig {
             .addTag(SymFunctionTags.HUD);
     public static final SymAbstractFunction HIGH_LIGHT_ITEM_DROP_FUNCTION = HighLightItemDropFunction.INSTANCE
             .addTag(SymFunctionTags.HUD);
+    public static final SymAbstractFunction AUTO_RECORD_DEATH_INFO_FUNCTION = AutoRecordDeathInfoFunction.INSTANCE
+            .addTag(SymFunctionTags.OTHER);
 
     public static final List<SymAbstractFunction> AUTO_ALL = List.of(
             AUTO_ATTACK_FUNCTION,
@@ -81,6 +83,7 @@ public class FeatureConfig {
             ONE_CLICK_TRADE_FUNCTION,
             HIGH_LIGHT_SPECIFIC_VILLAGERS_FUNCTION,
             HIGH_LIGHT_MASTER_FUNCTION,
-            HIGH_LIGHT_ITEM_DROP_FUNCTION
+            HIGH_LIGHT_ITEM_DROP_FUNCTION,
+            AUTO_RECORD_DEATH_INFO_FUNCTION
     );
 }

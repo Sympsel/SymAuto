@@ -2,7 +2,7 @@ package com.symauto.config;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.symauto.config.option.ConfigOption;
+import com.symauto.config.options.ConfigOption;
 import com.symauto.entity.BWList;
 import com.symauto.function.FeatureConfig;
 import com.symauto.function.abstracts.SymAbstractFunction;

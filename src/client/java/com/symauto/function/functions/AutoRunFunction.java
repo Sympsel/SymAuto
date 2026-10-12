@@ -2,7 +2,7 @@ package com.symauto.function.functions;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import com.symauto.config.SymAutoKeys;
-import com.symauto.config.option.BooleanOption;
+import com.symauto.config.options.BooleanOption;
 import com.symauto.function.abstracts.SymAbstractFunction;
 import com.symauto.function.utils.Tooltip;
 import lombok.Getter;
@@ -11,7 +11,6 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
-import net.minecraft.core.registries.BuiltInRegistries;
 import org.lwjgl.glfw.GLFW;
 
 public class AutoRunFunction extends SymAbstractFunction {

@@ -1,4 +1,4 @@
-package com.symauto.config.option;
+package com.symauto.config.options;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

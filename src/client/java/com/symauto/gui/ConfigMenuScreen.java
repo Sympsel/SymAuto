@@ -1,7 +1,7 @@
 package com.symauto.gui;
 
 import com.symauto.config.ConfigManager;
-import com.symauto.config.option.ConfigOption;
+import com.symauto.config.options.ConfigOption;
 import com.symauto.function.abstracts.SymAbstractFunction;
 import lombok.NonNull;
 import net.minecraft.ChatFormatting;
