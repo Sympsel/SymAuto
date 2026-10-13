@@ -11,6 +11,7 @@ import com.symauto.mixin.AbstractContainerScreenAccessor;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.Slot;
@@ -35,7 +36,6 @@ public class OneClickDiscardSameItemsFunction extends SymAbstractFunction {
                                             AbstractContainerScreen<?> cs,
                                             double mouseX, double mouseY, int button) {
         if (client.player == null || client.gameMode == null) return true;
-
         AbstractContainerMenu menu = cs.getMenu();
         ItemStack carried = menu.getCarried();
         if (carried.isEmpty()) return true;
@@ -49,6 +49,10 @@ public class OneClickDiscardSameItemsFunction extends SymAbstractFunction {
         if (FeatureConfig.BETTER_BUNDLE_FUNCTION.isEnable()
                 && BundlePanelRenderer.visible
                 && BundlePanelInteraction.isInsidePanel(mouseX, mouseY, xo, yo, imgH)) {
+            return true;
+        }
+
+        if (cs instanceof CreativeModeInventoryScreen) {
             return true;
         }
 
