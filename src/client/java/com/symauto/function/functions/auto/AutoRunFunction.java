@@ -1,4 +1,4 @@
-package com.symauto.function.functions;
+package com.symauto.function.functions.auto;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import com.symauto.config.SymAutoKeys;

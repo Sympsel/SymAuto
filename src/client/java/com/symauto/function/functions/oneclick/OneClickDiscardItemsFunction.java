@@ -1,4 +1,4 @@
-package com.symauto.function.functions;
+package com.symauto.function.functions.oneclick;
 
 import com.betterbundle.util.BundleContentsHelper;
 import com.mojang.blaze3d.platform.InputConstants;

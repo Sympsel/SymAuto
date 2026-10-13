@@ -1,4 +1,4 @@
-package com.symauto.function.functions;
+package com.symauto.function.functions.auto;
 
 import com.symauto.config.DeathInfoStore;
 import com.symauto.config.options.IntOption;

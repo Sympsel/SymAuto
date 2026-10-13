@@ -8,7 +8,7 @@ import com.symauto.config.SymAutoKeys;
 import com.symauto.config.VillagerTradeStore;
 import com.symauto.function.FeatureConfig;
 import com.symauto.function.abstracts.SymAbstractFunction;
-import com.symauto.function.functions.AutoSwiftToolsFunction;
+import com.symauto.function.functions.auto.AutoSwiftToolsFunction;
 import com.symauto.function.functions.FixYPlaceOrDestroyFunction;
 import com.symauto.function.utils.KeyUtils;
 import com.symauto.function.utils.ScreenUtils;

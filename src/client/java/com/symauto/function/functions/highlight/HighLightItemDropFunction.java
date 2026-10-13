@@ -1,4 +1,4 @@
-package com.symauto.function.functions;
+package com.symauto.function.functions.highlight;
 
 import com.symauto.config.options.BooleanOption;
 import com.symauto.config.options.IntOption;

@@ -1,4 +1,4 @@
-package com.symauto.function.functions;
+package com.symauto.function.functions.auto;
 
 import com.symauto.function.abstracts.SymAbstractFunction;
 import com.symauto.function.utils.Tooltip;

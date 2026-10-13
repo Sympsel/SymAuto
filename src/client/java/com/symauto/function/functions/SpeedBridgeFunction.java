@@ -2,6 +2,7 @@ package com.symauto.function.functions;
 
 import com.symauto.function.FeatureConfig;
 import com.symauto.function.abstracts.SymAbstractFunction;
+import com.symauto.function.functions.auto.AutoEatFunction;
 import com.symauto.function.utils.Tooltip;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;

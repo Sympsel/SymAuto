@@ -1,6 +1,5 @@
-package com.symauto.function.functions;
+package com.symauto.function.functions.auto;
 
-import com.symauto.entity.SymFunctionTags;
 import com.symauto.function.abstracts.SymAbstractFunction;
 import com.symauto.function.utils.Constants;
 import com.symauto.function.utils.ItemUtils;

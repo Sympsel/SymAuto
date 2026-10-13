@@ -1,4 +1,4 @@
-package com.symauto.function.functions;
+package com.symauto.function.functions.oneclick;
 
 import com.betterbundle.gui.BundlePanelInteraction;
 import com.betterbundle.gui.BundlePanelRenderer;

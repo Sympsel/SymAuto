@@ -1,7 +1,7 @@
 package com.symauto.render;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.symauto.function.functions.HighLightPlayerFunction;
+import com.symauto.function.functions.highlight.HighLightPlayerFunction;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderContext;

@@ -3,6 +3,15 @@ package com.symauto.function;
 import com.symauto.entity.SymFunctionTags;
 import com.symauto.function.abstracts.SymAbstractFunction;
 import com.symauto.function.functions.*;
+import com.symauto.function.functions.auto.*;
+import com.symauto.function.functions.highlight.HighLightItemDropFunction;
+import com.symauto.function.functions.highlight.HighLightMasterFunction;
+import com.symauto.function.functions.highlight.HighLightPlayerFunction;
+import com.symauto.function.functions.highlight.HighLightSpecificVillagersFunction;
+import com.symauto.function.functions.oneclick.OneClickDiscardItemsFunction;
+import com.symauto.function.functions.oneclick.OneClickDiscardSameItemsFunction;
+import com.symauto.function.functions.oneclick.OneClickFlatItemsFunction;
+import com.symauto.function.functions.oneclick.OneClickTradeFunction;
 
 import java.util.List;
 

@@ -1,6 +1,5 @@
-package com.symauto.function.functions;
+package com.symauto.function.functions.auto;
 
-import com.symauto.entity.SymFunctionTags;
 import com.symauto.function.abstracts.SymAbstractFunction;
 import com.symauto.function.utils.ItemUtils;
 import com.symauto.function.utils.Tooltip;
@@ -9,7 +8,6 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.Slot;
 
-import java.util.Collections;
 import java.util.Set;
 
 public class AutoSwiftSameItemsToContainerFunction extends SymAbstractFunction {
