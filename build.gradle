@@ -32,6 +32,14 @@ repositories {
     maven { url "https://maven.terraformersmc.com/" }
 }
 
+configurations.all {
+    resolutionStrategy {
+        // 7 天内不重复解析 SNAPSHOT / 动态版本，避免每次 runClient 重新拉取与重配
+        cacheChangingModulesFor 7, 'days'
+        cacheDynamicVersionsFor 7, 'days'
+    }
+}
+
 dependencies {
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
     implementation "net.fabricmc:fabric-loader:${project.loader_version}"

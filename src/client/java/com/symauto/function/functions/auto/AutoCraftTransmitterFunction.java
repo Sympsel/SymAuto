@@ -16,7 +16,6 @@ import net.minecraft.world.item.Items;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Logger;
 
 public class AutoCraftTransmitterFunction extends SymAbstractFunction {
     public static final AutoCraftTransmitterFunction INSTANCE = new AutoCraftTransmitterFunction();
@@ -49,7 +48,6 @@ public class AutoCraftTransmitterFunction extends SymAbstractFunction {
     };
 
     private State state = State.WAITING_FOR_OPEN_CRAFTING_TABLE;
-    private static final Logger logger = Logger.getLogger(AutoCraftTransmitterFunction.class.getName());
 
     private AutoCraftTransmitterFunction() {
         super("auto_craft_transmitter", "自动合成发射器",
@@ -89,7 +87,6 @@ public class AutoCraftTransmitterFunction extends SymAbstractFunction {
             }
             return;
         }
-        logger.info("state: " + state);
         switch (state) {
             case WAITING_FOR_OPEN_CRAFTING_TABLE -> state = State.CHECK_INGREDIENTS_FOR_BOW;
 

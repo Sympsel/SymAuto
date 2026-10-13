@@ -70,6 +70,9 @@ public class FeatureConfig {
             .addTag(SymFunctionTags.HUD);
     public static final SymAbstractFunction AUTO_RECORD_DEATH_INFO_FUNCTION = AutoRecordDeathInfoFunction.INSTANCE
             .addTag(SymFunctionTags.OTHER);
+    public static final SymAbstractFunction AUTO_CRAFTING_FUNCTION = AutoCraftingFunction.INSTANCE
+            .addTag(SymFunctionTags.CONVENIENCE_OPERATION)
+            .addTag(SymFunctionTags.PRODUCING);
 
     public static final List<SymAbstractFunction> AUTO_ALL = List.of(
             AUTO_ATTACK_FUNCTION,
@@ -96,6 +99,7 @@ public class FeatureConfig {
             HIGH_LIGHT_MASTER_FUNCTION,
             HIGH_LIGHT_ITEM_DROP_FUNCTION,
             HIGH_LIGHT_PLAYER_FUNCTION,
-            AUTO_RECORD_DEATH_INFO_FUNCTION
+            AUTO_RECORD_DEATH_INFO_FUNCTION,
+            AUTO_CRAFTING_FUNCTION
     );
 }

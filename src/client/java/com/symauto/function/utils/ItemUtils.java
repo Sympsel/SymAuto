@@ -143,7 +143,7 @@ public class ItemUtils {
     }
 
     // craftingTimes 模拟合成次数
-    private static boolean hasIngredientsFor(List<Ingredient> ingredients, Player player, int craftingTimes) {
+    public static boolean hasIngredientsFor(List<Ingredient> ingredients, Player player, int craftingTimes) {
         List<Ingredient> demands = new ArrayList<>();
         for (Ingredient ingredient : ingredients) {
             if (ingredient.isEmpty()) {
