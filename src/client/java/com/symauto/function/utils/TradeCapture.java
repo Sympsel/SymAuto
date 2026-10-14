@@ -1,7 +1,6 @@
 package com.symauto.function.utils;
 
-import com.symauto.config.VillagerTradeStore;
-import com.symauto.mixin.AbstractContainerScreenAccessor;
+import com.symauto.storage.VillagerTradeStore;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.MerchantScreen;
@@ -9,7 +8,6 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.npc.villager.AbstractVillager;
-import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.MerchantMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;

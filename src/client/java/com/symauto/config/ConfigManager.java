@@ -2,15 +2,15 @@ package com.symauto.config;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.symauto.config.options.ConfigOption;
-import com.symauto.entity.BWList;
-import com.symauto.function.FeatureConfig;
-import com.symauto.function.abstracts.SymAbstractFunction;
-import com.symauto.function.functions.auto.AutoAttackSafetyFunction;
-import com.symauto.function.functions.auto.AutoEatFunction;
-import com.symauto.function.functions.highlight.HighLightItemDropFunction;
-import com.symauto.function.functions.highlight.HighLightMasterFunction;
-import com.symauto.function.functions.oneclick.OneClickDiscardItemsFunction;
+import com.symauto.config.option.ConfigOption;
+import com.symauto.model.BWList;
+import com.symauto.core.FeatureConfig;
+import com.symauto.function.base.SymAbstractFunction;
+import com.symauto.function.auto.AutoAttackSafetyFunction;
+import com.symauto.function.auto.AutoEatFunction;
+import com.symauto.function.highlight.HighLightItemDropFunction;
+import com.symauto.function.highlight.HighLightMasterFunction;
+import com.symauto.function.oneclick.OneClickDiscardItemsFunction;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
@@ -199,7 +199,7 @@ public class ConfigManager {
         }
     }
 
-    private static Item parseItem(String id) {
+    public static Item parseItem(String id) {
         Identifier identifier = Identifier.tryParse(id);
         if (identifier == null) {
             return null;

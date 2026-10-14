@@ -1,7 +1,7 @@
 package com.symauto.mixin;
 
-import com.symauto.function.utils.EntityGlowRegistry;
-import com.symauto.function.utils.GlowTeam;
+import com.symauto.render.glow.EntityGlowRegistry;
+import com.symauto.render.glow.GlowTeam;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.scores.PlayerTeam;
 import net.minecraft.world.scores.TeamColor;

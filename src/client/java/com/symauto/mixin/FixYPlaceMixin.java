@@ -1,7 +1,7 @@
 package com.symauto.mixin;
 
-import com.symauto.function.FeatureConfig;
-import com.symauto.function.functions.FixYPlaceOrDestroyFunction;
+import com.symauto.core.FeatureConfig;
+import com.symauto.function.place.FixYPlaceOrDestroyFunction;
 import net.minecraft.client.multiplayer.MultiPlayerGameMode;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;

@@ -40,6 +40,7 @@ public class UpdateMessageManager {
 
     private void setUpdateMessages() {
         updateMessages.clear();
+        addUpdateMessage("[2026-10-14][v26.2-2.17.3] \"自动合成\" 添加了预设管理器 GUI");
         addUpdateMessage("[2026-10-14][v26.2-2.17.2] \"自动合成\" 预设，修复了自己分解自己合成的bug；每个预设采用私有状态机保证串行轮询执行");
         addUpdateMessage("[2026-10-13][v26.2-2.17.1] 添加新功能：\"自动合成\" 预设，支持开启是否递归原材料合成、自动丢弃结果");
         addUpdateMessage("[2026-10-13][v26.2-2.16.4] 修复了\"一键丢弃相同物品\"可以丢弃创造模式物品栏里的物品导致物品消失的难绷bug");

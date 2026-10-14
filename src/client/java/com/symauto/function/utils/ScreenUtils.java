@@ -1,7 +1,7 @@
 package com.symauto.function.utils;
 
-import com.symauto.function.abstracts.SymAbstractFunction;
-import com.symauto.mixin.AbstractContainerScreenAccessor;
+import com.symauto.function.base.SymAbstractFunction;
+import com.symauto.mixin.accessor.AbstractContainerScreenAccessor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.world.inventory.Slot;

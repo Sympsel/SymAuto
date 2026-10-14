@@ -2,19 +2,19 @@ package com.symauto;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import com.symauto.command.SymAutoCommand;
-import com.symauto.config.ConfigManager;
-import com.symauto.config.DeathInfoStore;
-import com.symauto.config.SymAutoKeys;
-import com.symauto.config.VillagerTradeStore;
-import com.symauto.function.FeatureConfig;
-import com.symauto.function.abstracts.SymAbstractFunction;
-import com.symauto.function.functions.auto.AutoSwiftToolsFunction;
-import com.symauto.function.functions.FixYPlaceOrDestroyFunction;
+import com.symauto.config.*;
+import com.symauto.core.FeatureConfig;
+import com.symauto.function.base.SymAbstractFunction;
+import com.symauto.function.auto.AutoSwiftToolsFunction;
+import com.symauto.function.place.FixYPlaceOrDestroyFunction;
 import com.symauto.function.utils.KeyUtils;
 import com.symauto.function.utils.ScreenUtils;
 import com.symauto.function.utils.TradeCapture;
-import com.symauto.gui.FeatureMenuScreen;
+import com.symauto.gui.screen.FeatureMenuScreen;
 import com.symauto.render.PlayerNameRenderer;
+import com.symauto.storage.CraftingPresetStore;
+import com.symauto.storage.DeathInfoStore;
+import com.symauto.storage.VillagerTradeStore;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -52,6 +52,7 @@ public class SymautoClient implements ClientModInitializer {
             }
             VillagerTradeStore.saveIfDirty();
             DeathInfoStore.saveIfDirty();
+            CraftingPresetStore.saveIfDirty();
         });
 
         // 容器界面事件分发：鼠标点击
@@ -106,6 +107,7 @@ public class SymautoClient implements ClientModInitializer {
         ConfigManager.load();
         VillagerTradeStore.load();
         DeathInfoStore.load();
+        CraftingPresetStore.load();
         SymAutoCommand.register();
         PlayerNameRenderer.register();
     }

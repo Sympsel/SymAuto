@@ -1,17 +1,13 @@
 package com.betterbundle.mixin;
 
 import com.betterbundle.gui.BundlePanelRenderer;
-import com.betterbundle.gui.SortButton;
-import com.symauto.function.FeatureConfig;
-import net.minecraft.client.Minecraft;
+import com.symauto.core.FeatureConfig;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.WidgetSprites;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.inventory.Slot;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;

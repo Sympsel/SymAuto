@@ -19,7 +19,7 @@
       "com.symauto.Symauto"
     ],
     "modmenu": [
-      "com.symauto.gui.ModMenuIntegration"
+      "com.symauto.gui.integration.ModMenuIntegration"
     ]
   },
   "mixins": [

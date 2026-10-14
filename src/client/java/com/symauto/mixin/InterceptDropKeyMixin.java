@@ -1,6 +1,6 @@
 package com.symauto.mixin;
 
-import com.symauto.function.functions.oneclick.OneClickDiscardItemsFunction;
+import com.symauto.function.oneclick.OneClickDiscardItemsFunction;
 import net.minecraft.client.KeyboardHandler;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.input.KeyEvent;

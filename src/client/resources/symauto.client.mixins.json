@@ -5,12 +5,12 @@
   "compatibilityLevel": "JAVA_25",
   "client": [
     "FixYPlaceMixin",
-    "FishingHookAccessor",
-    "MinecraftInvoker",
+    "accessor.FishingHookAccessor",
+    "accessor.MinecraftAccessor",
     "InterceptDropKeyMixin",
-    "AbstractContainerScreenAccessor",
+    "accessor.AbstractContainerScreenAccessor",
     "EntityGlowMixin",
-    "MerchantScreenAccessor"
+    "accessor.MerchantScreenAccessor"
   ],
   "injectors": {
     "defaultRequire": 1
