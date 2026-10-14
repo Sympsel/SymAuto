@@ -1,4 +1,4 @@
-package com.symauto.function.functions;
+package com.symauto.function.functions.auto;
 
 import com.symauto.entity.CraftingAssumption;
 import com.symauto.function.abstracts.SymAbstractFunction;
@@ -63,7 +63,6 @@ public class AutoCraftingFunction extends SymAbstractFunction {
         }
         switch (state) {
             case IDLE -> {
-                recursionGuard.clear();
                 remainingOps = assumption.getExecuteCount();
                 state = State.CHECK;
             }
@@ -93,13 +92,22 @@ public class AutoCraftingFunction extends SymAbstractFunction {
     @Override
     protected void onTrigger(Minecraft client) {
         if (assumptions.isEmpty()) {
+//            assumptions.add(new CraftingAssumption(
+//                    new ItemStack(Items.DIAMOND_SWORD), 1, true, true, true
+//            ));
             assumptions.add(new CraftingAssumption(
-                    new ItemStack(Items.DIAMOND_SWORD), 1, true, true, true
+                    new ItemStack(Items.DISPENSER), 1, true, true, true
+            ));
+//            assumptions.add(new CraftingAssumption(
+//                    new ItemStack(Items.PISTON), 1, true, true, true
+//            ));
+
+            assumptions.add(new CraftingAssumption(
+                    new ItemStack(Items.IRON_BLOCK), 1, true, true, true
             ));
         }
         for (CraftingAssumption assumption : assumptions) {
             if (assumption.isActive()) {
-
                 execute(assumption, client);
             }
         }
@@ -129,15 +137,15 @@ public class AutoCraftingFunction extends SymAbstractFunction {
 
     private void doCraftStep(CraftingAssumption assumption, CraftingRecipe recipe,
                              Player player, Minecraft client) {
+        recursionGuard.clear();
+        // 根目标纳入保留集，组织后续递归通过消耗该目标本身来合成其原料
+        recursionGuard.add(assumption.getResult().getItem());
 
         if (!ensureMaterials(assumption, recipe, player, client)) {
-            System.out.println("[AutoCraft] bail: ensureMaterials=false (缺料且未开递归?)");
-
             state = State.DONE;
             return;
         }
         if (!doCraft(assumption, recipe, player, client)) {
-            System.out.println("[AutoCraft] bail: doCraft=false");
             state = State.DONE;
             return;
         }
@@ -181,6 +189,18 @@ public class AutoCraftingFunction extends SymAbstractFunction {
                 .orElse(null);
     }
 
+    private boolean recipeUsesReserved(CraftingRecipe recipe, Set<Item> recursionGuard) {
+        for (Ingredient ingredient : recipe.placementInfo().ingredients()) {
+            if (ingredient.isEmpty()) {
+                continue;
+            }
+            if (ingredient.items().map(Holder::value).anyMatch(recursionGuard::contains)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private boolean ensureMaterials(CraftingAssumption assumption, CraftingRecipe recipe,
                                     Player player, Minecraft client) {
         for (Ingredient ingredient : recipe.placementInfo().ingredients()) {
@@ -207,6 +227,12 @@ public class AutoCraftingFunction extends SymAbstractFunction {
             if (subRecipe == null) {
                 return false;
             }
+            // 拒绝自我分解再合成
+            boolean selfDecomposition = recipeUsesReserved(subRecipe, recursionGuard);
+            System.out.println("[AutoCraft] selfDecomposition: " + selfDecomposition);
+            if (selfDecomposition) {
+                return false;
+            }
             recursionGuard.add(representative);
             boolean made = ensureMaterials(sub, subRecipe, player, client)
                     && doCraft(sub, subRecipe, player, client);
@@ -229,8 +255,6 @@ public class AutoCraftingFunction extends SymAbstractFunction {
                             Player player, Minecraft client) {
         AbstractContainerMenu menu = player.containerMenu;
         if (!(menu instanceof CraftingMenu)) {
-            System.out.println("[AutoCraft] doCraft bail: menu=" + menu.getClass().getSimpleName() + " 非工作台");
-
             return false;
         }
         int containerId = menu.containerId;
@@ -255,7 +279,8 @@ public class AutoCraftingFunction extends SymAbstractFunction {
             Ingredient ingredient = ingredients.get(ingredientIndex);
             int row = p / width;
             int col = p % width;
-            int gridSlot = GRID_FIRST_SLOT + row * 3 + col;   // 左上对齐到 3x3
+            // 左上对齐到 3x3
+            int gridSlot = GRID_FIRST_SLOT + row * 3 + col;
             if (gridSlot >= GRID_FIRST_SLOT + GRID_SIZE) {
                 return false;
             }
@@ -267,9 +292,6 @@ public class AutoCraftingFunction extends SymAbstractFunction {
             click(client, containerId, gridSlot, 1, ContainerInput.PICKUP);  // 放 1 个
             click(client, containerId, src, 0, ContainerInput.PICKUP);       // 剩余放回
         }
-//        if (!menu.getSlot(RESULT_SLOT).hasItem()) {
-//            return false;
-//        }
         if (assumption.isThrowResult()) {
             click(client, containerId, RESULT_SLOT, 0, ContainerInput.THROW); // 合成并丢出
         } else {

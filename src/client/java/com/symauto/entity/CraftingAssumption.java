@@ -35,7 +35,6 @@ public class CraftingAssumption {
         for (RecipeHolder<CraftingRecipe> holder
                 : server.getRecipeManager().getAllOfType(RecipeType.CRAFTING)) {
             CraftingRecipe recipe = holder.value();
-            // 只处理可用 3x3 网格摆放的普通配方；特殊配方（如纹饰壶）assemble 会越界
             if (!(recipe instanceof ShapedRecipe) && !(recipe instanceof ShapelessRecipe)) {
                 continue;
             }
@@ -54,7 +53,7 @@ public class CraftingAssumption {
 
     public CraftingRecipe chooseRecipe(Player player, int crafts) {
         return getRecipes().stream()
-                // 硬过滤——材料可凑齐
+                // 材料可凑齐
                 .filter(r -> ItemUtils.hasIngredientsFor(
                         r.placementInfo().ingredients(), player, crafts
                 ))

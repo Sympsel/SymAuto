@@ -40,6 +40,7 @@ public class UpdateMessageManager {
 
     private void setUpdateMessages() {
         updateMessages.clear();
+        addUpdateMessage("[2026-10-13][v26.2-2.17.1] 添加新功能：\"自动合成\" 预设，支持开启是否递归原材料合成、自动丢弃结果");
         addUpdateMessage("[2026-10-13][v26.2-2.16.4] 修复了\"一键丢弃相同物品\"可以丢弃创造模式物品栏里的物品导致物品消失的难绷bug");
         addUpdateMessage("[2026-10-12][v26.2-2.16.2] 为\"高亮周围玩家\"添加了是否高亮自己的配置项");
         addUpdateMessage("[2026-10-11][v26.2-2.16.1] 添加新功能：高亮周围玩家，隐身玩家会有单独的HUD显示");

@@ -48,16 +48,21 @@ dependencies {
     implementation "com.belerweb:pinyin4j:2.5.1"
 }
 
+def versionValue = project.version
+def minecraftVersionValue = project.minecraft_version
+def loaderVersionValue = project.loader_version
+def archivesBaseNameValue = project.archives_base_name
+
 processResources {
-    inputs.property "version", project.version
-    inputs.property "minecraft_version", project.minecraft_version
-    inputs.property "loader_version", project.loader_version
+    inputs.property "version", versionValue
+    inputs.property "minecraft_version", minecraftVersionValue
+    inputs.property "loader_version", loaderVersionValue
     filteringCharset "UTF-8"
 
     filesMatching("fabric.mod.json") {
-        expand "version": project.version,
-                "minecraft_version": project.minecraft_version,
-                "loader_version": project.loader_version
+        expand "version": versionValue,
+                "minecraft_version": minecraftVersionValue,
+                "loader_version": loaderVersionValue
     }
 }
 
@@ -79,7 +84,7 @@ java {
 
 jar {
     from("LICENSE") {
-        rename { "${it}_${project.archives_base_name}" }
+        rename { "${it}_${archivesBaseNameValue}" }
     }
 }
 
