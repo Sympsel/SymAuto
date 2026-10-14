@@ -95,12 +95,12 @@ public class AutoCraftingFunction extends SymAbstractFunction {
 //            assumptions.add(new CraftingAssumption(
 //                    new ItemStack(Items.DIAMOND_SWORD), 1, true, true, true
 //            ));
-            assumptions.add(new CraftingAssumption(
-                    new ItemStack(Items.DISPENSER), 1, true, true, true
-            ));
 //            assumptions.add(new CraftingAssumption(
-//                    new ItemStack(Items.PISTON), 1, true, true, true
+//                    new ItemStack(Items.DISPENSER), 1, true, true, true
 //            ));
+            assumptions.add(new CraftingAssumption(
+                    new ItemStack(Items.PISTON), 1, true, true, true
+            ));
 
             assumptions.add(new CraftingAssumption(
                     new ItemStack(Items.IRON_BLOCK), 1, true, true, true
@@ -142,10 +142,12 @@ public class AutoCraftingFunction extends SymAbstractFunction {
         recursionGuard.add(assumption.getResult().getItem());
 
         if (!ensureMaterials(assumption, recipe, player, client)) {
+            clearGrid(client, player.containerMenu);
             state = State.DONE;
             return;
         }
         if (!doCraft(assumption, recipe, player, client)) {
+            clearGrid(client, player.containerMenu);
             state = State.DONE;
             return;
         }
@@ -228,9 +230,7 @@ public class AutoCraftingFunction extends SymAbstractFunction {
                 return false;
             }
             // 拒绝自我分解再合成
-            boolean selfDecomposition = recipeUsesReserved(subRecipe, recursionGuard);
-            System.out.println("[AutoCraft] selfDecomposition: " + selfDecomposition);
-            if (selfDecomposition) {
+            if (recipeUsesReserved(subRecipe, recursionGuard)) {
                 return false;
             }
             recursionGuard.add(representative);
@@ -258,14 +258,8 @@ public class AutoCraftingFunction extends SymAbstractFunction {
             return false;
         }
         int containerId = menu.containerId;
-
         // 清理网格残留
-        for (int pos = 0; pos < GRID_SIZE; pos++) {
-            int gridSlot = GRID_FIRST_SLOT + pos;
-            if (menu.getSlot(gridSlot).hasItem()) {
-                click(client, containerId, gridSlot, 0, ContainerInput.QUICK_MOVE);
-            }
-        }
+        clearGrid(client, menu);
         PlacementInfo placement = recipe.placementInfo();
         List<Ingredient> ingredients = placement.ingredients();
         IntList slotsToIngredientIndex = placement.slotsToIngredientIndex();
@@ -298,6 +292,21 @@ public class AutoCraftingFunction extends SymAbstractFunction {
             click(client, containerId, RESULT_SLOT, 0, ContainerInput.QUICK_MOVE); // 合成入背包
         }
         return true;
+    }
+
+    /**
+     * 清理工作台网格残留
+     */
+    private void clearGrid(Minecraft client, AbstractContainerMenu menu) {
+        if (menu instanceof CraftingMenu) {
+            int containerId = menu.containerId;
+            for (int pos = 0; pos < GRID_SIZE; pos++) {
+                int gridSlot = GRID_FIRST_SLOT + pos;
+                if (menu.getSlot(gridSlot).hasItem()) {
+                    click(client, containerId, gridSlot, 0, ContainerInput.QUICK_MOVE);
+                }
+            }
+        }
     }
 
 
