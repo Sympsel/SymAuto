@@ -28,18 +28,35 @@ public class AutoCraftingFunction extends SymAbstractFunction {
     private static final int SETTLE_TICKS = 2;
 
     private enum State {
-        IDLE,
-        CHECK,
-        CRAFT,
-        DONE,
+        IDLE,   // 待初始化一轮计数
+        CHECK,  // 取配方并合成
+    }
+
+    // advance/doCraftStep 的调度反馈：STAY=继续盯当前预设；ADVANCE=让位到下一个
+    private enum Decision {
+        STAY,
+        ADVANCE,
     }
 
     private final List<CraftingAssumption> assumptions;
-    private State state = State.IDLE;
-    private int cooldown = 0;
-    private int remainingOps = 0;
-    // 记录当前调用栈上正在被合成的物品
-    private final Set<Item> recursionGuard = new HashSet<>();
+
+    private final Map<CraftingAssumption, TaskState> tasks = new IdentityHashMap<>();
+
+    // 每个预设占有一个私有状态机
+    private static final class TaskState {
+        State state = State.IDLE;
+        int cooldown = 0;
+        int remainingOps = 0;
+        // 该预设是否已把 executeCount 全部做完
+        boolean completed = false;
+        // 根目标 + 递归中间成品，防止拆解自身再合成
+        final Set<Item> reserved = new HashSet<>();
+    }
+
+    // 调度游标
+    private int cursor = 0;
+    // 全局保留集：当前所有 active 且未完成的预设根目标，防止跨预设互逆合成
+    private final Set<Item> activeTargets = new HashSet<>();
 
     private AutoCraftingFunction() {
         super("auto_crafting", "自动合成",
@@ -48,69 +65,130 @@ public class AutoCraftingFunction extends SymAbstractFunction {
         assumptions = new ArrayList<>();
     }
 
-
-    public void execute(CraftingAssumption assumption, Minecraft client) {
-        if (assumption == null || client.player == null || client.gameMode == null) {
-            return;
-        }
-        Player player = client.player;
-        if (!player.containerMenu.getCarried().isEmpty()) {
-            return;
-        }
-        if (cooldown > 0) {
-            --cooldown;
-            return;
-        }
-        switch (state) {
-            case IDLE -> {
-                remainingOps = assumption.getExecuteCount();
-                state = State.CHECK;
-            }
-            case CHECK -> {
-                CraftingRecipe recipe = pickRecipe(assumption, player);
-                if (recipe == null) {
-                    state = State.DONE;
-                    break;
-                }
-                state = State.CRAFT;
-                doCraftStep(assumption, recipe, player, client);
-            }
-            case CRAFT -> {
-                CraftingRecipe recipe = pickRecipe(assumption, player);
-                if (recipe == null) {
-                    state = State.DONE;
-                    break;
-                }
-                doCraftStep(assumption, recipe, player, client);
-            }
-            case DONE -> {
-                reset();
-            }
-        }
-    }
-
     @Override
     protected void onTrigger(Minecraft client) {
         if (assumptions.isEmpty()) {
-//            assumptions.add(new CraftingAssumption(
-//                    new ItemStack(Items.DIAMOND_SWORD), 1, true, true, true
-//            ));
-//            assumptions.add(new CraftingAssumption(
-//                    new ItemStack(Items.DISPENSER), 1, true, true, true
-//            ));
             assumptions.add(new CraftingAssumption(
-                    new ItemStack(Items.PISTON), 1, true, true, true
+                    new ItemStack(Items.PISTON), 10, true, true, true
             ));
-
             assumptions.add(new CraftingAssumption(
-                    new ItemStack(Items.IRON_BLOCK), 1, true, true, true
+                    new ItemStack(Items.IRON_BLOCK), 10, true, true, true
             ));
         }
-        for (CraftingAssumption assumption : assumptions) {
-            if (assumption.isActive()) {
-                execute(assumption, client);
+        Player player = client.player;
+        if (player == null || client.gameMode == null) {
+            return;
+        }
+        // 工作台未打开或光标占用，不推进
+        if (!(player.containerMenu instanceof CraftingMenu)) {
+            return;
+        }
+        if (!player.containerMenu.getCarried().isEmpty()) {
+            return;
+        }
+
+        int n = assumptions.size();
+        if (n == 0) {
+            return;
+        }
+
+        // 每 tick 重算全局保留集（所有 active 且未完成的预设根目标）
+        activeTargets.clear();
+        for (CraftingAssumption a : assumptions) {
+            if (a.isActive() && !taskFor(a).completed) {
+                activeTargets.add(a.getResult().getItem());
             }
         }
+
+        // 从游标起，找到第一个未完成且处于激活状态的预设作为当前独占任务
+        int idx = -1;
+        CraftingAssumption current = null;
+        TaskState task = null;
+        for (int i = 0; i < n; i++) {
+            int k = Math.floorMod(cursor + i, n);
+            CraftingAssumption cand = assumptions.get(k);
+            if (!cand.isActive()) {
+                continue;
+            }
+            TaskState ct = taskFor(cand);
+            if (ct.completed) {
+                continue;
+            }
+            idx = k;
+            current = cand;
+            task = ct;
+            break;
+        }
+        // 全部完成
+        if (idx < 0) {
+            return;
+        }
+
+        Decision d = advance(current, task, player, client);
+        cursor = (d == Decision.ADVANCE) ? idx + 1 : idx;
+    }
+
+    /**
+     * 推进单个预设状态机的一步
+     * @return 返回本 tick 结束后游标是否应让位
+     */
+    private Decision advance(CraftingAssumption assumption, TaskState task,
+                             Player player, Minecraft client) {
+        if (task.completed) {
+            return Decision.ADVANCE;
+        }
+        if (task.cooldown > 0) {
+            --task.cooldown;
+            return Decision.STAY;
+        }
+        if (task.state == State.IDLE) {
+            task.remainingOps = assumption.getExecuteCount();
+            task.state = State.CHECK;
+            return Decision.STAY;
+        }
+        // CHECK
+        CraftingRecipe recipe = pickRecipe(assumption, player);
+        if (recipe == null) {
+            clearGrid(client, player.containerMenu);
+            // 暂时做不了：让位，下一遍轮询重试
+            return Decision.ADVANCE;
+        }
+        return doCraftStep(assumption, task, recipe, player, client);
+    }
+
+    // 一次合成尝试：成功则继续当前预设；缺料/失败→让位重试
+    private Decision doCraftStep(CraftingAssumption assumption, TaskState task, CraftingRecipe recipe,
+                                 Player player, Minecraft client) {
+        // 禁止靠“拆自己”凑原料
+        task.reserved.clear();
+        task.reserved.add(assumption.getResult().getItem());
+
+        if (!ensureMaterials(assumption, task, recipe, player, client)) {
+            clearGrid(client, player.containerMenu);
+            return Decision.ADVANCE;
+        }
+        // 【批量吞吐接缝】现在每次产出 1 件；将来可替换为“用可堆叠料填满网格一次产多件”，
+        // 并按批量数递减 remainingOps，状态机骨架不变。
+        if (!doCraft(assumption, recipe, player, client)) {
+            clearGrid(client, player.containerMenu);
+            return Decision.ADVANCE;
+        }
+        if (task.remainingOps != CraftingAssumption.UNTIL_EXHAUSTED) {
+            --task.remainingOps;
+            if (task.remainingOps <= 0) {
+                // 该预设彻底完成，游标前进到下一个
+                task.completed = true;
+                task.reserved.clear();
+                return Decision.ADVANCE;
+            }
+        }
+        task.cooldown = SETTLE_TICKS;
+        return Decision.STAY;
+    }
+
+    // 获取或创建某预设的私有状态机
+    private TaskState taskFor(CraftingAssumption assumption) {
+        return tasks.computeIfAbsent(assumption, k -> new TaskState());
     }
 
     private CraftingRecipe pickRecipe(CraftingAssumption assumption, Player player) {
@@ -133,33 +211,6 @@ public class AutoCraftingFunction extends SymAbstractFunction {
             }
         }
         return false;
-    }
-
-    private void doCraftStep(CraftingAssumption assumption, CraftingRecipe recipe,
-                             Player player, Minecraft client) {
-        recursionGuard.clear();
-        // 根目标纳入保留集，组织后续递归通过消耗该目标本身来合成其原料
-        recursionGuard.add(assumption.getResult().getItem());
-
-        if (!ensureMaterials(assumption, recipe, player, client)) {
-            clearGrid(client, player.containerMenu);
-            state = State.DONE;
-            return;
-        }
-        if (!doCraft(assumption, recipe, player, client)) {
-            clearGrid(client, player.containerMenu);
-            state = State.DONE;
-            return;
-        }
-        if (remainingOps != CraftingAssumption.UNTIL_EXHAUSTED) {
-            --remainingOps;
-            if (remainingOps <= 0) {
-                state = State.DONE;
-                return;
-            }
-        }
-        cooldown = SETTLE_TICKS;
-        state = State.CHECK;
     }
 
     private int findSlotForIngredient(AbstractContainerMenu menu, Inventory inventory, Ingredient ingredient) {
@@ -191,19 +242,22 @@ public class AutoCraftingFunction extends SymAbstractFunction {
                 .orElse(null);
     }
 
-    private boolean recipeUsesReserved(CraftingRecipe recipe, Set<Item> recursionGuard) {
+    private boolean recipeUsesReserved(CraftingRecipe recipe, Set<Item> reserved) {
+        if (reserved.isEmpty()) {
+            return false;
+        }
         for (Ingredient ingredient : recipe.placementInfo().ingredients()) {
             if (ingredient.isEmpty()) {
                 continue;
             }
-            if (ingredient.items().map(Holder::value).anyMatch(recursionGuard::contains)) {
+            if (ingredient.items().map(Holder::value).anyMatch(reserved::contains)) {
                 return true;
             }
         }
         return false;
     }
 
-    private boolean ensureMaterials(CraftingAssumption assumption, CraftingRecipe recipe,
+    private boolean ensureMaterials(CraftingAssumption assumption, TaskState task, CraftingRecipe recipe,
                                     Player player, Minecraft client) {
         for (Ingredient ingredient : recipe.placementInfo().ingredients()) {
             if (ingredient.isEmpty()) {
@@ -217,24 +271,24 @@ public class AutoCraftingFunction extends SymAbstractFunction {
                 return false;
             }
             Item representative = representativeItem(ingredient);
-            if (representative == null || recursionGuard.contains(representative)) {
+            if (representative == null || task.reserved.contains(representative)) {
                 // 无法定位代表物品或检测到环形配方
                 return false;
             }
 
             CraftingAssumption sub = new CraftingAssumption(
                     new ItemStack(representative), 1, true, false, true);
-            recursionGuard.add(representative);
+            task.reserved.add(representative);
             CraftingRecipe subRecipe = sub.chooseRecipe(player, 1);
             if (subRecipe == null) {
                 return false;
             }
-            // 拒绝自我分解再合成
-            if (recipeUsesReserved(subRecipe, recursionGuard)) {
+            // 拒绝自我分解（本链）以及跨预设互逆分解（全局目标）
+            if (recipeUsesReserved(subRecipe, task.reserved)
+                    || recipeUsesReserved(subRecipe, activeTargets)) {
                 return false;
             }
-            recursionGuard.add(representative);
-            boolean made = ensureMaterials(sub, subRecipe, player, client)
+            boolean made = ensureMaterials(sub, task, subRecipe, player, client)
                     && doCraft(sub, subRecipe, player, client);
             if (!made) {
                 return false;
@@ -282,9 +336,9 @@ public class AutoCraftingFunction extends SymAbstractFunction {
             if (src < 0) {
                 return false;
             }
-            click(client, containerId, src, 0, ContainerInput.PICKUP);       // 取整叠
-            click(client, containerId, gridSlot, 1, ContainerInput.PICKUP);  // 放 1 个
-            click(client, containerId, src, 0, ContainerInput.PICKUP);       // 剩余放回
+            click(client, containerId, src, 0, ContainerInput.PICKUP); // 取整叠
+            click(client, containerId, gridSlot, 1, ContainerInput.PICKUP); // 放 1 个
+            click(client, containerId, src, 0, ContainerInput.PICKUP); // 剩余放回
         }
         if (assumption.isThrowResult()) {
             click(client, containerId, RESULT_SLOT, 0, ContainerInput.THROW); // 合成并丢出
@@ -309,16 +363,10 @@ public class AutoCraftingFunction extends SymAbstractFunction {
         }
     }
 
-
-    private void reset() {
-        state = State.IDLE;
-        cooldown = 0;
-        remainingOps = 0;
-        recursionGuard.clear();
-    }
-
     @Override
     protected void onDisable() {
-        reset();
+        tasks.clear();
+        cursor = 0;
+        activeTargets.clear();
     }
 }
