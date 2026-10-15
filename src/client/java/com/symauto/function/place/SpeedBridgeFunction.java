@@ -34,7 +34,8 @@ public class SpeedBridgeFunction extends SymAbstractFunction {
         super("speed_bridge", "水平跑搭",
                 Tooltip.create()
                         .line("移动时在脚下补方块，目前只支持完整方块和上半砖")
-                        .line(ChatFormatting.RED, "裸插件服可用，装了 Grim/Vulcan 等反作弊仍可能因'无视线放置'被标记。")
+                        .line(ChatFormatting.RED, "裸插件服可用，装了 Grim/Vulcan 等反作弊仍可能因'无视线放置'被标记")
+                        .line(ChatFormatting.RED, "启用此功能即同意以下：禁止用于 PVP，出事后果自负，不要找本 Mod 作者")
                         .toString()
         );
     }

@@ -6,12 +6,12 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.symauto.config.ConfigManager;
+import com.symauto.function.auto.AutoAttackFunction;
 import com.symauto.storage.DeathInfoStore;
 import com.symauto.storage.VillagerTradeStore;
 import com.symauto.model.BWList;
 import com.symauto.core.FeatureConfig;
 import com.symauto.function.base.SymAbstractFunction;
-import com.symauto.function.auto.AutoAttackSafetyFunction;
 import com.symauto.function.auto.AutoEatFunction;
 import com.symauto.function.highlight.HighLightItemDropFunction;
 import com.symauto.function.highlight.HighLightMasterFunction;
@@ -52,7 +52,7 @@ public class SymAutoCommand {
             itemTarget(OneClickDiscardItemsFunction.INSTANCE.getBW_LIST()),
             itemTarget(AutoEatFunction.INSTANCE.getFOOD_BLACKLIST()),
             itemTarget(HighLightItemDropFunction.INSTANCE.getBW_LIST()),
-            entityTarget(AutoAttackSafetyFunction.INSTANCE.getBW_LIST()),
+            entityTarget(AutoAttackFunction.INSTANCE.getBW_LIST()),
             entityTarget(HighLightMasterFunction.INSTANCE.getBW_LIST())
     );
 

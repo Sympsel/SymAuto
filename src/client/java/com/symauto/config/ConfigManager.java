@@ -3,10 +3,10 @@ package com.symauto.config;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.symauto.config.option.ConfigOption;
+import com.symauto.function.auto.AutoAttackFunction;
 import com.symauto.model.BWList;
 import com.symauto.core.FeatureConfig;
 import com.symauto.function.base.SymAbstractFunction;
-import com.symauto.function.auto.AutoAttackSafetyFunction;
 import com.symauto.function.auto.AutoEatFunction;
 import com.symauto.function.highlight.HighLightItemDropFunction;
 import com.symauto.function.highlight.HighLightMasterFunction;
@@ -56,7 +56,7 @@ public class ConfigManager {
             new BWListHandle<>(OneClickDiscardItemsFunction.INSTANCE.getBW_LIST(), ITEM_TO_ID, ITEM_FROM_ID),
             new BWListHandle<>(AutoEatFunction.INSTANCE.getFOOD_BLACKLIST(), ITEM_TO_ID, ITEM_FROM_ID),
             new BWListHandle<>(HighLightItemDropFunction.INSTANCE.getBW_LIST(), ITEM_TO_ID, ITEM_FROM_ID),
-            new BWListHandle<>(AutoAttackSafetyFunction.INSTANCE.getBW_LIST(), ENTITY_TO_ID, ENTITY_FROM_ID),
+            new BWListHandle<>(AutoAttackFunction.INSTANCE.getBW_LIST(), ENTITY_TO_ID, ENTITY_FROM_ID),
             new BWListHandle<>(HighLightMasterFunction.INSTANCE.getBW_LIST(), ENTITY_TO_ID, ENTITY_FROM_ID)
     );
 

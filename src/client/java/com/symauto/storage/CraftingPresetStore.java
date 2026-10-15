@@ -168,6 +168,18 @@ public class CraftingPresetStore {
         return true;
     }
 
+    /**
+     * 运行态消耗后回写剩余执行次数
+     */
+    public static synchronized void updateRemaining(int index, int remaining) {
+        CraftingPresetData d = safeGet(index);
+        if (d == null) return;
+        if (d.executeCount == CraftingPreset.UNTIL_EXHAUSTED) return;
+        if (d.executeCount == remaining) return;
+        d.executeCount = remaining;
+        dirty = true;
+    }
+
     public static synchronized boolean isUnlimited(int index) {
         CraftingPresetData d = getPreset(index);
         return d != null && d.executeCount == CraftingPreset.UNTIL_EXHAUSTED;

@@ -9,6 +9,7 @@ import lombok.Getter;
 import lombok.Setter;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -43,10 +44,13 @@ public class HighLightItemDropFunction extends HighLightFunction {
 
     @Override
     protected String describe() {
-        return Tooltip.create()
+        String tooltip = Tooltip.create()
                 .line("高亮扫描范围（边长" + getScanRadius() * 2 + "格）内的物品掉落物")
                 .keyValueLine(ChatFormatting.YELLOW, "仅高亮白名单物品", ChatFormatting.GRAY, onlyWhitelist ? "是" : "否")
                 .toString();
+        tooltip += BW_LIST.displayWhitelist(item -> BuiltInRegistries.ITEM.getKey(item).toString());
+        return tooltip;
+
     }
 
     @Override

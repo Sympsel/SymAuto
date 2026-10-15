@@ -20,8 +20,6 @@ import java.util.List;
 public class FeatureConfig {
     public static final SymAbstractFunction AUTO_ATTACK_FUNCTION = AutoAttackFunction.INSTANCE
             .addTag(SymFunctionTags.IDLE);
-    public static final SymAbstractFunction AUTO_ATTACK_SAFETY_FUNCTION = AutoAttackSafetyFunction.INSTANCE
-            .addTag(SymFunctionTags.IDLE);
     public static final SymAbstractFunction AUTO_FISHING_FUNCTION = AutoFishingFunction.INSTANCE
             .addTag(SymFunctionTags.IDLE);
     public static final SymAbstractFunction AUTO_EAT_FUNCTION = AutoEatFunction.INSTANCE
@@ -78,7 +76,6 @@ public class FeatureConfig {
 
     public static final List<SymAbstractFunction> AUTO_ALL = List.of(
             AUTO_ATTACK_FUNCTION,
-            AUTO_ATTACK_SAFETY_FUNCTION,
             AUTO_FISHING_FUNCTION,
             AUTO_EAT_FUNCTION,
             AUTO_RUN_FUNCTION,
