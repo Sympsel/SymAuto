@@ -25,7 +25,7 @@ public class UpdateMessageManager {
     private final List<String> updateMessages;
 
     static void main() {
-        sendUpdate("修复了因客户端无法拿到全量配方表导致“自动合成”完全不可用的 bug");
+        sendUpdate("增强了单人模式下“高亮特定村民”，不需要依赖手动建立缓存了，添加了新的可配置项：对于任意可交易物品都会高亮");
     }
 
     private static void sendUpdate(String context) {

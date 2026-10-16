@@ -14,18 +14,27 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.TagKey;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.npc.villager.Villager;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.Enchantments;
+import net.minecraft.world.item.enchantment.ItemEnchantments;
+import net.minecraft.world.item.trading.MerchantOffer;
+import net.minecraft.world.item.trading.MerchantOffers;
 import net.minecraft.world.scores.TeamColor;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -43,6 +52,10 @@ public class HighLightSpecificVillagersFunction extends HighLightFunction {
     @Getter
     @Setter
     private boolean interceptingConflictingEnchantment = true;
+    // 配置项：是否对任何可交易物品生效
+    @Getter
+    @Setter
+    private boolean applyToAnyItemsCouldTrade = false;
 
     // 原版附魔互斥集
     private static final Set<TagKey<Enchantment>> EXCLUSIVE_SETS = Set.of(
@@ -57,7 +70,10 @@ public class HighLightSpecificVillagersFunction extends HighLightFunction {
         super("high_light_specific_villagers",
                 "高亮特定村民",
                 SCAN_RADIUS,
-                Tooltip.create().line("高亮曾交易过、且出售与主手物品相关附魔书的村民").toString());
+                Tooltip.create()
+                        .line("高亮范围内卖相关附魔书的村民")
+                        .line(ChatFormatting.YELLOW, "多人模式下仅高亮\"曾交易过\"、\"且出售与主手物品相关附魔书\"的村民")
+                        .toString());
         ENCHANTMENT_BLACKLIST = new BWList<>(id);
         // 绑定诅咒、消失诅咒
         ENCHANTMENT_BLACKLIST.addAllToBlacklist(Set.of(
@@ -70,15 +86,20 @@ public class HighLightSpecificVillagersFunction extends HighLightFunction {
                 this::isOnlyNeedBetterEnchantment, this::setOnlyNeedBetterEnchantment, true));
         addOption(new BooleanOption("intercepting_conflicting_enchantment", "非创造模式下排除带有冲突附魔的村民",
                 this::isInterceptingConflictingEnchantment, this::setInterceptingConflictingEnchantment, true));
+        addOption(new BooleanOption("apply_to_any_items", "是否对任何可交易物品生效（仅单人模式生效）",
+                this::isApplyToAnyItemsCouldTrade, this::setApplyToAnyItemsCouldTrade, false));
+
     }
 
     @Override
     protected String describe() {
         int diameter = getScanRadius() * 2;
         return Tooltip.create()
-                .line("主手持可附魔物品时，高亮扫描范围（边长" + diameter + "格）内你曾打开过交易且出售相关附魔书的村民")
+                .line("主手持可附魔物品时，高亮范围内（" + diameter + "格）卖相关附魔书的村民")
+                .line(ChatFormatting.YELLOW, "多人模式下仅高亮\"曾交易过\"、\"且出售与主手物品相关附魔书\"的村民")
                 .keyValueLine(ChatFormatting.YELLOW, "仅高亮拥有更高等级相关附魔村民", ChatFormatting.GRAY, onlyNeedBetterEnchantment ? "是" : "否")
                 .keyValueLine(ChatFormatting.YELLOW, "非创造模式下排除带有冲突附魔的村民", ChatFormatting.GRAY, interceptingConflictingEnchantment ? "是" : "否")
+                .keyValueLine(ChatFormatting.YELLOW, "单人模式增强，是否对任何可交易物品生效", ChatFormatting.GRAY, applyToAnyItemsCouldTrade ? "是" : "否")
                 .line(ENCHANTMENT_BLACKLIST.displayBlacklist(enhancement -> enhancement.identifier().toString()))
                 .toString();
     }
@@ -95,6 +116,24 @@ public class HighLightSpecificVillagersFunction extends HighLightFunction {
         HolderLookup.RegistryLookup<Enchantment> enchantments =
                 client.level.registryAccess().lookupOrThrow(Registries.ENCHANTMENT);
         boolean isCreative = client.player.isCreative();
+        // 单人模式增强
+        MinecraftServer server = client.getSingleplayerServer();
+        if (server != null) {
+            ServerLevel serverLevel = server.getLevel(client.player.level().dimension());
+            if (serverLevel != null) {
+                if (applyToAnyItemsCouldTrade) {
+                    // 任意可交易物品模式：村民买卖主手物品即高亮
+                    Item heldItem = stack.getItem();
+                    return scan(client, Villager.class, villager ->
+                            tradesHeldItem(serverLevel, villager.getUUID(), heldItem));
+                }
+                return scan(client, Villager.class, villager -> isRelevantTrade(
+                        enchantments,
+                        readServerOffers(serverLevel, villager.getUUID()),
+                        stack,
+                        isCreative));
+            }
+        }
         return scan(client, Villager.class, villager -> hasCachedRelevantTrade(enchantments, villager.getUUID(), stack, isCreative));
     }
 
@@ -103,9 +142,63 @@ public class HighLightSpecificVillagersFunction extends HighLightFunction {
         return TeamColor.AQUA;
     }
 
+    /**
+     * 单人模式增强：开启任意可交易物品模式时，高亮买卖主手物品的村民
+     */
+    private static boolean tradesHeldItem(ServerLevel level, UUID villagerId, Item item) {
+        Entity entity = level.getEntity(villagerId);
+        if (!(entity instanceof Villager villager)) {
+            return false;
+        }
+        for (MerchantOffer offer : villager.getOffers()) {
+            if (offer.getResult().is(item)
+                    || offer.getCostA().is(item)
+                    || offer.getCostB().is(item)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 单人模式增强：从服务器端读取村民交易数据
+     */
+    private static Map<String, Integer> readServerOffers(ServerLevel level, UUID villagerId) {
+        Entity entity = level.getEntity(villagerId);
+        if (!(entity instanceof Villager villager)) {
+            return Map.of();
+        }
+        MerchantOffers offers = villager.getOffers();
+        Map<String, Integer> trades = new HashMap<>();
+        for (MerchantOffer offer : offers) {
+            ItemStack result = offer.getResult();
+            if (!result.is(Items.ENCHANTED_BOOK)) {
+                continue;
+            }
+            // 附魔书的数据在 STORED_ENCHANTMENTS 组件，不在 getEnchantments()
+            ItemEnchantments stored = result.get(DataComponents.STORED_ENCHANTMENTS);
+            if (stored == null) {
+                continue;
+            }
+            for (Map.Entry<Holder<Enchantment>, Integer> e : stored.entrySet()) {
+                e.getKey().unwrapKey().map(ResourceKey::identifier).ifPresent(
+                        id -> trades.merge(id.toString(), e.getValue(), Math::max)
+                );
+            }
+        }
+        return trades;
+    }
+
+    /**
+     * 多人模式下从缓存读
+     */
     private boolean hasCachedRelevantTrade(HolderLookup.RegistryLookup<Enchantment> enchantmentRegistry,
                                            UUID villagerId, ItemStack heldStack, boolean isCreative) {
-        Map<String, Integer> trades = VillagerTradeStore.getEnchantments(villagerId);
+        return isRelevantTrade(enchantmentRegistry, VillagerTradeStore.getEnchantments(villagerId), heldStack, isCreative);
+    }
+
+    private boolean isRelevantTrade(HolderLookup.RegistryLookup<Enchantment> enchantmentRegistry,
+                                    Map<String, Integer> trades, ItemStack heldStack, boolean isCreative) {
         if (trades == null || trades.isEmpty()) {
             return false;
         }
