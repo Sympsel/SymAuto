@@ -1,11 +1,11 @@
 package com.symauto.model.crafting;
 
+import com.symauto.function.utils.ClientRecipeMaps;
 import com.symauto.function.utils.ItemUtils;
 import it.unimi.dsi.fastutil.ints.IntList;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import net.minecraft.client.Minecraft;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.*;
@@ -23,30 +23,27 @@ public class CraftingPreset {
     private int executeCount;
     // 是否递归查询并合成原材料
     private boolean isRecursiveSearchMaterial;
-    // 是否将合成结果丢出，不占用背包空间
+    // 是否将产物丢出，不占用背包空间
     private boolean isThrowResult;
     private boolean isActive;
 
     public List<CraftingRecipe> getRecipes() {
-        List<CraftingRecipe> recipes = new ArrayList<>();
-        MinecraftServer server = Minecraft.getInstance().getSingleplayerServer();
-        if (server == null) {
-            return recipes;
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.level == null) {
+            return List.of();
         }
-        for (RecipeHolder<CraftingRecipe> holder
-                : server.getRecipeManager().getAllOfType(RecipeType.CRAFTING)) {
-            CraftingRecipe recipe = holder.value();
-            if (!(recipe instanceof ShapedRecipe) && !(recipe instanceof ShapelessRecipe)) {
+        List<CraftingRecipe> recipes = new ArrayList<>();
+        for (RecipeHolder<?> holder : ClientRecipeMaps.get(mc)) {
+            if (!(holder.value() instanceof ShapedRecipe) && !(holder.value() instanceof ShapelessRecipe)) {
                 continue;
             }
-            ItemStack output;
+            CraftingRecipe recipe = (CraftingRecipe) holder.value();
             try {
-                output = recipe.assemble(CraftingInput.EMPTY);
-            } catch (Throwable t) {
-                continue;
-            }
-            if (output.is(result.getItem())) {
-                recipes.add(recipe);
+                ItemStack output = recipe.assemble(CraftingInput.EMPTY);
+                if (output.is(result.getItem())) {
+                    recipes.add(recipe);
+                }
+            } catch (Throwable ignored) {
             }
         }
         return recipes;
@@ -54,7 +51,7 @@ public class CraftingPreset {
 
     public CraftingRecipe chooseRecipe(Player player, int crafts) {
         return getRecipes().stream()
-                // 材料可凑齐：按实际网格占用次数计算，而不是只按材料种类计算
+                // 材料可凑齐，按实际网格占用次数计算
                 .filter(r -> hasIngredientsFor(r, player, crafts))
                 // 打分排序
                 .max(Comparator
@@ -68,14 +65,12 @@ public class CraftingPreset {
 
     /**
      * placementInfo().ingredients() 是同种材料去重后的列表；
-     * 必须按 slotsToIngredientIndex() 展开，胸甲这类 8 格同材料配方才不会被误判成只需要 1 个材料。
      */
     public static boolean hasIngredientsFor(CraftingRecipe recipe, Player player, int crafts) {
         List<Ingredient> ingredients = recipe.placementInfo().ingredients();
         IntList slots = recipe.placementInfo().slotsToIngredientIndex();
         List<Ingredient> demands = new ArrayList<>();
         if (slots.isEmpty()) {
-            // 无序配方可能没有网格映射，直接使用完整材料列表（如铁块 -> 铁锭）
             for (Ingredient ingredient : ingredients) {
                 if (ingredient.isEmpty()) {
                     continue;

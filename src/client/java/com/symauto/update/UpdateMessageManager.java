@@ -25,7 +25,7 @@ public class UpdateMessageManager {
     private final List<String> updateMessages;
 
     static void main() {
-        sendUpdate("不再显示更新日志异常显示的时分秒");
+        sendUpdate("修复了因客户端无法拿到全量配方表导致“自动合成”完全不可用的 bug");
     }
 
     private static void sendUpdate(String context) {

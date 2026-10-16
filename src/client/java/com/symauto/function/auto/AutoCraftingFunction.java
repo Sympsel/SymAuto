@@ -187,6 +187,7 @@ public class AutoCraftingFunction extends SymAbstractFunction {
                         .line(ChatFormatting.GOLD, "支持配置是否递归合成原材料")
                         .line(ChatFormatting.GOLD, "支持配置是否丢出产物")
                         .line(ChatFormatting.GOLD, "支持配置合成次数")
+                        .line(ChatFormatting.GOLD, "多人模式下仅能读到原版配方，如果服务器修改了部分原版配方，将因配方被覆盖无法自动合成")
                         .line(ChatFormatting.YELLOW, "需要自动化建议开启递归合成材料，不过将导致合成效率大幅下降；需要高效自动合成建议关闭递归合成，手动配齐材料或者将需要的材料也放入预设中")
                         .toString()
         );
@@ -206,6 +207,7 @@ public class AutoCraftingFunction extends SymAbstractFunction {
                 .line(ChatFormatting.GOLD, "支持配置是否递归合成原材料")
                 .line(ChatFormatting.GOLD, "支持配置是否丢出产物")
                 .line(ChatFormatting.GOLD, "支持配置合成次数")
+                .line(ChatFormatting.GOLD, "多人模式下仅能读到原版配方，如果服务器修改了部分原版配方，将因配方被覆盖无法自动合成")
                 .line(ChatFormatting.YELLOW, "需要自动化建议开启递归合成材料，不过将导致合成效率大幅下降；需要高效自动合成建议关闭递归合成，手动配齐材料或者将需要的材料也放入预设中")
                 .toString();
     }
