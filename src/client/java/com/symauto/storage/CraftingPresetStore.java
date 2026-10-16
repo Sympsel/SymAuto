@@ -63,13 +63,13 @@ public class CraftingPresetStore {
     private static List<CraftingPresetData> defaultPresets() {
         List<CraftingPresetData> list = new ArrayList<>();
         list.add(new CraftingPresetData(Items.COAL_BLOCK, CraftingPreset.UNTIL_EXHAUSTED,
-                64, false, false, false));
+                -1, false, false, false));
         list.add(new CraftingPresetData(Items.IRON_BLOCK, CraftingPreset.UNTIL_EXHAUSTED,
-                64, false, false, false));
+                -1, false, false, false));
         list.add(new CraftingPresetData(Items.GOLD_BLOCK, CraftingPreset.UNTIL_EXHAUSTED,
-                64, false, false, false));
+                -1, false, false, false));
         list.add(new CraftingPresetData(Items.DIAMOND_BLOCK, CraftingPreset.UNTIL_EXHAUSTED,
-                64, false, false, false));
+                -1, false, false, false));
         list.add(new CraftingPresetData(Items.REDSTONE_BLOCK, CraftingPreset.UNTIL_EXHAUSTED,
                 64, false, false, false));
         list.add(new CraftingPresetData(Items.DISPENSER, CraftingPreset.UNTIL_EXHAUSTED,

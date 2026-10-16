@@ -2,70 +2,97 @@ package com.symauto.update;
 
 import lombok.Getter;
 
-import java.text.ParseException;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class UpdateMessageManager {
     public static final UpdateMessageManager INSTANCE = new UpdateMessageManager();
 
+    // 运行时
+    private static final String UPDATE_LOG_RESOURCE = "/assets/symauto/update_log.txt";
+    // 开发期
+    private static final String UPDATE_LOG_SOURCE = "src/client/resources/assets/symauto/update_log.txt";
+    private static final String GRADLE_FILE = "gradle.properties";
+
     @Getter
-    private final List<UpdateMessage> updateMessages;
+    private final List<String> updateMessages;
 
-    private void addUpdateMessage(String formatedText) {
-        // 格式：[标准时间][版本] 更新内容
-        Pattern pattern = Pattern.compile("^\\[([^\\]]+)\\]\\[([^\\]]+)\\]\\s*(.+)$");
-        Matcher matcher = pattern.matcher(formatedText);
-        if (!matcher.matches()) {
-            throw new IllegalArgumentException("Invalid update message format: " + formatedText);
-        }
-
-        String formatedTime = matcher.group(1);
-        String version = matcher.group(2);
-        String message = matcher.group(3);
-
-        long createTime;
-        try {
-            createTime = new SimpleDateFormat("yyyy-MM-dd").parse(formatedTime).getTime();
-        } catch (ParseException e) {
-            throw new IllegalArgumentException("时间格式错误: " + formatedTime, e);
-        }
-
-        UpdateMessage updateMessage = new UpdateMessage(createTime, version, message);
-        updateMessages.add(updateMessage);
+    static void main() {
+        sendUpdate("msg");
     }
 
-    private void setUpdateMessages() {
-        updateMessages.clear();
-        addUpdateMessage("[2026-10-14][v26.2-2.17.3] \"自动合成\" 添加了预设管理器 GUI");
-        addUpdateMessage("[2026-10-14][v26.2-2.17.2] \"自动合成\" 预设，修复了自己分解自己合成的bug；每个预设采用私有状态机保证串行轮询执行");
-        addUpdateMessage("[2026-10-13][v26.2-2.17.1] 添加新功能：\"自动合成\" 预设，支持开启是否递归原材料合成、自动丢弃结果");
-        addUpdateMessage("[2026-10-13][v26.2-2.16.4] 修复了\"一键丢弃相同物品\"可以丢弃创造模式物品栏里的物品导致物品消失的难绷bug");
-        addUpdateMessage("[2026-10-12][v26.2-2.16.2] 为\"高亮周围玩家\"添加了是否高亮自己的配置项");
-        addUpdateMessage("[2026-10-11][v26.2-2.16.1] 添加新功能：高亮周围玩家，隐身玩家会有单独的HUD显示");
-        addUpdateMessage("[2026-10-11][v26.2-2.15.1] 添加新功能：自动记录死亡信息");
-        addUpdateMessage("[2026-10-10][v26.2-2.14.1] 添加新功能：自动合成发射器");
-        addUpdateMessage("[2026-10-10][v26.2-2.13.3] 增加高亮功能相关配置项");
-        addUpdateMessage("[2026-10-10][v26.2-2.13.2] 添加新功能：高亮掉落物，支持仅白名单模式");
-        addUpdateMessage("[2026-10-10][v26.2-2.13.1] 添加新功能：手持武器时高亮周围怪物");
-        addUpdateMessage("[2026-10-09][v26.2-2.12.2] 重写了tooltip的格式");
-        addUpdateMessage("[2026-10-09][v26.2-2.12.1] 添加新功能：高亮显示当前卖手持物品可附魔的附魔书的村民，需要手动打开一遍村民交易列表记录数据");
-        addUpdateMessage("[2026-10-08][v26.2-2.11.2] 添加新功能：快速跑路（Ctrl + W 激活，再按取消激活，支持八向防偏航，建议搭配自动搭路使用）");
-        addUpdateMessage("[2026-10-08][v26.2-2.10.1] 添加新功能：快速搭路（目前不支持下半砖）、鼠标悬浮物品时 Ctrl + A 平铺物品");
-        addUpdateMessage("[2026-10-07][v26.2-2.9.2] 对菜单的功能进行了分类");
-        addUpdateMessage("[2026-10-07][v26.2-2.9.1] 添加新功能：自动填充物品分类机");
-        addUpdateMessage("[2026-10-07][v26.2-2.8.6] 菜单添加了\"指令用法\"");
-        addUpdateMessage("[2026-10-07][v26.2-2.8.5] 为自动攻击配置了黑名单机制（默认为展示框、画、村民、玩家，可通过指令\"/sa bwlist auto_attack_safety_blacklist blacklist add/remove\"配置）；重构了部分显示效果");
-        addUpdateMessage("[2026-10-07][v26.2-2.8.4] 在菜单新增了更新日志按钮，可以便捷查阅；优化了菜单界面");
-        addUpdateMessage("[2026-10-07][v26.2-2.8.3] 自动钓鱼：对未落水或非开放水域做了检测，未在水中的会10秒后重新抛竿");
-        addUpdateMessage("[2026-10-07][v26.2-2.8.2] 添加了更新日志模块");
+    private static void sendUpdate(String context) {
+        long timeStamp = System.currentTimeMillis();
+        String createTime = new SimpleDateFormat("yyyy-MM-dd").format(timeStamp);
+        File file = new File(UPDATE_LOG_SOURCE);
+        File gradle = new File(GRADLE_FILE);
+        if (!file.exists()) {
+            System.out.println("更新日志文件不存在: " + file.getAbsolutePath());
+            return;
+        }
+        if (!gradle.exists()) {
+            System.out.println("gradle.properties 文件不存在: " + gradle.getAbsolutePath());
+            return;
+        }
+
+        String version = "";
+        try {
+            List<String> lines = Files.readAllLines(gradle.toPath(), StandardCharsets.UTF_8);
+            for (String line : lines) {
+                line = line.trim();
+                if (line.isEmpty()) {
+                    continue;
+                }
+                if (line.startsWith("mod_version")) {
+                    version = line.split("=")[1].trim();
+                    break;
+                }
+            }
+            if (version.isEmpty()) {
+                System.err.println("未识别到版本号");
+                return;
+            }
+            System.out.println("当前版本号为: " + version);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        try {
+            List<String> lines = new ArrayList<>(
+                    Files.readAllLines(file.toPath(), StandardCharsets.UTF_8));
+            lines.addFirst("[" + createTime + "][" + version + "] " + context);
+            Files.write(file.toPath(), lines, StandardCharsets.UTF_8);
+            System.out.println("更新日志已保存到 " + file.getAbsolutePath());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private UpdateMessageManager() {
         updateMessages = new ArrayList<>();
-        setUpdateMessages();
+        try (InputStream in = UpdateMessageManager.class.getResourceAsStream(UPDATE_LOG_RESOURCE)) {
+            if (in == null) {
+                System.err.println("[SymAuto] 未找到更新日志资源: " + UPDATE_LOG_RESOURCE);
+                return;
+            }
+            try (BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(in, StandardCharsets.UTF_8))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    if (!line.isBlank()) {
+                        updateMessages.add(line);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

@@ -1,12 +1,14 @@
 package com.symauto.function.auto;
 
-import com.mojang.logging.LogUtils;
+import com.symauto.config.option.IntOption;
 import com.symauto.storage.CraftingPresetStore;
 import com.symauto.model.crafting.CraftingPreset;
 import com.symauto.function.base.SymAbstractFunction;
 import com.symauto.function.utils.Tooltip;
 import com.symauto.gui.screen.CraftingPresetsManagerScreen;
 import it.unimi.dsi.fastutil.ints.IntList;
+import lombok.Getter;
+import lombok.Setter;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
@@ -20,7 +22,6 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.*;
-import org.slf4j.Logger;
 
 import java.util.*;
 
@@ -32,24 +33,105 @@ public class AutoCraftingFunction extends SymAbstractFunction {
     private static final int GRID_SIZE = 9;
     private static final int STACK_MAX = 64;
     // 合成后等待服务器回包同步背包的 tick 数
-    private static final int SETTLE_TICKS = 2;
+    private static final int SETTLE_TICKS_DEFAULT = 2;
+    // 失败、缺料、补料超时后的退避时间
+    private static final int WAIT_TICKS_DEFAULT = 0;
 
-    private static final int WAIT_TICKS = 10;
-    private static final Logger LOGGER = LogUtils.getLogger();
-    private static final boolean DEBUG = true;
+    @Getter
+    @Setter
+    private int settleTicks = SETTLE_TICKS_DEFAULT;
+    @Getter
+    @Setter
+    private int waitTicks = WAIT_TICKS_DEFAULT;
+
+    private static final int LOG_LIMIT = 200;
+    private static final Object LOG_LOCK = new Object();
+    private static final Deque<LogLine> EXECUTION_LOGS = new ArrayDeque<>();
+
+    private record LogLine(String message, int repeat) {
+        String display() {
+            return repeat > 1 ? message + "（重复 ×" + repeat + "）" : message;
+        }
+
+        LogLine nextRepeat() {
+            return new LogLine(message, repeat + 1);
+        }
+    }
+
+    public static List<String> getExecutionLogs() {
+        synchronized (LOG_LOCK) {
+            return EXECUTION_LOGS.stream().map(LogLine::display).toList();
+        }
+    }
+
+    public static void clearExecutionLogs() {
+        synchronized (LOG_LOCK) {
+            EXECUTION_LOGS.clear();
+        }
+    }
 
     private static void debug(String message, Object... args) {
-        if (DEBUG) {
-            LOGGER.info("[AutoCrafting] " + message, args);
+        String formatted = formatLog(message, args);
+        synchronized (LOG_LOCK) {
+            LogLine last = EXECUTION_LOGS.peekLast();
+            if (last != null && last.message().equals(formatted)) {
+                EXECUTION_LOGS.pollLast();
+                EXECUTION_LOGS.addLast(last.nextRepeat());
+            } else {
+                EXECUTION_LOGS.addLast(new LogLine(formatted, 1));
+                while (EXECUTION_LOGS.size() > LOG_LIMIT) {
+                    EXECUTION_LOGS.pollFirst();
+                }
+            }
         }
+    }
+
+    private static String formatLog(String message, Object... args) {
+        StringBuilder result = new StringBuilder();
+        int argIndex = 0;
+        int start = 0;
+        while (true) {
+            int marker = message.indexOf("{}", start);
+            if (marker < 0) {
+                result.append(message, start, message.length());
+                break;
+            }
+            result.append(message, start, marker);
+            if (argIndex < args.length) {
+                result.append(String.valueOf(args[argIndex++]));
+            } else {
+                result.append("{}");
+            }
+            start = marker + 2;
+        }
+        return result.toString();
+    }
+
+    private static String describeItem(Item item) {
+        return new ItemStack(item).getHoverName().getString();
+    }
+
+    private static String describeIngredient(Ingredient ingredient) {
+        List<String> names = ingredient.items()
+                .map(Holder::value)
+                .map(AutoCraftingFunction::describeItem)
+                .distinct()
+                .limit(3)
+                .toList();
+        if (names.isEmpty()) {
+            return "空";
+        }
+        String text = String.join("/", names);
+        return ingredient.items().count() > 3 ? text + " 等" : text;
     }
 
     private static String describeRecipe(CraftingRecipe recipe) {
         if (recipe == null) {
-            return "null";
+            return "无";
         }
         ItemStack output = recipe.assemble(CraftingInput.EMPTY);
-        return recipe.getClass().getSimpleName() + " -> " + output.getItem() + " x" + output.getCount();
+        return recipe.getClass().getSimpleName()
+                + " → " + output.getHoverName().getString() + " ×" + output.getCount();
     }
 
     private enum State {
@@ -102,12 +184,30 @@ public class AutoCraftingFunction extends SymAbstractFunction {
         super("auto_crafting", "自动合成",
                 Tooltip.create()
                         .line("打开工作台自动线性轮询执行预设管理器里的合成配方，全自动输入输出，输出可接漏斗矿车")
-                        .line(ChatFormatting.YELLOW, "支持配置是否递归合成原材料")
-                        .line(ChatFormatting.YELLOW, "支持配置是否丢出产物")
-                        .line(ChatFormatting.YELLOW, "支持配置合成次数")
+                        .line(ChatFormatting.GOLD, "支持配置是否递归合成原材料")
+                        .line(ChatFormatting.GOLD, "支持配置是否丢出产物")
+                        .line(ChatFormatting.GOLD, "支持配置合成次数")
+                        .line(ChatFormatting.YELLOW, "需要自动化建议开启递归合成材料，不过将导致合成效率大幅下降；需要高效自动合成建议关闭递归合成，手动配齐材料或者将需要的材料也放入预设中")
                         .toString()
         );
+        addOption(new IntOption("settleTicks", "服务器同步等待（tick，过高影响效率）",
+                this::getSettleTicks, this::setSettleTicks, 0, 10, 1));
+        addOption(new IntOption("waitTicks", "失败、缺料、补料超时后的退避时间（tick）",
+                this::getWaitTicks, this::setWaitTicks, 0, 10, 1));
         presets = new ArrayList<>();
+    }
+
+    @Override
+    protected String describe() {
+        return Tooltip.create()
+                .line("打开工作台自动线性轮询执行预设管理器里的合成配方，全自动输入输出，输出可接漏斗矿车")
+                .keyValueLine(ChatFormatting.YELLOW, "服务器同步等待（延迟越高调越高）", ChatFormatting.GRAY, String.valueOf(settleTicks))
+                .keyValueLine(ChatFormatting.YELLOW, "失败、缺料、补料超时后的退避时间", ChatFormatting.GRAY, String.valueOf(waitTicks))
+                .line(ChatFormatting.GOLD, "支持配置是否递归合成原材料")
+                .line(ChatFormatting.GOLD, "支持配置是否丢出产物")
+                .line(ChatFormatting.GOLD, "支持配置合成次数")
+                .line(ChatFormatting.YELLOW, "需要自动化建议开启递归合成材料，不过将导致合成效率大幅下降；需要高效自动合成建议关闭递归合成，手动配齐材料或者将需要的材料也放入预设中")
+                .toString();
     }
 
     @Override
@@ -120,7 +220,9 @@ public class AutoCraftingFunction extends SymAbstractFunction {
         return new CraftingPresetsManagerScreen(parent);
     }
 
-    /** 预设存储变化时重建运行时列表并重置状态（编辑预设即从头开始，符合预期） */
+    /**
+     * 预设存储变化时重建运行时列表并重置状态（编辑预设即从头开始，符合预期）
+     */
     private void syncPresetsFromStore() {
         long rev = CraftingPresetStore.getRevision();
         if (rev == loadedRevision) {
@@ -207,7 +309,7 @@ public class AutoCraftingFunction extends SymAbstractFunction {
         CraftingRecipe recipe = pickRecipe(assumption, player);
         if (recipe == null) {
             clearGrid(client, player.containerMenu);
-            task.cooldown = WAIT_TICKS;
+            task.cooldown = waitTicks;
             // 暂时做不了就让位，退避后再试
             return Decision.ADVANCE;
         }
@@ -216,7 +318,7 @@ public class AutoCraftingFunction extends SymAbstractFunction {
 
     /**
      * 一次合成尝试：优先原料槽堆叠批量合成，否则回退逐件（含递归中间产物）
-     * 成功则继续盯当前预设；缺料/失败就让位重试
+     * 成功则继续当前预设；缺料/失败就让位重试
      */
     private Decision doCraftStep(CraftingPreset assumption, TaskState task, CraftingRecipe recipe,
                                  Player player, Minecraft client, int storeIndex) {
@@ -224,35 +326,34 @@ public class AutoCraftingFunction extends SymAbstractFunction {
         int targetOps = (task.remainingOps == CraftingPreset.UNTIL_EXHAUSTED)
                 ? Integer.MAX_VALUE : task.remainingOps;
         int crafted = tryBatchCraft(assumption, recipe, player, client, targetOps);
-        debug("批量合成尝试: 目标={}, 配方={}, 实际产出={}",
-                assumption.getResult().getItem(), describeRecipe(recipe), crafted);
         if (crafted > 0) {
+            debug("批量合成完成：{}，执行 {} 次", describeItem(assumption.getResult().getItem()), crafted);
             return finishBatch(task, crafted, storeIndex);
         }
 
-        // 回退：需要中间产物或库存不足以堆叠时，逐件合成
+        // 需要中间产物或存货不足以堆叠时，逐件合成
         MaterialCheck materials = ensureMaterials(assumption, recipe, player, client,
                 Set.of(assumption.getResult().getItem()), task);
         if (materials == MaterialCheck.WAITING) {
-            debug("等待递归补料同步: 目标={}", assumption.getResult().getItem());
-            // 已发起一次分解/中间产物合成，等待服务器把新物品同步进背包
-            task.cooldown = SETTLE_TICKS;
+            debug("等待中间材料同步：{}", describeItem(assumption.getResult().getItem()));
+            task.cooldown = settleTicks;
             return Decision.STAY;
         }
         if (materials == MaterialCheck.UNAVAILABLE) {
-            debug("递归补料不可用: 目标={}, 配方={}",
-                    assumption.getResult().getItem(), describeRecipe(recipe));
+            debug("暂时无法补齐材料：{}（{}）",
+                    describeItem(assumption.getResult().getItem()), describeRecipe(recipe));
             clearGrid(client, player.containerMenu);
-            task.cooldown = WAIT_TICKS;
+            task.cooldown = waitTicks;
             return Decision.ADVANCE;
         }
         if (!doCraft(assumption, recipe, player, client)) {
-            debug("根配方点击合成失败: 目标={}, 配方={}",
-                    assumption.getResult().getItem(), describeRecipe(recipe));
+            debug("合成操作失败：{}（{}）",
+                    describeItem(assumption.getResult().getItem()), describeRecipe(recipe));
             clearGrid(client, player.containerMenu);
-            task.cooldown = WAIT_TICKS;
+            task.cooldown = waitTicks;
             return Decision.ADVANCE;
         }
+        debug("合成完成：{} ×1", describeItem(assumption.getResult().getItem()));
         return finishBatch(task, 1, storeIndex);
     }
 
@@ -266,8 +367,6 @@ public class AutoCraftingFunction extends SymAbstractFunction {
             }
             int totalRequired = totalRequiredFor(ingredients, required, j);
             int available = countIngredient(inventory, ingredient);
-            debug("网格总量预检查: 配方={}, 原料索引={}, 需要={}, 现有={}",
-                    describeRecipe(recipe), j, totalRequired, available);
             if (available < totalRequired) {
                 return false;
             }
@@ -314,15 +413,14 @@ public class AutoCraftingFunction extends SymAbstractFunction {
             }
             CraftingPresetStore.updateRemaining(storeIndex, task.remainingOps);
         }
-        task.cooldown = SETTLE_TICKS;
+        task.cooldown = settleTicks;
         return Decision.STAY;
     }
 
     /**
-     * 仅在“所有原料都已直接存在于背包”时启用，需要中间产物时返回 0 交由逐件回退
-     * 每个网格位分配背包里一整叠匹配原料
+     * 批量合成
      *
-     * @return 实际合成的件数；0 表示本次不适合批量
+     * @return 实际合成的配方执行次数；0 表示本次不适合批量
      */
     private int tryBatchCraft(CraftingPreset assumption, CraftingRecipe recipe,
                               Player player, Minecraft client, int targetOps) {
@@ -338,9 +436,8 @@ public class AutoCraftingFunction extends SymAbstractFunction {
         IntList slotsToIngredientIndex = placement.slotsToIngredientIndex();
         int width = (recipe instanceof ShapedRecipe shaped) ? shaped.getWidth() : 3;
 
-        // 预分配：为每个网格位各分配背包里“一整叠”匹配原料
-        List<int[]> plan = new ArrayList<>(); // {gridSlot, srcSlot, count}
-        Set<Integer> used = new HashSet<>();
+        // 确定每个非空网格位对应哪种原料
+        List<int[]> positions = new ArrayList<>(); // {gridSlot, ingredientIndex}
         int placementSize = slotsToIngredientIndex.isEmpty() ? ingredients.size() : slotsToIngredientIndex.size();
         for (int p = 0; p < placementSize; p++) {
             int ingredientIndex = slotsToIngredientIndex.isEmpty()
@@ -349,78 +446,122 @@ public class AutoCraftingFunction extends SymAbstractFunction {
             if (ingredientIndex == PlacementInfo.EMPTY_SLOT) {
                 continue;
             }
-            Ingredient ingredient = ingredients.get(ingredientIndex);
             int row = p / width;
             int col = p % width;
             int gridSlot = GRID_FIRST_SLOT + row * 3 + col;
             if (gridSlot >= GRID_FIRST_SLOT + GRID_SIZE) {
+                debug("批量规划失败: 配方={}, 网格槽={} 超出范围", describeRecipe(recipe), gridSlot);
                 return 0;
             }
-            int src = findUnusedInventorySlot(menu, inventory, ingredient, used);
-            if (src < 0) {
-                debug("批量规划失败: 配方={}, 网格槽={}, 缺少可用材料叠={}",
-                        describeRecipe(recipe), gridSlot, ingredient);
-                // 该原料的可用叠数不足以铺满所有网格位，改为逐件回退
-                return 0;
-            }
-            used.add(src);
-            plan.add(new int[]{gridSlot, src, menu.getSlot(src).getItem().getCount()});
+            positions.add(new int[]{gridSlot, ingredientIndex});
         }
-        if (plan.isEmpty()) {
+        if (positions.isEmpty()) {
             return 0;
         }
 
-        int batch = targetOps;
-        for (int[] e : plan) {
-            batch = Math.min(batch, e[2]);
+        // 合并相同 Ingredient
+        int[] required = requiredCounts(recipe);
+        int batch = Math.min(targetOps, STACK_MAX);
+        for (int j = 0; j < ingredients.size(); j++) {
+            Ingredient ingredient = ingredients.get(j);
+            if (ingredient.isEmpty() || hasSameIngredientBefore(ingredients, j)) {
+                continue;
+            }
+            int requiredTotal = totalRequiredFor(ingredients, required, j);
+            int available = countIngredient(inventory, ingredient);
+            int ingredientBatch = available / requiredTotal;
+            int maxStackSize = maxAvailableStackSize(menu, inventory, ingredient);
+            batch = Math.min(batch, Math.min(ingredientBatch, maxStackSize));
         }
-        batch = Math.min(batch, STACK_MAX);
         if (batch <= 0) {
+            debug("批量规划失败: 配方={}, 材料总数不足", describeRecipe(recipe));
             return 0;
+        }
+
+        // 为每个网格位精确分配 batch 个材料；允许同一背包槽服务多个网格位
+        Map<Integer, Integer> remainingBySlot = new HashMap<>();
+        for (Slot slot : menu.slots) {
+            if (slot.container == inventory && slot.hasItem()) {
+                remainingBySlot.put(slot.index, slot.getItem().getCount());
+            }
+        }
+        List<int[]> plan = new ArrayList<>(); // {gridSlot, srcSlot, count}
+        for (int[] position : positions) {
+            int gridSlot = position[0];
+            Ingredient ingredient = ingredients.get(position[1]);
+            int needed = batch;
+            for (Slot slot : menu.slots) {
+                if (slot.container != inventory || needed <= 0) {
+                    continue;
+                }
+                ItemStack stack = slot.getItem();
+                if (stack.isEmpty() || !ingredient.test(stack)) {
+                    continue;
+                }
+                int available = remainingBySlot.getOrDefault(slot.index, 0);
+                int take = Math.min(available, needed);
+                if (take <= 0) {
+                    continue;
+                }
+                remainingBySlot.put(slot.index, available - take);
+                plan.add(new int[]{gridSlot, slot.index, take});
+                needed -= take;
+            }
+            if (needed > 0) {
+                debug("批量分配失败：{} 第 {} 格还缺 {} 个 {}",
+                        describeRecipe(recipe), gridSlot, needed, describeIngredient(ingredient));
+                return 0;
+            }
         }
 
         clearGrid(client, menu);
-        // 整叠左键放入空槽
-        for (int[] e : plan) {
-            int gridSlot = e[0];
-            int src = e[1];
-            // 取整叠到光标
+
+        Map<Integer, List<int[]>> planBySource = new LinkedHashMap<>();
+        for (int[] entry : plan) {
+            planBySource.computeIfAbsent(entry[1], k -> new ArrayList<>()).add(entry);
+        }
+        for (Map.Entry<Integer, List<int[]>> sourcePlan : planBySource.entrySet()) {
+            int src = sourcePlan.getKey();
             click(client, containerId, src, 0, ContainerInput.PICKUP);
-            // 空槽整叠放入，光标清空
-            click(client, containerId, gridSlot, 0, ContainerInput.PICKUP);
+            for (int[] entry : sourcePlan.getValue()) {
+                int gridSlot = entry[0];
+                int count = entry[2];
+                for (int i = 0; i < count; i++) {
+                    click(client, containerId, gridSlot, 1, ContainerInput.PICKUP);
+                }
+            }
+            if (!menu.getCarried().isEmpty()) {
+                click(client, containerId, src, 0, ContainerInput.PICKUP);
+            }
         }
 
-        // 一次性合成 batch 件
+        // 网格每格恰好 batch 个，结果槽一次取出即执行 batch 次
         if (assumption.isThrowResult()) {
             for (int i = 0; i < batch; i++) {
-                // 丢出
                 click(client, containerId, RESULT_SLOT, 0, ContainerInput.THROW);
             }
         } else {
-            // 一次全部合成进背包
             click(client, containerId, RESULT_SLOT, 0, ContainerInput.QUICK_MOVE);
         }
 
-        // 各叠数量可能大于 batch，清掉多出的余料退回背包
         clearGrid(client, menu);
         return batch;
     }
 
-    /**
-     * 在背包中找一个匹配原料、本次尚未被占用、且非空的槽位
-     */
-    private int findUnusedInventorySlot(AbstractContainerMenu menu, Inventory inventory,
-                                        Ingredient ingredient, Set<Integer> used) {
+    private int maxAvailableStackSize(AbstractContainerMenu menu, Inventory inventory, Ingredient ingredient) {
+        int max = STACK_MAX;
+        boolean found = false;
         for (Slot slot : menu.slots) {
-            if (slot.container != inventory || used.contains(slot.index)) {
+            if (slot.container != inventory) {
                 continue;
             }
             ItemStack stack = slot.getItem();
             if (!stack.isEmpty() && ingredient.test(stack)) {
-                return slot.index;
+                max = Math.min(max, stack.getMaxStackSize());
+                found = true;
             }
         }
-        return -1;
+        return found ? max : 0;
     }
 
     /**
@@ -433,21 +574,14 @@ public class AutoCraftingFunction extends SymAbstractFunction {
     private CraftingRecipe pickRecipe(CraftingPreset assumption, Player player) {
         CraftingRecipe craftable = assumption.chooseRecipe(player, 1);
         if (craftable != null) {
-            debug("选择可直接合成配方: 目标={}, 配方={}",
-                    assumption.getResult().getItem(), describeRecipe(craftable));
             return craftable;
         }
-        debug("没有可直接合成配方: 目标={}, 递归={}",
-                assumption.getResult().getItem(), assumption.isRecursiveSearchMaterial());
         if (!assumption.isRecursiveSearchMaterial()) {
             return null;
         }
-        CraftingRecipe fallback = assumption.getRecipes().stream()
+        return assumption.getRecipes().stream()
                 .max(Comparator.comparingInt(r -> r.assemble(CraftingInput.EMPTY).getCount()))
                 .orElse(null);
-        debug("递归兜底根配方: 目标={}, 配方={}",
-                assumption.getResult().getItem(), describeRecipe(fallback));
-        return fallback;
     }
 
     /**
@@ -534,7 +668,7 @@ public class AutoCraftingFunction extends SymAbstractFunction {
 
     /**
      * 检查递归补料是否已经同步进背包。
-     * 合成铁块 -> 铁锭这类操作需要等待服务器回包，不能在同一 tick 内立刻重试父配方。
+     * 等待服务器回包，不能在同一 tick 内立刻重试父配方
      */
     private MaterialCheck pendingMaterialStatus(TaskState task, Inventory inventory) {
         if (task.pendingIngredient == null) {
@@ -542,16 +676,16 @@ public class AutoCraftingFunction extends SymAbstractFunction {
         }
         int now = countIngredient(inventory, task.pendingIngredient);
         if (now > task.pendingBefore) {
-            debug("补料已同步: 材料={}, 原数量={}, 当前数量={}",
-                    task.pendingIngredient, task.pendingBefore, now);
+            debug("中间材料已到位：{}（{} → {}）",
+                    describeIngredient(task.pendingIngredient), task.pendingBefore, now);
             task.pendingIngredient = null;
             task.pendingBefore = 0;
             task.pendingWait = 0;
             return MaterialCheck.READY;
         }
         if (--task.pendingWait <= 0) {
-            debug("补料同步超时: 材料={}, 原数量={}, 当前数量={}",
-                    task.pendingIngredient, task.pendingBefore, now);
+            debug("中间材料同步超时：{}（仍为 {}）",
+                    describeIngredient(task.pendingIngredient), now);
             // 超时后放弃本次补料状态，进入正常退避；下一轮仍可重新尝试
             task.pendingIngredient = null;
             task.pendingBefore = 0;
@@ -561,10 +695,10 @@ public class AutoCraftingFunction extends SymAbstractFunction {
     }
 
     private void waitForMaterial(TaskState task, Ingredient ingredient, int before) {
-        debug("记录待同步补料: 材料={}, 同步前数量={}", ingredient, before);
+        debug("已发起中间材料合成：{}（当前 {} 个）", describeIngredient(ingredient), before);
         task.pendingIngredient = ingredient;
         task.pendingBefore = before;
-        task.pendingWait = WAIT_TICKS;
+        task.pendingWait = waitTicks;
     }
 
     private MaterialCheck ensureMaterials(CraftingPreset assumption, CraftingRecipe recipe,
@@ -585,63 +719,47 @@ public class AutoCraftingFunction extends SymAbstractFunction {
             }
             int need = totalRequiredFor(ingredients, required, j);
             int have = countIngredient(inventory, ingredient);
-            debug("材料检查: 目标={}, 原料索引={}, 需要={}, 现有={}",
-                    recipe.assemble(CraftingInput.EMPTY).getItem(), j, need, have);
             if (have >= need) {
                 continue;
             }
+            debug("材料不足：{} 需要 {} 个，当前 {} 个",
+                    describeIngredient(ingredient), need, have);
             if (!assumption.isRecursiveSearchMaterial()) {
+                debug("未开启递归合成，无法自动补齐：{}", describeIngredient(ingredient));
                 return MaterialCheck.UNAVAILABLE;
             }
             Item representative = representativeItem(ingredient);
             if (representative == null || path.contains(representative)) {
-                // 无法定位代表物品，或检测到“自身/祖先”成环
+                debug("无法自动补齐 {}：未找到可用配方或存在循环配方", describeIngredient(ingredient));
                 return MaterialCheck.UNAVAILABLE;
             }
             CraftingPreset sub = new CraftingPreset(
                     new ItemStack(representative), 1, true, false, true);
-            // 拆解配方不得动用本链上的任何目标（含要产出的代表物品）。
-            // 必须先过滤再选择，避免选中被禁止的配方后直接放弃铁块分解等可用配方。
+            // 拆解配方不得动用本链上的任何目标（含要产出的代表物品）
             Set<Item> subPath = new HashSet<>(path);
             subPath.add(representative);
             List<CraftingRecipe> subCandidates = sub.getRecipes();
-            debug("递归目标: {}, 找到子配方 {} 个: {}",
-                    representative,
-                    subCandidates.size(),
-                    subCandidates.stream().map(AutoCraftingFunction::describeRecipe).toList());
             CraftingRecipe subRecipe = subCandidates.stream()
-                    .filter(candidate -> {
-                        boolean reserved = recipeUsesReserved(candidate, subPath);
-                        if (reserved) {
-                            debug("排除会使用保留材料的子配方: {}", describeRecipe(candidate));
-                        }
-                        return !reserved;
-                    })
-                    .filter(candidate -> {
-                        boolean hasMaterials = CraftingPreset.hasIngredientsFor(candidate, player, 1);
-                        if (!hasMaterials) {
-                            debug("排除材料不足的子配方: {}", describeRecipe(candidate));
-                        }
-                        return hasMaterials;
-                    })
+                    .filter(candidate -> !recipeUsesReserved(candidate, subPath))
+                    .filter(candidate -> CraftingPreset.hasIngredientsFor(candidate, player, 1))
                     .max(Comparator.comparingInt(candidate ->
                             candidate.assemble(CraftingInput.EMPTY).getCount()))
                     .orElse(null);
-            debug("选中子配方: {}", describeRecipe(subRecipe));
             if (subRecipe == null) {
+                debug("没有可用的中间材料配方：{}", describeItem(representative));
                 return MaterialCheck.UNAVAILABLE;
             }
+            debug("准备合成中间材料：{}（{}）", describeItem(representative), describeRecipe(subRecipe));
             MaterialCheck subMaterials = ensureMaterials(sub, subRecipe, player, client, subPath, task);
-            debug("子配方材料检查结果: 子配方={}, 结果={}", describeRecipe(subRecipe), subMaterials);
             if (subMaterials != MaterialCheck.READY) {
                 return subMaterials;
             }
             boolean craftedSub = doCraft(sub, subRecipe, player, client);
-            debug("执行子配方: 子配方={}, 点击结果={}", describeRecipe(subRecipe), craftedSub);
             if (!craftedSub) {
+                debug("中间材料合成失败：{}", describeItem(representative));
                 return MaterialCheck.UNAVAILABLE;
             }
-            // 本次只补一层料并等待同步；同步完成后再判断父配方，避免同一 tick 内空转和闪烁
+            // 避免同一 tick 内空转和闪烁
             waitForMaterial(task, ingredient, have);
             return MaterialCheck.WAITING;
         }
@@ -649,8 +767,7 @@ public class AutoCraftingFunction extends SymAbstractFunction {
     }
 
     /**
-     * 逐件合成：依据配方网格把材料各放 1 个进 3x3 工作台并产出一次（用于需要中间产物的回退路径）
-     *
+     * 逐件合成：依据配方网格把材料各放 1 个进 3x3 工作台并产出一次
      * @return 是否成功产出一次
      */
     private boolean doCraft(CraftingPreset assumption, CraftingRecipe recipe,
@@ -661,7 +778,7 @@ public class AutoCraftingFunction extends SymAbstractFunction {
         }
         // 凑不满网格就一次都不点
         if (!canFillGrid(player.getInventory(), recipe)) {
-            debug("doCraft 预检查失败: 配方={}", describeRecipe(recipe));
+            debug("材料不足以填满合成格：{}", describeRecipe(recipe));
             return false;
         }
         int containerId = menu.containerId;
@@ -678,7 +795,7 @@ public class AutoCraftingFunction extends SymAbstractFunction {
                     ? p
                     : slotsToIngredientIndex.getInt(p);
             if (ingredientIndex == PlacementInfo.EMPTY_SLOT) {
-                continue; // 空槽
+                continue;
             }
             Ingredient ingredient = ingredients.get(ingredientIndex);
             int row = p / width;
@@ -689,8 +806,6 @@ public class AutoCraftingFunction extends SymAbstractFunction {
                 return false;
             }
             int src = findSlotForIngredient(menu, player.getInventory(), ingredient);
-            debug("放置材料: 配方={}, 网格槽={}, 背包槽={}, 原料={}",
-                    describeRecipe(recipe), gridSlot, src, ingredient);
             if (src < 0) {
                 return false;
             }

@@ -15,6 +15,8 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class UpdateLogScreen extends Screen {
     private final Screen parent;
@@ -28,9 +30,10 @@ public class UpdateLogScreen extends Screen {
 
     private static final int BACK_W = 72;
     private static final int BACK_H = 16;
-
+    //todo
+    private static final String pattern = "^\\[([^]]+)]\\[([^]]+)]\\s*(.+)$";
     private static final DateTimeFormatter DATE_FMT =
-            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+            DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
     private int scrollOffset = 0;
     private int maxScroll = 0;
@@ -62,18 +65,29 @@ public class UpdateLogScreen extends Screen {
         int titleX = (this.width - this.font.width(this.title)) / 2;
         graphics.text(this.font, this.title, titleX, TITLE_Y, TITLE_COLOR, true);
 
-        List<UpdateMessage> messages = UpdateMessageManager.INSTANCE.getUpdateMessages();
+        List<String> messages = UpdateMessageManager.INSTANCE.getUpdateMessages();
         int contentBottom = this.height - LIST_BOTTOM_MARGIN;
         int maxWidth = this.width - 2 * SIDE_PAD;
 
         // 按可用宽度自动换行，并展平为“视觉行”（保留每段颜色）
         List<FormattedCharSequence> allLines = new ArrayList<>();
-        for (UpdateMessage m : messages) {
+        Pattern p = Pattern.compile(pattern);
+        for (String m : messages) {
+            // 格式 [时间][版本号] 内容
+            Matcher matcher = p.matcher(m);
+            if (!matcher.matches()) {
+                System.err.println("Invalid update message format: " + m);
+                continue;
+            }
+            String formatedTime = matcher.group(1);
+            String version = matcher.group(2);
+            String content = matcher.group(3);
+            UpdateMessage updateMessage = UpdateMessage.of(formatedTime, version, content);
             String time = DATE_FMT.format(
-                    Instant.ofEpochMilli(m.getCreateTime()).atZone(ZoneId.systemDefault()));
+                    Instant.ofEpochMilli(updateMessage.getCreateTime()).atZone(ZoneId.systemDefault()));
             Component line = Component.literal("[" + time + "] ").withStyle(ChatFormatting.GRAY)
-                    .append(Component.literal(m.getVersion() + " ").withStyle(ChatFormatting.GOLD))
-                    .append(Component.literal(m.getMessage()).withStyle(ChatFormatting.WHITE));
+                    .append(Component.literal(updateMessage.getVersion() + " ").withStyle(ChatFormatting.GOLD))
+                    .append(Component.literal(updateMessage.getMessage()).withStyle(ChatFormatting.WHITE));
             allLines.addAll(this.font.split(line, maxWidth));
         }
 

@@ -165,8 +165,11 @@ public abstract class SymAbstractFunction {
     }
 
     public String tooltipLineIfConfigurable() {
+        if (hasConfigScreen() && hasConfig()) {
+            return "左键切换开启状态，右键进入配置菜单，中键打开管理界面";
+        }
         if (hasConfigScreen()) {
-            return "左键切换开启状态，右键打开管理界面";
+            return "左键切换开启状态，中键打开管理界面";
         }
         return hasConfig()
                 ? "左键切换开启状态，右键进入配置菜单"

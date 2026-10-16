@@ -231,19 +231,28 @@ public class FeatureMenuScreen extends Screen {
 
     @Override
     public boolean mouseClicked(@NonNull MouseButtonEvent event, boolean doubleClick) {
-        if (event.button() == 1) {
-            SymAbstractFunction f = findFunctionAt(event.x(), event.y());
-            if (f != null) {
+        SymAbstractFunction f = findFunctionAt(event.x(), event.y());
+        if (f != null) {
+            // 中键：打开专用管理界面
+            if (event.button() == 2 && f.hasConfigScreen()) {
+                Screen screen = f.createConfigScreen(this);
+                if (screen != null) {
+                    this.minecraft.gui.setScreen(screen);
+                    return true;
+                }
+            }
+            // 右键：优先配置菜单，其次打开专用管理界面
+            if (event.button() == 1) {
+                if (f.hasConfig()) {
+                    this.minecraft.gui.setScreen(new ConfigMenuScreen(f, this));
+                    return true;
+                }
                 if (f.hasConfigScreen()) {
                     Screen screen = f.createConfigScreen(this);
                     if (screen != null) {
                         this.minecraft.gui.setScreen(screen);
                         return true;
                     }
-                }
-                if (f.hasConfig()) {
-                    this.minecraft.gui.setScreen(new ConfigMenuScreen(f, this));
-                    return true;
                 }
             }
         }
@@ -256,18 +265,6 @@ public class FeatureMenuScreen extends Screen {
             if (mx >= b.getX() && mx <= b.getX() + b.getWidth()
                     && my >= b.getY() && my <= b.getY() + b.getHeight()) {
                 return currentFunctions.get(i);
-            }
-        }
-        return null;
-    }
-
-    private SymAbstractFunction findConfigurableAt(double mx, double my) {
-        for (int i = 0; i < featureButtons.size() && i < currentFunctions.size(); ++i) {
-            Button b = featureButtons.get(i);
-            if (mx >= b.getX() && mx <= b.getX() + b.getWidth()
-                    && my >= b.getY() && my <= b.getY() + b.getHeight()) {
-                SymAbstractFunction f = currentFunctions.get(i);
-                return f.hasConfig() ? f : null;
             }
         }
         return null;
