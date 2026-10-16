@@ -25,7 +25,7 @@ public class UpdateMessageManager {
     private final List<String> updateMessages;
 
     static void main() {
-        sendUpdate("msg");
+        sendUpdate("不再显示更新日志异常显示的时分秒");
     }
 
     private static void sendUpdate(String context) {
