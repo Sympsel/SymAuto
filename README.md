@@ -1,7 +1,7 @@
 # SymAuto
 
-> Sympsel 编写的 Minecraft **客户端**自动化 / 便利用具 Fabric 模组。
-> 按 `Shift + X` 打开功能菜单，全部功能均可在菜单中一键开关。
+> Sympsel 编写的适用于 Fabric 端 Minecraft **客户端**自动化 / 便利模组。
+> 按 `Shift + X` 打开功能菜单，全部功能均可在菜单中开关
 
 - **运行环境**：Minecraft `26.2` + Fabric Loader + Fabric API + 模组菜单
 - **模组 ID**：`symauto`
@@ -35,11 +35,11 @@
 - 特定村民高亮（依据本地交易缓存，附魔书黑 / 白名单）
 
 ### 便利与生产
-- BetterBundle 收纳袋增强
+- BetterBundle 收纳袋增强（该部分实现参考 [BetterBundleHUDMod](https://github.com/aningQwQ/BetterBundleHUDMod-26.2/releases/tag/v1.3.0)）
 - 多预设自动合成
 
 ### 注意
-- 本项目目前不支持自定义组合快捷键绑定，推荐添加前置 mod [https://www.mcmod.cn/class/27226.html](NewVisualKeybinding)或其它快捷键管理工具
+- 本项目目前不支持自定义组合快捷键绑定，推荐添加前置 mod [NewVisualKeybinding](https://www.mcmod.cn/class/27226.html) 或其它快捷键管理工具
 
 ## 命令
 
