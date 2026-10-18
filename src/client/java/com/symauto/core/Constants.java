@@ -1,6 +1,13 @@
 package com.symauto.core;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class Constants {
+    public static final String MOD_ID = "symauto";
+    public static final String MOD_NAME = "SymAuto";
+    public static final Logger LOG = LoggerFactory.getLogger("SymAuto");
+
     private Constants() {
     }
 

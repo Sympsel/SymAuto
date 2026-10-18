@@ -4,26 +4,31 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.symauto.config.option.ConfigOption;
 import com.symauto.function.auto.AutoAttackFunction;
-import com.symauto.model.BWList;
-import com.symauto.core.FeatureConfig;
+import com.symauto.function.highlight.HighLightSpecificVillagersFunction;
+import com.symauto.core.FunctionConfig;
 import com.symauto.function.base.SymAbstractFunction;
 import com.symauto.function.auto.AutoEatFunction;
 import com.symauto.function.highlight.HighLightItemDropFunction;
 import com.symauto.function.highlight.HighLightMasterFunction;
 import com.symauto.function.oneclick.OneClickDiscardItemsFunction;
+import com.symauto.model.SymList;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.util.Util;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.enchantment.Enchantment;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class ConfigManager {
@@ -43,21 +48,44 @@ public class ConfigManager {
             type -> BuiltInRegistries.ENTITY_TYPE.getKey(type).toString();
     private static final Function<String, EntityType<?>> ENTITY_FROM_ID = ConfigManager::parseEntityType;
 
+    private static final Function<ResourceKey<Enchantment>, String> ENCHANT_TO_ID =
+            key -> key.identifier().toString();
+    private static final Function<String, ResourceKey<Enchantment>> ENCHANT_FROM_ID = id -> {
+        Identifier identifier = Identifier.tryParse(id);
+        return identifier == null ? null : ResourceKey.create(Registries.ENCHANTMENT, identifier);
+    };
+
     /**
      * 描述一个黑白名单如何与磁盘上的独立 JSON 文件互转
      */
-    private record BWListHandle<T>(BWList<T> list, Function<T, String> toId, Function<String, T> fromId) {
-        String featureId() {
-            return list.getFeatureId();
+     private record SymListHandle<T>(SymList<T> list, Function<T, String> toId, Function<String, T> fromId) {
+        String functionId() {
+            return list.getFunctionId();
+        }
+
+        String type() {
+            return list.getType();
+        }
+
+        String displayName() {
+            return functionId() + "/" + type();
+        }
+
+        String fileName() {
+            return functionId() + "-" + type() + ".json";
         }
     }
 
-    private static final List<BWListHandle<?>> BW_LISTS = List.of(
-            new BWListHandle<>(OneClickDiscardItemsFunction.INSTANCE.getBW_LIST(), ITEM_TO_ID, ITEM_FROM_ID),
-            new BWListHandle<>(AutoEatFunction.INSTANCE.getFOOD_BLACKLIST(), ITEM_TO_ID, ITEM_FROM_ID),
-            new BWListHandle<>(HighLightItemDropFunction.INSTANCE.getBW_LIST(), ITEM_TO_ID, ITEM_FROM_ID),
-            new BWListHandle<>(AutoAttackFunction.INSTANCE.getBW_LIST(), ENTITY_TO_ID, ENTITY_FROM_ID),
-            new BWListHandle<>(HighLightMasterFunction.INSTANCE.getBW_LIST(), ENTITY_TO_ID, ENTITY_FROM_ID)
+    private static final List<SymListHandle<?>> BW_LISTS = List.of(
+            new SymListHandle<>(OneClickDiscardItemsFunction.INSTANCE.getWHITE_LIST(), ITEM_TO_ID, ITEM_FROM_ID),
+            new SymListHandle<>(OneClickDiscardItemsFunction.INSTANCE.getBLACK_LIST(), ITEM_TO_ID, ITEM_FROM_ID),
+            new SymListHandle<>(HighLightItemDropFunction.INSTANCE.getWHITE_LIST(), ITEM_TO_ID, ITEM_FROM_ID),
+            new SymListHandle<>(HighLightItemDropFunction.INSTANCE.getBLACK_LIST(), ITEM_TO_ID, ITEM_FROM_ID),
+            new SymListHandle<>(AutoEatFunction.INSTANCE.getBLACK_LIST(), ITEM_TO_ID, ITEM_FROM_ID),
+            new SymListHandle<>(AutoAttackFunction.INSTANCE.getBLACK_LIST(), ENTITY_TO_ID, ENTITY_FROM_ID),
+            new SymListHandle<>(HighLightMasterFunction.INSTANCE.getWHITE_LIST(), ENTITY_TO_ID, ENTITY_FROM_ID),
+            new SymListHandle<>(HighLightMasterFunction.INSTANCE.getBLACK_LIST(), ENTITY_TO_ID, ENTITY_FROM_ID),
+            new SymListHandle<>(HighLightSpecificVillagersFunction.INSTANCE.getBLACK_LIST(), ENCHANT_TO_ID, ENCHANT_FROM_ID)
     );
 
     public static void load() {
@@ -79,11 +107,11 @@ public class ConfigManager {
         applyFeatures(config);
         saveConfig(config);
 
-        for (BWListHandle<?> handle : BW_LISTS) {
+        for (SymListHandle<?> handle : BW_LISTS) {
             try {
-                loadBwList(handle);
+                loadSymList(handle);
             } catch (Exception e) {
-                System.err.println("[SymAuto] 读取黑白名单失败(" + handle.featureId() + "): " + e.getMessage());
+                System.err.println("[SymAuto] 读取黑白名单失败(" + handle.displayName() + "): " + e.getMessage());
             }
         }
         deleteLegacyRootFiles();
@@ -103,13 +131,43 @@ public class ConfigManager {
         ModConfig config = new ModConfig();
         captureFeatures(config);
         saveConfig(config);
-        for (BWListHandle<?> handle : BW_LISTS) {
+        for (SymListHandle<?> handle : BW_LISTS) {
             try {
-                saveBwList(handle);
+                saveSymList(handle);
             } catch (IOException e) {
-                System.err.println("[SymAuto] 保存黑白名单失败(" + handle.featureId() + "): " + e.getMessage());
+                System.err.println("[SymAuto] 保存黑白名单失败(" + handle.displayName() + "): " + e.getMessage());
             }
         }
+    }
+
+    private static <T> void loadSymList(SymListHandle<T> handle) throws IOException {
+        Path path = BWLIST_DIR.resolve(handle.fileName());
+        SymList<T> list = handle.list();
+        if (!Files.exists(path)) {
+            // 首次运行：保留构造时写入的默认条目
+            saveSymList(handle);
+            return;
+        }
+        String json = Files.readString(path);
+        String[] ids = GSON.fromJson(json, String[].class);
+        list.clear();
+        if (ids != null) {
+            for (String id : ids) {
+                T value = handle.fromId().apply(id);
+                if (value != null) {
+                    list.add(value);
+                }
+            }
+        }
+    }
+
+    private static <T> void saveSymList(SymListHandle<T> handle) throws IOException {
+        List<String> ids = new ArrayList<>();
+        for (T value : handle.list().getList()) {
+            ids.add(handle.toId().apply(value));
+        }
+        Files.createDirectories(BWLIST_DIR);
+        Files.writeString(BWLIST_DIR.resolve(handle.fileName()), GSON.toJson(ids));
     }
 
     private static void saveConfig(ModConfig config) {
@@ -122,7 +180,7 @@ public class ConfigManager {
     }
 
     private static void captureFeatures(ModConfig config) {
-        for (SymAbstractFunction f : FeatureConfig.AUTO_ALL) {
+        for (SymAbstractFunction f : FunctionConfig.AUTO_ALL) {
             config.features.put(f.getId(), f.isEnable());
             if (f.hasConfig()) {
                 Map<String, String> opts = new LinkedHashMap<>();
@@ -135,7 +193,7 @@ public class ConfigManager {
     }
 
     private static void applyFeatures(ModConfig config) {
-        for (SymAbstractFunction f : FeatureConfig.AUTO_ALL) {
+        for (SymAbstractFunction f : FunctionConfig.AUTO_ALL) {
             Boolean enabled = config.features.get(f.getId());
             if (enabled != null) {
                 f.setEnable(enabled);
@@ -152,49 +210,6 @@ public class ConfigManager {
                         }
                     }
                 }
-            }
-        }
-    }
-
-    private static <T> void loadBwList(BWListHandle<T> handle) throws IOException {
-        Path path = BWLIST_DIR.resolve(handle.featureId() + ".json");
-        BWList<T> bwList = handle.list();
-        if (!Files.exists(path)) {
-            bwList.applyDefaults();
-            saveBwList(handle);
-            return;
-        }
-        String json = Files.readString(path);
-        ModConfig.BWListConfig cfg = GSON.fromJson(json, ModConfig.BWListConfig.class);
-        if (cfg == null) {
-            cfg = new ModConfig.BWListConfig();
-        }
-        bwList.getBlacklist().clear();
-        bwList.getWhitelist().clear();
-        loadIds(cfg.blacklist, bwList::addToBlacklist, handle.fromId());
-        loadIds(cfg.whitelist, bwList::addToWhitelist, handle.fromId());
-    }
-
-    private static <T> void saveBwList(BWListHandle<T> handle) throws IOException {
-        ModConfig.BWListConfig cfg = new ModConfig.BWListConfig();
-        for (T value : handle.list().getBlacklist()) {
-            cfg.blacklist.add(handle.toId().apply(value));
-        }
-        for (T value : handle.list().getWhitelist()) {
-            cfg.whitelist.add(handle.toId().apply(value));
-        }
-        Files.createDirectories(BWLIST_DIR);
-        Files.writeString(BWLIST_DIR.resolve(handle.featureId() + ".json"), GSON.toJson(cfg));
-    }
-
-    private static <T> void loadIds(List<String> ids, Consumer<T> adder, Function<String, T> fromId) {
-        if (ids == null) {
-            return;
-        }
-        for (String id : ids) {
-            T value = fromId.apply(id);
-            if (value != null) {
-                adder.accept(value);
             }
         }
     }
@@ -222,6 +237,18 @@ public class ConfigManager {
             }
         } catch (IOException e) {
             System.err.println("[SymAuto] 删除旧配置文件失败(" + ConfigManager.LEGACY_ROOT_CONFIG.getFileName() + "): " + e.getMessage());
+        }
+    }
+
+    /**
+     * 在系统文件管理器中打开配置文件夹（config/symauto）。
+     */
+    public static void openConfigFolder() {
+        try {
+            Files.createDirectories(BASE_DIR);
+            Util.getPlatform().openFile(BASE_DIR.toFile());
+        } catch (Exception e) {
+            System.err.println("[SymAuto] 打开配置文件夹失败: " + e.getMessage());
         }
     }
 }

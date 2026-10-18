@@ -2,7 +2,7 @@ package com.symauto.gui.screen;
 
 import com.symauto.config.ConfigManager;
 import com.symauto.core.SymFunctionTags;
-import com.symauto.core.FeatureConfig;
+import com.symauto.core.FunctionConfig;
 import com.symauto.function.base.SymAbstractFunction;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -16,7 +16,7 @@ import org.jspecify.annotations.NonNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class FeatureMenuScreen extends Screen {
+public class FunctionMenuScreen extends Screen {
     private final Screen parent;
     /** 当前选中的分类标签；SymFunctionTags.ALL(-1) 表示全部。 */
     private final int activeTag;
@@ -53,11 +53,11 @@ public class FeatureMenuScreen extends Screen {
     private int totalRows = 0;
     private int scrollRow = 0;
 
-    public FeatureMenuScreen(Screen parent) {
+    public FunctionMenuScreen(Screen parent) {
         this(parent, SymFunctionTags.ALL);
     }
 
-    public FeatureMenuScreen(Screen parent, int activeTag) {
+    public FunctionMenuScreen(Screen parent, int activeTag) {
         super(Component.literal("SymAuto 功能菜单")
                 .withStyle(ChatFormatting.BOLD, ChatFormatting.GOLD));
         this.parent = parent;
@@ -83,8 +83,8 @@ public class FeatureMenuScreen extends Screen {
 
         int step = BTN_H + GAP_Y;
 
-        // 底部按钮行数：更新日志/指令用法共用一行，返回另占一行（仅在有 parent 时）
-        int footerCount = 1 + (parent != null ? 1 : 0);
+        // 底部按钮行数
+        int footerCount = 1;
         int footerReserve = footerCount * step + GAP_Y;
 
         int available = this.height - listTop - footerReserve - 8;
@@ -113,31 +113,35 @@ public class FeatureMenuScreen extends Screen {
             this.addRenderableWidget(btn);
         }
 
-        // 底部按钮：自适应追加，共享游标 nextY
         int nextY = listTop + listHeight + GAP_Y;
 
-        int halfW = (listWidth - GAP_X) / 2;
+        int fourW = (listWidth - 3 * GAP_X) / 4;
+        int bx = listLeft;
         this.addRenderableWidget(
                 Button.builder(Component.literal("更新日志"), b ->
                                 this.minecraft.gui.setScreen(new UpdateLogScreen(this)))
-                        .bounds(listLeft, nextY, halfW, BTN_H)
+                        .bounds(bx, nextY, fourW, BTN_H)
                         .build()
         );
+        bx += fourW + GAP_X;
         this.addRenderableWidget(
                 Button.builder(Component.literal("指令用法"), b ->
                                 this.minecraft.gui.setScreen(new CommandUsageScreen(this)))
-                        .bounds(listLeft + halfW + GAP_X, nextY, halfW, BTN_H)
+                        .bounds(bx, nextY, fourW, BTN_H)
                         .build()
         );
-        nextY += step;
-
-        if (parent != null) {
-            this.addRenderableWidget(
-                    Button.builder(Component.literal("返回"), b -> this.minecraft.gui.setScreen(parent))
-                            .bounds(listLeft, nextY, listWidth, BTN_H)
-                            .build()
-            );
-        }
+        bx += fourW + GAP_X;
+        this.addRenderableWidget(
+                Button.builder(Component.literal("打开配置文件夹"), b -> ConfigManager.openConfigFolder())
+                        .bounds(bx, nextY, fourW, BTN_H)
+                        .build()
+        );
+        bx += fourW + GAP_X;
+        this.addRenderableWidget(
+                Button.builder(Component.literal("返回"), b -> this.onClose())
+                        .bounds(bx, nextY, fourW, BTN_H)
+                        .build()
+        );
     }
 
     /** 构建顶部标签栏：「全部」+ 各分类，居中排布。 */
@@ -162,7 +166,7 @@ public class FeatureMenuScreen extends Screen {
             final int tag = tagIds[i];
             this.addRenderableWidget(
                     Button.builder(Component.literal(tagText(tag)), b ->
-                                    this.minecraft.gui.setScreen(new FeatureMenuScreen(this.parent, tag)))
+                                    this.minecraft.gui.setScreen(new FunctionMenuScreen(this.parent, tag)))
                             .bounds(x, TAG_BAR_Y, widths[i], TAG_BTN_H)
                             .build()
             );
@@ -178,10 +182,10 @@ public class FeatureMenuScreen extends Screen {
 
     private static List<SymAbstractFunction> filter(int tag) {
         if (tag == SymFunctionTags.ALL) {
-            return FeatureConfig.AUTO_ALL;
+            return FunctionConfig.AUTO_ALL;
         }
         List<SymAbstractFunction> result = new ArrayList<>();
-        for (SymAbstractFunction f : FeatureConfig.AUTO_ALL) {
+        for (SymAbstractFunction f : FunctionConfig.AUTO_ALL) {
             if (f.hasTag(tag)) {
                 result.add(f);
             }

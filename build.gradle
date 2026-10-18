@@ -30,9 +30,17 @@ fabricApi {
 
 repositories {
     maven { url "https://maven.terraformersmc.com/" }
+
+    maven {
+        name = "Modrinth"
+        url = "https://api.modrinth.com/maven"
+        content {
+            includeGroup "maven.modrinth"
+        }
+    }
 }
 
-configurations.all {
+configurations.configureEach {
     resolutionStrategy {
         // 7 天内不重复解析 SNAPSHOT / 动态版本，避免每次 runClient 重新拉取与重配
         cacheChangingModulesFor 7, 'days'
@@ -46,6 +54,7 @@ dependencies {
     implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
     implementation "com.terraformersmc:modmenu:20.0.3"
     implementation "com.belerweb:pinyin4j:2.5.1"
+    localRuntime "maven.modrinth:jUO7wMKn:qNF9SWIb"
 }
 
 def versionValue = project.version

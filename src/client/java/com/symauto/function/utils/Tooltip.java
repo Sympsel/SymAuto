@@ -1,9 +1,12 @@
 package com.symauto.function.utils;
 
+import com.symauto.model.SymList;
 import net.minecraft.ChatFormatting;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.function.Function;
 
 public class Tooltip {
     private final List<String> lines = new ArrayList<>();
@@ -13,6 +16,11 @@ public class Tooltip {
 
     public static Tooltip create() {
         return new Tooltip();
+    }
+
+    public Tooltip append(Tooltip tooltip) {
+        lines.addAll(tooltip.lines);
+        return this;
     }
 
     // 追加一行普通文本
@@ -66,6 +74,36 @@ public class Tooltip {
      */
     public Tooltip keyValueLine(ChatFormatting keyColor, String key, ChatFormatting valueColor, String value) {
         return line(keyColor.toString() + key + ChatFormatting.RESET + ": " + valueColor.toString() + value + ChatFormatting.RESET);
+    }
+
+    /**
+     * 空行
+     */
+    public Tooltip newline() {
+        return line("");
+    }
+
+    /**
+     * 展示黑白/名单
+     *
+     * @param toLabel 单个条目的展示文本转换
+     */
+    public <T> Tooltip display(SymList<T> list, Function<T, String> toLabel) {
+        Tooltip tooltip = Tooltip.create();
+        tooltip.newline();
+        if (Objects.equals(list.getType(), SymList.Type.BLACKLIST)) {
+            tooltip.line(ChatFormatting.DARK_BLUE, "黑名单");
+        } else {
+            tooltip.line(ChatFormatting.DARK_GREEN, "白名单");
+        }
+        if (list.isEmpty()) {
+            tooltip.line(ChatFormatting.GRAY, " 无");
+        } else {
+            for (T value : list.getList()) {
+                tooltip.line(ChatFormatting.GRAY, " " + toLabel.apply(value));
+            }
+        }
+        return this.append(tooltip);
     }
 
     public boolean isEmpty() {

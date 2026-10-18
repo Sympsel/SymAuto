@@ -1,11 +1,9 @@
 package com.symauto.update;
 
 import lombok.Getter;
+import net.minecraft.ChatFormatting;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.text.SimpleDateFormat;
@@ -25,7 +23,48 @@ public class UpdateMessageManager {
     private final List<String> updateMessages;
 
     static void main() {
-        sendUpdate("增强了单人模式下“高亮特定村民”，不需要依赖手动建立缓存了，添加了新的可配置项：对于任意可交易物品都会高亮");
+        sendUpdates(
+                "重写了黑白名单逻辑，并为“高亮特定村民”也添加了配置选项",
+                "旧的配置文件可能不兼容，请手动删除旧的配置文件（最好备份一下方便复制到新格式的配置文件） " + file("symauto/bwlist.json"),
+                "为“自动钓鱼”添加了配置选项",
+                "主菜单添加了打开配置文件夹按钮"
+        );
+    }
+
+    private static String file(String path) {
+        return ChatFormatting.AQUA + path + ChatFormatting.WHITE;
+    }
+
+    private static String cmd(String command) {
+        return ChatFormatting.YELLOW + command + ChatFormatting.WHITE;
+    }
+
+    private static String key(String key) {
+        return ChatFormatting.GOLD + key + ChatFormatting.WHITE;
+    }
+
+    private static String item(String item, int id) {
+        return "\n  " + ChatFormatting.AQUA + id + ". " + ChatFormatting.WHITE + item;
+    }
+
+    private static String item(String item) {
+        return "\n  " + item;
+    }
+
+    private static void sendUpdates(String... updates) {
+        if (updates.length == 0) {
+            return;
+        }
+        if (updates.length == 1) {
+            sendUpdate(item(updates[0]));
+            return;
+        }
+        int id = 1;
+        StringBuilder items = new StringBuilder();
+        for (String update : updates) {
+            items.append(item(update, id++));
+        }
+        sendUpdate(items.toString());
     }
 
     private static void sendUpdate(String context) {
@@ -33,13 +72,8 @@ public class UpdateMessageManager {
         String createTime = new SimpleDateFormat("yyyy-MM-dd").format(timeStamp);
         File file = new File(UPDATE_LOG_SOURCE);
         File gradle = new File(GRADLE_FILE);
-        if (!file.exists()) {
-            System.out.println("更新日志文件不存在: " + file.getAbsolutePath());
-            return;
-        }
-        if (!gradle.exists()) {
-            System.out.println("gradle.properties 文件不存在: " + gradle.getAbsolutePath());
-            return;
+        if (!file.exists() || !gradle.exists()) {
+            return; // 略微简化异常处理
         }
 
         String version = "";
@@ -47,28 +81,26 @@ public class UpdateMessageManager {
             List<String> lines = Files.readAllLines(gradle.toPath(), StandardCharsets.UTF_8);
             for (String line : lines) {
                 line = line.trim();
-                if (line.isEmpty()) {
-                    continue;
-                }
                 if (line.startsWith("mod_version")) {
                     version = line.split("=")[1].trim();
                     break;
                 }
             }
-            if (version.isEmpty()) {
-                System.err.println("未识别到版本号");
-                return;
-            }
-            System.out.println("当前版本号为: " + version);
+            if (version.isEmpty()) return;
         } catch (Exception e) {
             e.printStackTrace();
+            return;
         }
 
         try {
-            List<String> lines = new ArrayList<>(
-                    Files.readAllLines(file.toPath(), StandardCharsets.UTF_8));
-            lines.addFirst("[" + createTime + "][" + version + "] " + context);
-            Files.write(file.toPath(), lines, StandardCharsets.UTF_8);
+            String existingContent = Files.readString(file.toPath(), StandardCharsets.UTF_8);
+
+            // 【核心修改】头部和时间在一行，内容加 \n 放到下一行
+            String newEntry = "[" + createTime + "][" + version + "]\n" + context + "\n";
+
+            String finalContent = newEntry + (existingContent.startsWith("\n") ? "" : "\n") + existingContent;
+
+            Files.writeString(file.toPath(), finalContent, StandardCharsets.UTF_8);
             System.out.println("更新日志已保存到 " + file.getAbsolutePath());
         } catch (Exception e) {
             e.printStackTrace();
@@ -77,19 +109,15 @@ public class UpdateMessageManager {
 
     private UpdateMessageManager() {
         updateMessages = new ArrayList<>();
-        try (InputStream in = UpdateMessageManager.class.getResourceAsStream(UPDATE_LOG_RESOURCE)) {
+        // 将整个文件内容作为一个元素加入列表，交由 UI 去正则匹配
+        try (var in = UpdateMessageManager.class.getResourceAsStream(UPDATE_LOG_RESOURCE)) {
             if (in == null) {
                 System.err.println("[SymAuto] 未找到更新日志资源: " + UPDATE_LOG_RESOURCE);
                 return;
             }
-            try (BufferedReader reader = new BufferedReader(
-                    new InputStreamReader(in, StandardCharsets.UTF_8))) {
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    if (!line.isBlank()) {
-                        updateMessages.add(line);
-                    }
-                }
+            String fullText = new String(in.readAllBytes(), StandardCharsets.UTF_8);
+            if (!fullText.isBlank()) {
+                updateMessages.add(fullText);
             }
         } catch (Exception e) {
             e.printStackTrace();

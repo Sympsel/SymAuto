@@ -44,7 +44,7 @@ public class HighLightPlayerFunction extends HighLightFunction {
     }
 
     @Override
-    protected String describe() {
+    protected String tooltip() {
         int diameter = getScanRadius() * 2;
         return Tooltip.create()
                 .line("高亮范围（边长" + diameter + "格）内，除自己以外的其他玩家")

@@ -10,7 +10,8 @@
     "InterceptDropKeyMixin",
     "accessor.AbstractContainerScreenAccessor",
     "EntityGlowMixin",
-    "accessor.MerchantScreenAccessor"
+    "accessor.MerchantScreenAccessor",
+    "accessor.VaultServerDataAccessor"
   ],
   "injectors": {
     "defaultRequire": 1

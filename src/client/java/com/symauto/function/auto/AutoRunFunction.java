@@ -34,7 +34,7 @@ public class AutoRunFunction extends SymAbstractFunction {
     }
 
     @Override
-    public String describe() {
+    public String tooltip() {
         return Tooltip.create()
                 .line("按下 Ctrl + W 激活，并自动八向校正视角，再次按下取消，建议搭配自动搭路实现挂机")
                 .keyValueLine(ChatFormatting.YELLOW, "自动锁定视角", ChatFormatting.GRAY, autoFixedScreen ? "是" : "否")

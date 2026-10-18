@@ -1,6 +1,6 @@
 package com.symauto.function.place;
 
-import com.symauto.core.FeatureConfig;
+import com.symauto.core.FunctionConfig;
 import com.symauto.function.base.SymAbstractFunction;
 import com.symauto.function.auto.AutoEatFunction;
 import com.symauto.function.utils.Tooltip;
@@ -67,7 +67,7 @@ public class SpeedBridgeFunction extends SymAbstractFunction {
     }
 
     private boolean isAutoEatActive(Minecraft client) {
-        SymAbstractFunction autoEat = FeatureConfig.AUTO_EAT_FUNCTION;
+        SymAbstractFunction autoEat = FunctionConfig.AUTO_EAT_FUNCTION;
         return (autoEat instanceof AutoEatFunction f && f.isEating())
                 || (client.player != null && client.player.isUsingItem());
     }

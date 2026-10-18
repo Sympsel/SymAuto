@@ -181,16 +181,7 @@ public class AutoCraftingFunction extends SymAbstractFunction {
     private long loadedRevision = -1;
 
     private AutoCraftingFunction() {
-        super("auto_crafting", "自动合成",
-                Tooltip.create()
-                        .line("打开工作台自动线性轮询执行预设管理器里的合成配方，全自动输入输出，输出可接漏斗矿车")
-                        .line(ChatFormatting.GOLD, "支持配置是否递归合成原材料")
-                        .line(ChatFormatting.GOLD, "支持配置是否丢出产物")
-                        .line(ChatFormatting.GOLD, "支持配置合成次数")
-                        .line(ChatFormatting.GOLD, "多人模式下仅能读到原版配方，如果服务器修改了部分原版配方，将因配方被覆盖无法自动合成")
-                        .line(ChatFormatting.YELLOW, "需要自动化建议开启递归合成材料，不过将导致合成效率大幅下降；需要高效自动合成建议关闭递归合成，手动配齐材料或者将需要的材料也放入预设中")
-                        .toString()
-        );
+        super("auto_crafting", "自动合成");
         addOption(new IntOption("settleTicks", "服务器同步等待（tick，过高影响效率）",
                 this::getSettleTicks, this::setSettleTicks, 0, 10, 1));
         addOption(new IntOption("waitTicks", "失败、缺料、补料超时后的退避时间（tick）",
@@ -199,7 +190,7 @@ public class AutoCraftingFunction extends SymAbstractFunction {
     }
 
     @Override
-    protected String describe() {
+    protected String tooltip() {
         return Tooltip.create()
                 .line("打开工作台自动线性轮询执行预设管理器里的合成配方，全自动输入输出，输出可接漏斗矿车")
                 .keyValueLine(ChatFormatting.YELLOW, "服务器同步等待（延迟越高调越高）", ChatFormatting.GRAY, String.valueOf(settleTicks))

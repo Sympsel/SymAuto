@@ -1,8 +1,12 @@
 package com.symauto.function.auto;
 
+import com.symauto.config.option.ConfigOption;
+import com.symauto.config.option.IntOption;
 import com.symauto.function.base.SymAbstractFunction;
 import com.symauto.function.utils.Tooltip;
 import com.symauto.mixin.accessor.FishingHookAccessor;
+import lombok.Getter;
+import lombok.Setter;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
@@ -17,7 +21,6 @@ import net.minecraft.world.level.block.Blocks;
 public class AutoFishingFunction extends SymAbstractFunction {
     public static final AutoFishingFunction INSTANCE = new AutoFishingFunction();
     private static final int RECAST_DELAY_TICKS = 15;
-    private static final int CAST_TIMEOUT_TICKS = 900;
 
     private enum State { IDLE, CAST, WAITING, REELING, RECASTING }
 
@@ -26,9 +29,19 @@ public class AutoFishingFunction extends SymAbstractFunction {
     private int recastCountdown = 0;
     // 抛竿后等待 2s 判定是否落水 + 是否开放水域
     private static final int SETTLE_CHECK_TICKS = 40;
+    @Setter
+    @Getter
+    private int checkAfterCastSeconds = SETTLE_CHECK_TICKS / 20;
     // 不再水中十秒后重抛
     private static final int NOT_IN_WATER_RECAST_TICKS = 200;
+    @Getter
+    @Setter
+    private int notInWaterRecastSeconds = NOT_IN_WATER_RECAST_TICKS / 20;
     private boolean notInWater = false;
+    private static final int CAST_TIMEOUT_TICKS = 900;
+    @Getter
+    @Setter
+    private int castTimeoutSeconds = CAST_TIMEOUT_TICKS / 20;
 
     private AutoFishingFunction() {
         Tooltip tooltip = Tooltip.create()
@@ -38,6 +51,15 @@ public class AutoFishingFunction extends SymAbstractFunction {
                 .line("如果不在水中10秒后重新抛竿")
                 .line("兜底45秒没有鱼会超时重新抛竿");
         super("auto_fishing", "自动钓鱼", tooltip.toString());
+        addOption(new IntOption("check_after_cast_seconds", "抛竿几秒后检查鱼钩状态",
+                this::getCheckAfterCastSeconds, this::setCheckAfterCastSeconds,
+                2, 10, 1));
+        addOption(new IntOption("not_in_water_recast_seconds", "不再水中几秒后重抛",
+                this::getNotInWaterRecastSeconds, this::setNotInWaterRecastSeconds,
+                3, 20, 1));
+        addOption(new IntOption("cast_timeout_seconds", "抛竿后最长等待几秒重抛",
+                this::getCastTimeoutSeconds, this::setCastTimeoutSeconds,
+                20, 90, 5));
     }
 
     @Override
@@ -79,7 +101,7 @@ public class AutoFishingFunction extends SymAbstractFunction {
                     notInWater = !isHookInWater(client.level, hook);
                     if (notInWater) {
                         client.player.sendOverlayMessage(
-                                Component.literal("⚠ 鱼漂未落入水中，" + NOT_IN_WATER_RECAST_TICKS / 20 + " 秒后自动重抛")
+                                Component.literal("⚠ 鱼漂未落入水中，" + notInWaterRecastSeconds + " 秒后自动重抛")
                                         .withStyle(ChatFormatting.RED)
                         );
                     } else {
@@ -87,7 +109,7 @@ public class AutoFishingFunction extends SymAbstractFunction {
                     }
                 }
 
-                if (notInWater && waitTicks >= NOT_IN_WATER_RECAST_TICKS) {
+                if (notInWater && waitTicks >= notInWaterRecastSeconds) {
                     reelIn(client);
                     state = State.REELING;
                     notInWater = false;

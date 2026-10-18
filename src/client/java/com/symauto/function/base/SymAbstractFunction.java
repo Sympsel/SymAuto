@@ -2,7 +2,7 @@ package com.symauto.function.base;
 
 import com.symauto.config.option.ConfigOption;
 import com.symauto.model.TagList;
-import com.symauto.core.FeatureConfig;
+import com.symauto.core.FunctionConfig;
 import com.symauto.function.utils.Tooltip;
 import lombok.Getter;
 import lombok.Setter;
@@ -52,6 +52,10 @@ public abstract class SymAbstractFunction {
             throw new IllegalStateException(
                     getClass().getName() + "已存在实例");
         }
+    }
+
+    protected SymAbstractFunction(String id, String name) {
+        this(id, name, "");
     }
 
     public static <T extends SymAbstractFunction> T of(Class<T> clazz) {
@@ -134,7 +138,7 @@ public abstract class SymAbstractFunction {
      */
     private void disableConflicts() {
         Set<Class<? extends SymAbstractFunction>> mine = getConflicts();
-        for (SymAbstractFunction other : FeatureConfig.AUTO_ALL) {
+        for (SymAbstractFunction other : FunctionConfig.AUTO_ALL) {
             if (other == this || !other.isEnable()) {
                 continue;
             }
@@ -179,14 +183,14 @@ public abstract class SymAbstractFunction {
     public final String getTooltip() {
         Tooltip tooltip = Tooltip.create()
                 .line(ChatFormatting.GOLD, tooltipLineIfConfigurable());
-        String desc = describe();
+        String desc = tooltip();
         if (desc != null && !desc.isBlank()) {
             tooltip.line(desc);
         }
         return tooltip.toString();
     }
 
-    protected String describe() {
+    protected String tooltip() {
         return baseToolTip;
     }
 

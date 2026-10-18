@@ -1,7 +1,7 @@
 package com.betterbundle.mixin;
 
 import com.betterbundle.gui.BundlePanelRenderer;
-import com.symauto.core.FeatureConfig;
+import com.symauto.core.FunctionConfig;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.WidgetSprites;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -40,7 +40,7 @@ public abstract class InventoryScreenMixin {
 
     @Inject(method = "extractContents", at = @At("TAIL"))
     private void onExtractContents(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick, CallbackInfo ci) {
-        if (!FeatureConfig.BETTER_BUNDLE_FUNCTION.isEnable()) {
+        if (!FunctionConfig.BETTER_BUNDLE_FUNCTION.isEnable()) {
             return;
         }
 

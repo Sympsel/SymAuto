@@ -1,8 +1,8 @@
 package com.symauto.function.auto;
 
 import com.symauto.config.option.BooleanOption;
-import com.symauto.model.BWList;
-import com.symauto.core.FeatureConfig;
+import com.symauto.model.SymList;
+import com.symauto.core.FunctionConfig;
 import com.symauto.function.base.SymAbstractFunction;
 import com.symauto.function.utils.Tooltip;
 import com.symauto.mixin.accessor.MinecraftAccessor;
@@ -19,33 +19,29 @@ public class AutoAttackFunction extends SymAbstractFunction {
     public static final AutoAttackFunction INSTANCE = new AutoAttackFunction();
 
     @Getter
-    private final BWList<EntityType<?>> BW_LIST = new BWList<>("auto_attack_safety_blacklist");
+    private final SymList<EntityType<?>> BLACK_LIST = new SymList<>("auto_attack_safety_blacklist", SymList.Type.BLACKLIST);
 
-    /** true=安全模式(自适应攻速/防检测，有GUI不攻击)；false=危险模式(直发包，可后台挂机) */
+    /**
+     * true=安全模式(防检测，有GUI不攻击)；false=危险模式(直发包，可后台挂机)
+     */
     @Getter
     @Setter
     private boolean safeMode = true;
 
-    private static String TOOLTIP_BASE;
 
     private AutoAttackFunction() {
-        TOOLTIP_BASE = Tooltip.create()
-                .line("自适应攻速的攻击")
-                .line(ChatFormatting.GREEN, "安全模式：推荐")
-                .line(ChatFormatting.RED, "危险模式：直发攻击包，可后台挂机，会被反作弊检测，建议单人用")
-                .toString();
-        super("auto_attack", "自动攻击", TOOLTIP_BASE);
-        BW_LIST.withDefaultsApplier(() -> {
-            // 玩家
-            BW_LIST.addToBlacklist(EntityTypes.PLAYER);
-            // 展示框类
-            BW_LIST.addToBlacklist(EntityTypes.ITEM_FRAME);
-            BW_LIST.addToBlacklist(EntityTypes.GLOW_ITEM_FRAME);
-            BW_LIST.addToBlacklist(EntityTypes.PAINTING);
-            // 村民
-            BW_LIST.addToBlacklist(EntityTypes.VILLAGER);
-        });
-        addOption(new BooleanOption("auto_attack_safe_mode", "安全模式(防检测)",
+        super("auto_attack", "自动攻击");
+        BLACK_LIST.withDefaultItems(
+                // 玩家
+                EntityTypes.PLAYER,
+                // 展示类
+                EntityTypes.ITEM_FRAME,
+                EntityTypes.GLOW_ITEM_FRAME,
+                EntityTypes.PAINTING,
+                // 村民
+                EntityTypes.VILLAGER
+        );
+        addOption(new BooleanOption("auto_attack_safe_mode", "安全模式（防检测）",
                 this::isSafeMode, this::setSafeMode, true));
     }
 
@@ -71,7 +67,7 @@ public class AutoAttackFunction extends SymAbstractFunction {
         if (target == null || !target.isAlive()) {
             return;
         }
-        if (BW_LIST.isBlacklisted(target.getType())) {
+        if (BLACK_LIST.contains(target.getType())) {
             return;
         }
         if (safeMode) {
@@ -82,17 +78,22 @@ public class AutoAttackFunction extends SymAbstractFunction {
     }
 
     @Override
-    public String describe() {
-        String mode = safeMode
-                ? ChatFormatting.GREEN + "\n当前模式：安全\n"
-                : ChatFormatting.RED + "\n当前模式：危险\n";
-        return TOOLTIP_BASE + mode + BW_LIST.displayBlacklist(
-                entity -> BuiltInRegistries.ENTITY_TYPE.getKey(entity).toString()
-        );
+    public String tooltip() {
+        Tooltip tooltip = Tooltip.create();
+        tooltip.line("自适应攻速的攻击")
+                .line(ChatFormatting.GREEN, "安全模式：推荐")
+                .line(ChatFormatting.RED, "危险模式：直发攻击包，可后台挂机，会被反作弊检测，建议单人用");
+        if (safeMode) {
+            tooltip.keyValueLine(ChatFormatting.WHITE, "当前模式", ChatFormatting.GREEN, "安全");
+        } else {
+            tooltip.keyValueLine(ChatFormatting.WHITE, "当前模式", ChatFormatting.RED, "危险");
+        }
+        tooltip.display(BLACK_LIST, entityTypes -> BuiltInRegistries.ENTITY_TYPE.getKey(entityTypes).toString());
+        return tooltip.toString();
     }
 
     private boolean isAutoEatActive() {
-        SymAbstractFunction autoEat = FeatureConfig.AUTO_EAT_FUNCTION;
+        SymAbstractFunction autoEat = FunctionConfig.AUTO_EAT_FUNCTION;
         return autoEat.isEnable() && autoEat instanceof AutoEatFunction f && f.isEating();
     }
 }

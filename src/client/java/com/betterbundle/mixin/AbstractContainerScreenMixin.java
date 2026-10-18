@@ -4,7 +4,7 @@ import com.betterbundle.gui.BundleCategory;
 import com.betterbundle.gui.BundlePanelInteraction;
 import com.betterbundle.gui.BundlePanelRenderer;
 import com.betterbundle.sort.exec.SortStateMachine;
-import com.symauto.core.FeatureConfig;
+import com.symauto.core.FunctionConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.input.KeyEvent;
@@ -37,7 +37,7 @@ public abstract class AbstractContainerScreenMixin {
 
     @Inject(method = "mouseClicked", at = @At("HEAD"), cancellable = true)
     private void onMouseClicked(MouseButtonEvent event, boolean doubleClick, CallbackInfoReturnable<Boolean> cir) {
-        if (!FeatureConfig.BETTER_BUNDLE_FUNCTION.isEnable()) {
+        if (!FunctionConfig.BETTER_BUNDLE_FUNCTION.isEnable()) {
             return;
         }
         AbstractContainerScreen<?> self = (AbstractContainerScreen<?>) (Object) this;
@@ -139,7 +139,7 @@ public abstract class AbstractContainerScreenMixin {
 
     @Inject(method = "mouseReleased", at = @At("HEAD"), cancellable = true)
     private void onMouseReleased(MouseButtonEvent event, CallbackInfoReturnable<Boolean> cir) {
-        if (!FeatureConfig.BETTER_BUNDLE_FUNCTION.isEnable()) {
+        if (!FunctionConfig.BETTER_BUNDLE_FUNCTION.isEnable()) {
             return;
         }
         BundlePanelInteraction.stopBulkInsert();
@@ -154,7 +154,7 @@ public abstract class AbstractContainerScreenMixin {
 
     @Inject(method = "keyPressed", at = @At("HEAD"), cancellable = true)
     private void onKeyPressed(KeyEvent event, CallbackInfoReturnable<Boolean> cir) {
-        if (!FeatureConfig.BETTER_BUNDLE_FUNCTION.isEnable()) {
+        if (!FunctionConfig.BETTER_BUNDLE_FUNCTION.isEnable()) {
             return;
         }
         SortStateMachine.get().abortByUser();
@@ -169,7 +169,7 @@ public abstract class AbstractContainerScreenMixin {
     @Inject(method = "mouseDragged", at = @At("HEAD"), cancellable = true)
     private void onMouseDragged(MouseButtonEvent event, double dx, double dy,
                                 CallbackInfoReturnable<Boolean> cir) {
-        if (!FeatureConfig.BETTER_BUNDLE_FUNCTION.isEnable()) {
+        if (!FunctionConfig.BETTER_BUNDLE_FUNCTION.isEnable()) {
             return;
         }
         SortStateMachine.get().abortByUser();
@@ -191,7 +191,7 @@ public abstract class AbstractContainerScreenMixin {
     @Inject(method = "mouseScrolled", at = @At("HEAD"), cancellable = true)
     private void onMouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY,
                                  CallbackInfoReturnable<Boolean> cir) {
-        if (!FeatureConfig.BETTER_BUNDLE_FUNCTION.isEnable()) {
+        if (!FunctionConfig.BETTER_BUNDLE_FUNCTION.isEnable()) {
             return;
         }
         SortStateMachine.get().abortByUser();

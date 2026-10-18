@@ -1,9 +1,9 @@
 package com.symauto.function.highlight;
 
+import com.symauto.model.SymList;
 import com.symauto.storage.VillagerTradeStore;
 import com.symauto.config.option.BooleanOption;
 import com.symauto.config.option.IntOption;
-import com.symauto.model.BWList;
 import com.symauto.function.base.HighLightFunction;
 import com.symauto.render.glow.EntityGlowRegistry;
 import com.symauto.function.utils.ItemUtils;
@@ -63,23 +63,20 @@ public class HighLightSpecificVillagersFunction extends HighLightFunction {
             exclusiveSet("crossbow"), exclusiveSet("damage"), exclusiveSet("mining"),
             exclusiveSet("riptide"));
     // 黑名单
-    private final BWList<ResourceKey<Enchantment>> ENCHANTMENT_BLACKLIST;
+    @Getter
+    private final SymList<ResourceKey<Enchantment>> BLACK_LIST;
 
     private HighLightSpecificVillagersFunction() {
         String id = "high_light_specific_villagers";
         super("high_light_specific_villagers",
                 "高亮特定村民",
-                SCAN_RADIUS,
-                Tooltip.create()
-                        .line("高亮范围内卖相关附魔书的村民")
-                        .line(ChatFormatting.YELLOW, "多人模式下仅高亮\"曾交易过\"、\"且出售与主手物品相关附魔书\"的村民")
-                        .toString());
-        ENCHANTMENT_BLACKLIST = new BWList<>(id);
+                SCAN_RADIUS);
+        BLACK_LIST = new SymList<>(id, SymList.Type.BLACKLIST);
         // 绑定诅咒、消失诅咒
-        ENCHANTMENT_BLACKLIST.addAllToBlacklist(Set.of(
+        BLACK_LIST.withDefaultItems(
                 Enchantments.BINDING_CURSE,
                 Enchantments.VANISHING_CURSE
-        ));
+        );
         addOption(new IntOption("scan_radius", "扫描半径",
                 this::getScanRadius, this::setScanRadius, 1, 50, 1));
         addOption(new BooleanOption("only_need_better_enchantment", "仅高亮拥有更高相关附魔村民",
@@ -92,7 +89,7 @@ public class HighLightSpecificVillagersFunction extends HighLightFunction {
     }
 
     @Override
-    protected String describe() {
+    protected String tooltip() {
         int diameter = getScanRadius() * 2;
         return Tooltip.create()
                 .line("主手持可附魔物品时，高亮范围内（" + diameter + "格）卖相关附魔书的村民")
@@ -100,7 +97,7 @@ public class HighLightSpecificVillagersFunction extends HighLightFunction {
                 .keyValueLine(ChatFormatting.YELLOW, "仅高亮拥有更高等级相关附魔村民", ChatFormatting.GRAY, onlyNeedBetterEnchantment ? "是" : "否")
                 .keyValueLine(ChatFormatting.YELLOW, "非创造模式下排除带有冲突附魔的村民", ChatFormatting.GRAY, interceptingConflictingEnchantment ? "是" : "否")
                 .keyValueLine(ChatFormatting.YELLOW, "单人模式增强，是否对任何可交易物品生效", ChatFormatting.GRAY, applyToAnyItemsCouldTrade ? "是" : "否")
-                .line(ENCHANTMENT_BLACKLIST.displayBlacklist(enhancement -> enhancement.identifier().toString()))
+                .display(BLACK_LIST, enhancement -> enhancement.identifier().toString())
                 .toString();
     }
 
@@ -213,7 +210,7 @@ public class HighLightSpecificVillagersFunction extends HighLightFunction {
             ResourceKey<Enchantment> enchantmentKey =
                     ResourceKey.create(Registries.ENCHANTMENT, identifier);
             // 跳过黑名单中的附魔
-            if (ENCHANTMENT_BLACKLIST.isBlacklisted(enchantmentKey)) {
+            if (BLACK_LIST.contains(enchantmentKey)) {
                 continue;
             }
             Holder<Enchantment> holder = enchantmentRegistry.get(enchantmentKey).orElse(null);

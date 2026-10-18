@@ -29,6 +29,11 @@ public abstract class HighLightFunction extends SymAbstractFunction {
         this.scanRadius = scanRadius;
     }
 
+    protected HighLightFunction(String id, String name, int scanRadius) {
+        super(id, name, "");
+        this.scanRadius = scanRadius;
+    }
+
     /**
      * 子类重写收集到的实体uuid，由此类统一高亮
      */

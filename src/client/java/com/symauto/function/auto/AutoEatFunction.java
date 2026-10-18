@@ -1,9 +1,11 @@
 package com.symauto.function.auto;
 
-import com.symauto.model.BWList;
+import com.symauto.config.option.IntOption;
+import com.symauto.model.SymList;
 import com.symauto.function.base.SymAbstractFunction;
 import com.symauto.function.utils.Tooltip;
 import lombok.Getter;
+import lombok.Setter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -17,13 +19,15 @@ import java.util.Set;
 
 public class AutoEatFunction extends SymAbstractFunction {
     public static final AutoEatFunction INSTANCE = new AutoEatFunction();
-    private static final int HUNGER_THRESHOLD = 16;
-    private static String TOOLTIP_BASE;
+    private static final int HUNGER_THRESHOLD_DEFAULT = 16;
+    @Getter
+    @Setter
+    private int hungerThreshold = HUNGER_THRESHOLD_DEFAULT;
     @Getter
     private boolean eating = false;
 
     @Getter
-    private final BWList<Item> FOOD_BLACKLIST;
+    private final SymList<Item> BLACK_LIST;
 
 
     // 主手拿着这些物品时，禁止自动进食（避免右键误触发）
@@ -33,10 +37,11 @@ public class AutoEatFunction extends SymAbstractFunction {
     );
 
     @Override
-    public String describe() {
-        return TOOLTIP_BASE + FOOD_BLACKLIST.displayBlacklist(
-                item -> BuiltInRegistries.ITEM.getKey(item).toString()
-        );
+    public String tooltip() {
+        return Tooltip.create()
+                .line("饥饿值低于阈值（" + HUNGER_THRESHOLD_DEFAULT + "）时自动进食")
+                .display(BLACK_LIST, item -> BuiltInRegistries.ITEM.getKey(item).toString())
+                .toString();
     }
 
 
@@ -45,13 +50,22 @@ public class AutoEatFunction extends SymAbstractFunction {
     private boolean startedUsingItem = false;
 
     private AutoEatFunction() {
-        TOOLTIP_BASE = Tooltip.create().line("饥饿值低于阈值（" + HUNGER_THRESHOLD + "）时自动进食").toString();
         String id = "auto_eat";
-        FOOD_BLACKLIST = new BWList<>(id);
-        super(id, "自动吃食物", TOOLTIP_BASE);
-        FOOD_BLACKLIST.withDefaultsApplier(
-                AutoEatFunction::applyDefaults
+        BLACK_LIST = new SymList<>(id, SymList.Type.BLACKLIST);
+        super(id, "自动吃食物");
+        BLACK_LIST.withDefaultItems(
+                Items.GOLDEN_APPLE,
+                Items.ENCHANTED_GOLDEN_APPLE,
+                Items.ROTTEN_FLESH,
+                Items.SPIDER_EYE,
+                Items.POTION,
+                Items.PUFFERFISH,
+                Items.POISONOUS_POTATO,
+                Items.CHICKEN
         );
+        addOption(new IntOption("hunger_threshold", "饥饿值阈值",
+                this::getHungerThreshold, this::setHungerThreshold,
+                0, 20, 1));
     }
 
     @Override
@@ -79,7 +93,7 @@ public class AutoEatFunction extends SymAbstractFunction {
         }
 
         FoodData foodData = client.player.getFoodData();
-        if (foodData.getFoodLevel() >= HUNGER_THRESHOLD) {
+        if (foodData.getFoodLevel() >= HUNGER_THRESHOLD_DEFAULT) {
             return;
         }
 
@@ -167,19 +181,6 @@ public class AutoEatFunction extends SymAbstractFunction {
         if (stack.isEmpty()) return false;
         if (!stack.has(DataComponents.FOOD)) return false;
         if (BLOCKED_MAIN_HAND_USABLES.contains(stack.getItem())) return false;
-        return !FOOD_BLACKLIST.isBlacklisted(stack.getItem());
-    }
-
-    public static void applyDefaults() {
-        INSTANCE.FOOD_BLACKLIST.addAllToBlacklist(Set.of(
-                Items.GOLDEN_APPLE,
-                Items.ENCHANTED_GOLDEN_APPLE,
-                Items.ROTTEN_FLESH,
-                Items.SPIDER_EYE,
-                Items.POTION,
-                Items.PUFFERFISH,
-                Items.POISONOUS_POTATO,
-                Items.CHICKEN
-        ));
+        return !BLACK_LIST.contains(stack.getItem());
     }
 }

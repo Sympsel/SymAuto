@@ -3,10 +3,14 @@
   "id": "symauto",
   "version": "${version}",
   "name": "SymAuto",
-  "description": "Sympsel 所写的自动化mod, Shift + X 打开菜单",
+  "description": "Sympsel 所写的自动化Mod, Shift + X 或指令 /sa 打开菜单",
   "authors": ["Sympsel"],
-  "contact": {},
-  "license": "All-Rights-Reserved",
+  "contact": {
+    "homepage": "https://github.com/Sympsel/SymAuto",
+    "sources": "https://github.com/Sympsel/SymAuto",
+    "issues": "https://github.com/Sympsel/SymAuto/issues"
+  },
+  "license": "MIT",
   "icon": "assets/symauto/icon.png",
   "environment": "client",
   "entrypoints": {

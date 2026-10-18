@@ -2,7 +2,7 @@ package com.symauto.function.highlight;
 
 import com.symauto.config.option.BooleanOption;
 import com.symauto.config.option.IntOption;
-import com.symauto.model.BWList;
+import com.symauto.model.SymList;
 import com.symauto.function.base.HighLightFunction;
 import com.symauto.function.utils.Tooltip;
 import lombok.Getter;
@@ -46,25 +46,21 @@ public class HighLightMasterFunction extends HighLightFunction {
     );
     // 黑白名单
     @Getter
-    private final BWList<EntityType<?>> BW_LIST;
+    private final SymList<EntityType<?>> BLACK_LIST;
+    @Getter
+    private final SymList<EntityType<?>> WHITE_LIST;
 
     private HighLightMasterFunction() {
-        super("high_light_master",
-                "高亮周围敌对生物",
-                SCAN_RADIUS,
-                Tooltip.create()
-                        .line("高亮范围内（边长" + SCAN_RADIUS * 2 + "格）的敌对怪物")
-                        .toString());
-        BW_LIST = new BWList<>(getId());
-        BW_LIST.withDefaultsApplier(() -> {
-            BW_LIST.addAllToBlacklist(Set.of(
-                    EntityTypes.ZOMBIFIED_PIGLIN, // 僵尸猪灵
-                    EntityTypes.PIGLIN // 猪灵
-            ));
-            BW_LIST.addAllToWhitelist(Set.of(
-                    EntityTypes.WARDEN // 监守者（不属于怪物分类，强制高亮）
-            ));
-        });
+        super("high_light_master", "高亮周围敌对生物", SCAN_RADIUS);
+        BLACK_LIST = new SymList<>(getId(), SymList.Type.BLACKLIST);
+        WHITE_LIST = new SymList<>(getId(), SymList.Type.WHITELIST);
+        BLACK_LIST.withDefaultItems(
+                EntityTypes.ZOMBIFIED_PIGLIN, // 僵尸猪灵
+                EntityTypes.PIGLIN // 猪灵
+        );
+        WHITE_LIST.withDefaultItems(
+                EntityTypes.WARDEN // 监守者（不属于怪物分类，强制高亮）
+        );
         addOption(new IntOption("scan_radius", "扫描半径",
                 this::getScanRadius, this::setScanRadius, 1, 50, 1));
         addOption(new BooleanOption("only_when_holding_weapon", "仅在主手持有武器时高亮",
@@ -72,15 +68,14 @@ public class HighLightMasterFunction extends HighLightFunction {
     }
 
     @Override
-    protected String describe() {
+    protected String tooltip() {
         int diameter = getScanRadius() * 2;
-        String tooltip = Tooltip.create()
+        return Tooltip.create()
                 .line("高亮扫描范围（边长" + diameter + "格）内、分类为敌对的怪物")
                 .keyValueLine(ChatFormatting.YELLOW, "仅在主手持有武器时高亮", ChatFormatting.GRAY, onlyWhenHoldingWeapon ? "是" : "否")
+                .display(BLACK_LIST, type -> BuiltInRegistries.ENTITY_TYPE.getKey(type).toString())
+                .display(WHITE_LIST, type -> BuiltInRegistries.ENTITY_TYPE.getKey(type).toString())
                 .toString();
-        tooltip += BW_LIST.displayBlacklist(type -> BuiltInRegistries.ENTITY_TYPE.getKey(type).toString());
-        tooltip += BW_LIST.displayWhitelist(type -> BuiltInRegistries.ENTITY_TYPE.getKey(type).toString());
-        return tooltip;
     }
 
     @Override
@@ -101,10 +96,10 @@ public class HighLightMasterFunction extends HighLightFunction {
 
     private boolean shouldHighlight(Mob mob) {
         EntityType<?> type = mob.getType();
-        if (BW_LIST.isBlacklisted(type)) {
+        if (BLACK_LIST.contains(type)) {
             return false;
         }
-        if (BW_LIST.isWhitelisted(type)) {
+        if (WHITE_LIST.contains(type)) {
             return true;
         }
         return type.getCategory() == MobCategory.MONSTER;

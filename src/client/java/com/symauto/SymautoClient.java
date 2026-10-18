@@ -3,14 +3,15 @@ package com.symauto;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.symauto.command.SymAutoCommand;
 import com.symauto.config.*;
-import com.symauto.core.FeatureConfig;
+import com.symauto.core.Constants;
+import com.symauto.core.FunctionConfig;
 import com.symauto.function.base.SymAbstractFunction;
 import com.symauto.function.auto.AutoSwiftToolsFunction;
 import com.symauto.function.place.FixYPlaceOrDestroyFunction;
 import com.symauto.function.utils.KeyUtils;
 import com.symauto.function.utils.ScreenUtils;
 import com.symauto.function.utils.TradeCapture;
-import com.symauto.gui.screen.FeatureMenuScreen;
+import com.symauto.gui.screen.FunctionMenuScreen;
 import com.symauto.render.PlayerNameRenderer;
 import com.symauto.storage.CraftingPresetStore;
 import com.symauto.storage.DeathInfoStore;
@@ -38,16 +39,31 @@ public class SymautoClient implements ClientModInitializer {
                 SymAutoKeys.CATEGORY_MAIN);
         KeyMappingHelper.registerKeyMapping(openMenuKey);
 
-        // 每个功能自己交出 KeyMapping，主类统一注册
-        for (SymAbstractFunction f : FeatureConfig.AUTO_ALL) {
+        // 注册按键
+        this.keyMappingRegisters();
+        // 注册事件
+        this.eventRegisters();
+        ConfigManager.load();
+        VillagerTradeStore.load();
+        DeathInfoStore.load();
+        CraftingPresetStore.load();
+        SymAutoCommand.register();
+        PlayerNameRenderer.register();
+        Constants.LOG.info("SymAuto Client initialized");
+    }
+
+    private void keyMappingRegisters() {
+        for (SymAbstractFunction f : FunctionConfig.AUTO_ALL) {
             KeyMapping km = f.getKeyMapping();
             if (km != null) {
                 KeyMappingHelper.registerKeyMapping(km);
             }
         }
+    }
 
+    private void eventRegisters() {
         ClientLifecycleEvents.CLIENT_STOPPING.register(client -> {
-            for (SymAbstractFunction f : FeatureConfig.AUTO_ALL) {
+            for (SymAbstractFunction f : FunctionConfig.AUTO_ALL) {
                 f.setEnable(false);
             }
             VillagerTradeStore.saveIfDirty();
@@ -60,7 +76,7 @@ public class SymautoClient implements ClientModInitializer {
             if (!(screen instanceof AbstractContainerScreen<?>)) return;
             ScreenMouseEvents.allowMouseClick(screen).register((s, event) -> {
                 if (!(s instanceof AbstractContainerScreen<?> cs)) return true;
-                for (SymAbstractFunction f : FeatureConfig.AUTO_ALL) {
+                for (SymAbstractFunction f : FunctionConfig.AUTO_ALL) {
                     if (!f.isEnable()) continue;
                     if (!f.allowContainerMouseClick(client, cs, event.x(), event.y(), event.button())) {
                         return false;
@@ -71,8 +87,8 @@ public class SymautoClient implements ClientModInitializer {
         });
 
         ClientTickEvents.START_CLIENT_TICK.register(client -> {
-            if (FeatureConfig.AUTO_SWIFT_TOOLS_FUNCTION.isEnable() && client.player != null) {
-                ((AutoSwiftToolsFunction) FeatureConfig.AUTO_SWIFT_TOOLS_FUNCTION).earlySwitchBack(client);
+            if (FunctionConfig.AUTO_SWIFT_TOOLS_FUNCTION.isEnable() && client.player != null) {
+                ((AutoSwiftToolsFunction) FunctionConfig.AUTO_SWIFT_TOOLS_FUNCTION).earlySwitchBack(client);
             }
         });
 
@@ -93,23 +109,16 @@ public class SymautoClient implements ClientModInitializer {
             if (openMenuKey.isDown()
                     && KeyUtils.isShiftDown(client)
                     && ScreenUtils.isNoScreen(client)) {
-                client.gui.setScreen(new FeatureMenuScreen(null));
+                client.gui.setScreen(new FunctionMenuScreen(null));
             }
 
             // 遍历所有功能：持续型 tick + 事件型 key
-            for (SymAbstractFunction f : FeatureConfig.AUTO_ALL) {
+            for (SymAbstractFunction f : FunctionConfig.AUTO_ALL) {
                 if (!f.isEnable()) continue;
                 f.tick();
                 dispatchKey(client, f);
             }
         });
-
-        ConfigManager.load();
-        VillagerTradeStore.load();
-        DeathInfoStore.load();
-        CraftingPresetStore.load();
-        SymAutoCommand.register();
-        PlayerNameRenderer.register();
     }
 
     /**

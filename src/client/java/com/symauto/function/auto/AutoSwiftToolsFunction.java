@@ -34,7 +34,7 @@ public class AutoSwiftToolsFunction extends SymAbstractFunction {
         super("auto_swift_tools", "自动切换破坏工具", Tooltip.create()
                 .line( "自动切换破坏工具")
                 .line(ChatFormatting.BLUE, "优先级：")
-                .line(1, "快捷栏工具 > 精准采集工具优先 > 挖掘速度")
+                .line(1, "快捷栏 > 精准采集 > 挖掘等级")
                 .toString()
         );
         setIntervalMs(50);
@@ -48,13 +48,6 @@ public class AutoSwiftToolsFunction extends SymAbstractFunction {
 
     public void setFloatFactor(float floatFactor) {
         this.floatFactor = Math.max(0f, floatFactor);
-    }
-
-    protected int nextDelay() {
-        float min = intervalMs * (1f - floatFactor);
-        float max = intervalMs * (1f + floatFactor);
-        int delay = (int) (min + RANDOM.nextFloat() * (max - min));
-        return Math.max(10, delay);
     }
 
     @Override
@@ -115,7 +108,7 @@ public class AutoSwiftToolsFunction extends SymAbstractFunction {
         }
         currBlockPos = blockPos;
 
-        // 第一阶段：快捷栏
+        // 快捷栏
         int hotBarSlot = findBestInRange(inv, blockState, Constants.HOTBAR_START, Constants.HOTBAR_END);
         if (hotBarSlot >= 0) {
             if (hotBarSlot != currSlot) {
@@ -127,7 +120,7 @@ public class AutoSwiftToolsFunction extends SymAbstractFunction {
             return;
         }
 
-        // 第二阶段：背包，使用服务器认可的容器交换
+        // 背包
         int invSlot = findBestInRange(inv, blockState, Constants.INV_START, Constants.INV_END);
         if (invSlot < 0) {
             return;

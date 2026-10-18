@@ -29,7 +29,7 @@ public class OneClickFlatItemsFunction extends SymAbstractFunction {
                         .line("鼠标悬浮在要平铺的物品上，按下 Ctrl + A 进行平铺")
                         .line("在容器界面则铺满容器")
                         .line("在背包界面则铺满背包")
-                        .line(ChatFormatting.AQUA, "意外地发现这个功能用来快速合成块状物品很方便")
+                        .line(ChatFormatting.AQUA, "可以用来快速合成块状物品")
                         .toString()
         );
         this.key = new KeyMapping(

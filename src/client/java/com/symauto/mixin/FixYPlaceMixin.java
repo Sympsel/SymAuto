@@ -1,6 +1,6 @@
 package com.symauto.mixin;
 
-import com.symauto.core.FeatureConfig;
+import com.symauto.core.FunctionConfig;
 import com.symauto.function.place.FixYPlaceOrDestroyFunction;
 import net.minecraft.client.multiplayer.MultiPlayerGameMode;
 import net.minecraft.client.player.LocalPlayer;
@@ -20,7 +20,7 @@ public class FixYPlaceMixin {
     private void onUseItemOn(LocalPlayer player, InteractionHand hand,
                              BlockHitResult blockHit,
                              CallbackInfoReturnable<InteractionResult> cir) {
-        if (!FeatureConfig.FIX_Y_PLACE_OR_DESTROY_FUNCTION.isEnable()) {
+        if (!FunctionConfig.FIX_Y_PLACE_OR_DESTROY_FUNCTION.isEnable()) {
             return;
         }
         if (hand != InteractionHand.MAIN_HAND) {
@@ -45,7 +45,7 @@ public class FixYPlaceMixin {
     @Inject(method = "startDestroyBlock", at = @At("HEAD"), cancellable = true)
     private void onStartDestroy(BlockPos pos, Direction direction,
                                 CallbackInfoReturnable<Boolean> cir) {
-        if (!FeatureConfig.FIX_Y_PLACE_OR_DESTROY_FUNCTION.isEnable()) return;
+        if (!FunctionConfig.FIX_Y_PLACE_OR_DESTROY_FUNCTION.isEnable()) return;
 
         int targetY = pos.getY();
 
@@ -64,7 +64,7 @@ public class FixYPlaceMixin {
     @Inject(method = "continueDestroyBlock", at = @At("HEAD"), cancellable = true)
     private void onContinueDestroy(BlockPos pos, Direction direction,
                                    CallbackInfoReturnable<Boolean> cir) {
-        if (!FeatureConfig.FIX_Y_PLACE_OR_DESTROY_FUNCTION.isEnable()) return;
+        if (!FunctionConfig.FIX_Y_PLACE_OR_DESTROY_FUNCTION.isEnable()) return;
         if (!FixYPlaceOrDestroyFunction.isMining()) return;
 
         if (pos.getY() != FixYPlaceOrDestroyFunction.getMineLockedY()) {
