@@ -1,10 +1,13 @@
 package com.symauto.gui.screen;
 
+import com.symauto.gui.base.SymBaseScreen;
+import com.symauto.gui.widget.ScrollableTextList;
 import com.symauto.update.UpdateMessageManager;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.FormattedCharSequence;
 import org.jspecify.annotations.NonNull;
@@ -17,143 +20,103 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class UpdateLogScreen extends Screen {
+public class UpdateLogScreen extends SymBaseScreen {
     private final Screen parent;
-
-    private static final int TITLE_COLOR = 0xFFFFFFFF;
-    private static final int TITLE_Y = 8;
-    private static final int LIST_TOP = 30;
-    private static final int LIST_BOTTOM_MARGIN = 24;
-    private static final int ROW_H = 12;
-    private static final int SIDE_PAD = 8;
-
-    private static final int BACK_W = 72;
-    private static final int BACK_H = 16;
-
-    private static final String pattern = "(?s)^\\[([^]]+)]\\[([^]]+)]\\s*\\n(.*?)(?=\\n\\[[0-9]{4}-[0-9]{2}-[0-9]{2}]\\[[^]]+]]|$)";
+    private ScrollableTextList list;
 
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-
-    private int scrollOffset = 0;
-    private int maxScroll = 0;
+    private static final Pattern SPLIT = Pattern.compile("(?m)^\\[([^]]+)]\\[([^]]+)]\\s*");
+    private List<String> cachedRaw;
+    private List<ScrollableTextList.Line> cachedLines;
 
     public UpdateLogScreen(Screen parent) {
-        super(Component.literal("SymAuto 更新日志")
-                .withStyle(ChatFormatting.BOLD, ChatFormatting.GOLD));
+        super(Component.literal("SymAuto 更新日志").withStyle(ChatFormatting.BOLD, ChatFormatting.GOLD));
         this.parent = parent;
     }
 
     @Override
     protected void init() {
-        super.init();
-        int backX = this.width - BACK_W - 6;
-        this.addRenderableWidget(
-                Button.builder(Component.literal("返回主菜单"), b ->
-                                this.minecraft.gui.setScreen(parent))
-                        .bounds(backX, 6, BACK_W, BACK_H)
-                        .build()
-        );
+        list = new ScrollableTextList(this::parseLines)
+                .setBounds(8, 30, this.width - 8, this.height - 24)
+                .setEmptyText("暂无更新日志")
+                .setHintText("滚轮滚动")
+                .setScrollbarEnabled(true);
+        addRenderableWidget(backButton(parent, "返回主菜单", 72));
     }
 
     @Override
-    public void extractRenderState(@NonNull GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
-        super.extractRenderState(graphics, mouseX, mouseY, delta);
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        return list.mouseClicked(event.x(), event.y())
+                || super.mouseClicked(event, doubleClick);
+    }
 
-        // 标题居中
-        int titleX = (this.width - this.font.width(this.title)) / 2;
-        graphics.text(this.font, this.title, titleX, TITLE_Y, TITLE_COLOR, true);
+    @Override
+    public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
+        return list.mouseDragged(event.y()) || super.mouseDragged(event, dragX, dragY);
+    }
 
-        List<String> messages = UpdateMessageManager.INSTANCE.getUpdateMessages();
-        int contentBottom = this.height - LIST_BOTTOM_MARGIN;
-        int maxWidth = this.width - 2 * SIDE_PAD;
+    @Override
+    public boolean mouseReleased(MouseButtonEvent event) {
+        return list.mouseReleased() || super.mouseReleased(event);
+    }
 
-        List<FormattedCharSequence> allLines = new ArrayList<>();
+    private List<ScrollableTextList.Line> parseLines() {
+        List<String> raw = UpdateMessageManager.INSTANCE.getUpdateMessages();
+        if (raw == cachedRaw && cachedLines != null) {
+            return cachedLines;
+        }
+        cachedLines = doParse();
+        cachedRaw = raw;
+        return cachedLines;
+    }
 
-        // 匹配 [日期][版本] 的正则，用来做切分
-        Pattern splitPattern = Pattern.compile("(?m)^\\[([^]]+)]\\[([^]]+)]\\s*");
-
-        for (String rawText : messages) {
+    private List<ScrollableTextList.Line> doParse() {
+        List<ScrollableTextList.Line> out = new ArrayList<>();
+        for (String rawText : UpdateMessageManager.INSTANCE.getUpdateMessages()) {
             String text = rawText.trim();
-            Matcher matcher = splitPattern.matcher(text);
-
-            List<Integer> matchStarts = new ArrayList<>();
-            List<String[]> matchGroups = new ArrayList<>();
-
+            Matcher matcher = SPLIT.matcher(text);
+            List<Integer> starts = new ArrayList<>();
+            List<String[]> groups = new ArrayList<>();
             while (matcher.find()) {
-                matchStarts.add(matcher.start());
-                matchGroups.add(new String[]{matcher.group(1), matcher.group(2)});
+                starts.add(matcher.start());
+                groups.add(new String[]{matcher.group(1), matcher.group(2)});
             }
-
-            for (int i = 0; i < matchStarts.size(); i++) {
-                int start = matchStarts.get(i);
-                int end = (i + 1 < matchStarts.size()) ? matchStarts.get(i + 1) : text.length();
-
-                String formatedTime = matchGroups.get(i)[0];
-                String version = matchGroups.get(i)[1];
-
-                int headerLength = ("[" + formatedTime + "][" + version + "]").length();
-                String content = text.substring(start + headerLength, end).stripTrailing();
-
+            for (int i = 0; i < starts.size(); i++) {
+                int end = (i + 1 < starts.size()) ? starts.get(i + 1) : text.length();
+                int headerLength = ("[" + groups.get(i)[0] + "][" + groups.get(i)[1] + "]").length();
+                String content = text.substring(starts.get(i) + headerLength, end).stripTrailing();
                 if (content.isEmpty()) continue;
 
-                // 格式化日期
                 String time;
                 try {
-                    java.util.Date date = new java.text.SimpleDateFormat("yyyy-MM-dd").parse(formatedTime);
+                    java.util.Date date = new java.text.SimpleDateFormat("yyyy-MM-dd").parse(groups.get(i)[0]);
                     time = DATE_FMT.format(Instant.ofEpochMilli(date.getTime()).atZone(ZoneId.systemDefault()));
                 } catch (Exception e) {
-                    time = formatedTime; // 解析失败直接显示原字符串
+                    time = groups.get(i)[0];
                 }
 
                 Component header = Component.literal("[" + time + "] ").withStyle(ChatFormatting.GRAY)
-                        .append(Component.literal(version).withStyle(ChatFormatting.GOLD));
-                allLines.addAll(this.font.split(header, maxWidth));
-
-                String[] contentLines = content.split("\n", -1);
-                for (String lineStr : contentLines) {
-                    Component line = Component.literal(lineStr).withStyle(ChatFormatting.WHITE);
-                    allLines.addAll(this.font.split(line, maxWidth));
+                        .append(Component.literal(groups.get(i)[1]).withStyle(ChatFormatting.GOLD));
+                out.add(new ScrollableTextList.Line(header, 0xFFFFFFFF));
+                for (String s : content.split("\n", -1)) {
+                    out.add(new ScrollableTextList.Line(Component.literal(s), 0xFFFFFFFF));
                 }
-
-                allLines.addAll(this.font.split(Component.literal(" "), maxWidth));
+                out.add(new ScrollableTextList.Line(Component.literal(" "), 0xFFFFFFFF));
             }
         }
+        return out;
+    }
 
-        // 滚动范围计算
-        int visibleRows = Math.max(1, (contentBottom - LIST_TOP) / ROW_H);
-        maxScroll = Math.max(0, allLines.size() - visibleRows);
-        scrollOffset = Math.clamp(scrollOffset, 0, maxScroll);
-
-        // 背景板
-        graphics.fill(SIDE_PAD - 2, LIST_TOP - 4, this.width - SIDE_PAD + 2, contentBottom + 4, 0x60000000);
-
-        // 空状态
-        if (allLines.isEmpty()) {
-            String empty = "暂无更新日志";
-            graphics.text(this.font, empty, (this.width - this.font.width(empty)) / 2, LIST_TOP, 0xFFAAAAAA, false);
-        }
-
-        int y = LIST_TOP;
-        for (int i = scrollOffset; i < allLines.size(); i++) {
-            if (y + ROW_H > contentBottom) {
-                break;
-            }
-            graphics.text(this.font, allLines.get(i), SIDE_PAD, y, 0xFFFFFFFF, false);
-            y += ROW_H;
-        }
-
-        // 提示文字
-        String hint = "滚轮滚动";
-        graphics.text(this.font, hint, this.width - this.font.width(hint) - SIDE_PAD,
-                contentBottom + 8, 0xFFAAAAAA, false);
+    @Override
+    public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
+        list.render(graphics, this.font);
+        super.extractRenderState(graphics, mouseX, mouseY, delta);
+        renderTitle(graphics);
     }
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
-        if (scrollY != 0) {
-            scrollOffset = Math.clamp(scrollOffset - (int) scrollY, 0, maxScroll);
-        }
-        return true;
+        return list.mouseScrolled(scrollY) || super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
     }
 
     @Override

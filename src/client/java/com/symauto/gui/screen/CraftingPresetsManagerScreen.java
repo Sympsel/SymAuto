@@ -1,6 +1,9 @@
 package com.symauto.gui.screen;
 
 import com.symauto.function.auto.AutoCraftingFunction;
+import com.symauto.gui.base.SymBaseScreen;
+import com.symauto.gui.widget.ScrollableTextList;
+import com.symauto.gui.widget.SimpleScrollbar;
 import com.symauto.storage.CraftingPresetStore;
 import com.symauto.gui.widget.CraftingPresetItem;
 import net.minecraft.ChatFormatting;
@@ -16,7 +19,7 @@ import org.jspecify.annotations.NonNull;
 
 import java.util.List;
 
-public class CraftingPresetsManagerScreen extends Screen {
+public class CraftingPresetsManagerScreen extends SymBaseScreen {
     private final Screen parent;
 
     private static final int TITLE_Y = 8;
@@ -24,13 +27,24 @@ public class CraftingPresetsManagerScreen extends Screen {
     private static final int ROW_H = 20;
     private static final int LOG_LINE_H = 10;
     private static final int BOTTOM_MARGIN = 26;
-    private static final int SCROLLBAR_W = 6;
 
     private int scrollRow = 0;
     private int visibleRows = 1;
     private final boolean showLogs;
-    private boolean draggingScrollbar = false;
-    private int scrollbarDragOffset = 0;
+    private ScrollableTextList logList;
+
+    private final SimpleScrollbar scrollbar = new SimpleScrollbar(new SimpleScrollbar.ScrollTarget() {
+        @Override public int totalRows() { return entryCount(); }
+        @Override public int visibleRows() { return visibleRows; }
+        @Override public int scrollRow() { return scrollRow; }
+        @Override
+        public void scrollRow(int v) {
+            scrollRow = v;
+            if (showLogs && logList != null) {
+                logList.setScrollOffset(v);
+            }
+        }
+    });
 
     public CraftingPresetsManagerScreen(Screen parent) {
         this(parent, 0, false);
@@ -54,7 +68,18 @@ public class CraftingPresetsManagerScreen extends Screen {
         int total = entryCount();
         int maxScroll = Math.max(0, total - visibleRows);
         scrollRow = Math.clamp(scrollRow, 0, maxScroll);
-
+        scrollbar.setBounds(this.width - 12, LIST_TOP - 4, this.height - BOTTOM_MARGIN + 2);
+        if (showLogs) {
+            logList = new ScrollableTextList(() -> AutoCraftingFunction.getExecutionLogs().stream()
+                    .map(s -> new ScrollableTextList.Line(
+                            Component.literal(this.font.plainSubstrByWidth(s, this.width - 38)),
+                            logColor(s)))
+                    .toList())
+                    .setBounds(10, LIST_TOP, this.width - 28, this.height - BOTTOM_MARGIN)
+                    .setRowHeight(LOG_LINE_H)
+                    .setEmptyText("暂无执行日志；打开工作台并启动自动合成后会在这里显示");
+            logList.setScrollOffset(scrollRow);
+        }
         if (!showLogs) {
             int y = LIST_TOP;
             for (int i = scrollRow; i < total && i < scrollRow + visibleRows; i++) {
@@ -132,32 +157,15 @@ public class CraftingPresetsManagerScreen extends Screen {
         graphics.text(this.font, this.title, titleX, TITLE_Y, 0xFFFFFFFF, true);
 
         if (showLogs) {
-            renderLogs(graphics);
+            logList.render(graphics, this.font);
         } else if (CraftingPresetStore.size() == 0) {
             String empty = "暂无预设，点击底部将手持物品新增到预设管理器";
             graphics.text(this.font, empty, (this.width - this.font.width(empty)) / 2, LIST_TOP + 4, 0xFFAAAAAA, false);
         }
-        drawScrollbar(graphics);
+        scrollbar.render(graphics);
     }
 
-    private void renderLogs(GuiGraphicsExtractor graphics) {
-        List<String> logs = AutoCraftingFunction.getExecutionLogs();
-        if (logs.isEmpty()) {
-            String empty = "暂无执行日志；打开工作台并启动自动合成后会在这里显示";
-            graphics.text(this.font, empty, (this.width - this.font.width(empty)) / 2,
-                    LIST_TOP + 4, 0xFFAAAAAA, false);
-            return;
-        }
 
-        int y = LIST_TOP;
-        int end = Math.min(logs.size(), scrollRow + visibleRows);
-        for (int i = scrollRow; i < end; i++) {
-            String line = logs.get(i);
-            String fitted = this.font.plainSubstrByWidth(line, this.width - 28);
-            graphics.text(this.font, fitted, 10, y, logColor(line), false);
-            y += LOG_LINE_H;
-        }
-    }
 
     private int logColor(String line) {
         if (line.contains("失败") || line.contains("不足") || line.contains("超时") || line.contains("无法")) {
@@ -172,47 +180,9 @@ public class CraftingPresetsManagerScreen extends Screen {
         return 0xFFE0E0E0;
     }
 
-    private void drawScrollbar(GuiGraphicsExtractor graphics) {
-        int total = entryCount();
-        int maxScroll = total - visibleRows;
-        if (maxScroll <= 0) {
-            return;
-        }
-        int top = scrollbarTop();
-        int bottom = scrollbarBottom();
-        int trackLeft = scrollbarLeft();
-
-        graphics.fill(trackLeft, top, trackLeft + SCROLLBAR_W, bottom, 0x40FFFFFF);
-        int thumbH = scrollbarThumbHeight();
-        int thumbY = scrollbarThumbTop();
-        int thumbColor = draggingScrollbar ? 0xFFFFFFFF : 0xC0FFFFFF;
-        graphics.fill(trackLeft, thumbY, trackLeft + SCROLLBAR_W, thumbY + thumbH, thumbColor);
-    }
-
-    @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
-        int maxScroll = Math.max(0, entryCount() - visibleRows);
-        if (scrollY != 0 && maxScroll > 0) {
-            int step = showLogs ? 6 : 2;
-            scrollRow = Math.clamp(scrollRow - (int) Math.signum(scrollY) * step, 0, maxScroll);
-            reopen();
-            return true;
-        }
-        return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
-    }
-
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
-        if (isOverScrollbar(event.x(), event.y())) {
-            int thumbTop = scrollbarThumbTop();
-            int thumbHeight = scrollbarThumbHeight();
-            if (event.y() >= thumbTop && event.y() <= thumbTop + thumbHeight) {
-                scrollbarDragOffset = (int) event.y() - thumbTop;
-            } else {
-                scrollbarDragOffset = thumbHeight / 2;
-                updateScrollFromMouse(event.y());
-            }
-            draggingScrollbar = true;
+        if (scrollbar.mouseClicked(event.x(), event.y())) {
             return true;
         }
         return super.mouseClicked(event, doubleClick);
@@ -220,8 +190,7 @@ public class CraftingPresetsManagerScreen extends Screen {
 
     @Override
     public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
-        if (draggingScrollbar) {
-            updateScrollFromMouse(event.y());
+        if (scrollbar.mouseDragged(event.y())) {
             return true;
         }
         return super.mouseDragged(event, dragX, dragY);
@@ -229,9 +198,7 @@ public class CraftingPresetsManagerScreen extends Screen {
 
     @Override
     public boolean mouseReleased(MouseButtonEvent event) {
-        if (draggingScrollbar) {
-            draggingScrollbar = false;
-            // 预设页需要重建行控件；日志页无行控件，已经随 scrollRow 实时刷新
+        if (scrollbar.mouseReleased()) {
             if (!showLogs) {
                 reopen();
             }
@@ -240,52 +207,22 @@ public class CraftingPresetsManagerScreen extends Screen {
         return super.mouseReleased(event);
     }
 
-    private boolean isOverScrollbar(double mouseX, double mouseY) {
-        if (entryCount() - visibleRows <= 0) {
-            return false;
-        }
-        int left = scrollbarLeft();
-        return mouseX >= left - 3 && mouseX <= left + SCROLLBAR_W + 3
-                && mouseY >= scrollbarTop() && mouseY <= scrollbarBottom();
-    }
-
-    private void updateScrollFromMouse(double mouseY) {
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
         int maxScroll = Math.max(0, entryCount() - visibleRows);
-        int usable = scrollbarBottom() - scrollbarTop() - scrollbarThumbHeight();
-        if (usable <= 0) {
-            scrollRow = 0;
-            return;
+        if (scrollY != 0 && maxScroll > 0) {
+            if (showLogs) {
+                if (logList.mouseScrolled(scrollY)) {
+                    scrollRow = logList.scrollOffset(); // 同步给滚动条滑块
+                    return true;
+                }
+                return false;
+            }
+            scrollRow = Math.clamp(scrollRow - (int) Math.signum(scrollY) * 2L, 0, maxScroll);
+            reopen();
+            return true;
         }
-        double ratio = (mouseY - scrollbarTop() - scrollbarDragOffset) / usable;
-        scrollRow = Math.clamp((int) Math.round(ratio * maxScroll), 0, maxScroll);
-    }
-
-    private int scrollbarTop() {
-        return LIST_TOP - 4;
-    }
-
-    private int scrollbarBottom() {
-        return this.height - BOTTOM_MARGIN + 2;
-    }
-
-    private int scrollbarLeft() {
-        return this.width - 12;
-    }
-
-    private int scrollbarThumbHeight() {
-        int total = entryCount();
-        int trackHeight = scrollbarBottom() - scrollbarTop();
-        return Math.max(12, trackHeight * visibleRows / Math.max(1, total));
-    }
-
-    private int scrollbarThumbTop() {
-        int maxScroll = Math.max(0, entryCount() - visibleRows);
-        int trackHeight = scrollbarBottom() - scrollbarTop();
-        int thumbHeight = scrollbarThumbHeight();
-        if (maxScroll <= 0) {
-            return scrollbarTop();
-        }
-        return scrollbarTop() + (int) ((long) (trackHeight - thumbHeight) * scrollRow / maxScroll);
+        return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
     }
 
     @Override

@@ -4,6 +4,7 @@ import com.symauto.config.ConfigManager;
 import com.symauto.core.SymFunctionTags;
 import com.symauto.core.FunctionConfig;
 import com.symauto.function.base.SymAbstractFunction;
+import com.symauto.gui.widget.SimpleScrollbar;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
@@ -35,9 +36,8 @@ public class FunctionMenuScreen extends Screen {
     private static final int TAG_GAP = 4;
     private static final int MAX_COLUMNS = 3;
 
-    // 固定高度列表（可滚动区域）
+    // 固定可滚动区域
     private static final int LIST_MAX_HEIGHT = 180;
-    private static final int SCROLLBAR_W = 4;
     private static final int SCROLLBAR_GAP = 3;
 
     private final List<Button> featureButtons = new ArrayList<>();
@@ -52,6 +52,13 @@ public class FunctionMenuScreen extends Screen {
     private int visibleRows = 1;
     private int totalRows = 0;
     private int scrollRow = 0;
+
+    private final SimpleScrollbar scrollbar = new SimpleScrollbar(new SimpleScrollbar.ScrollTarget() {
+        @Override public int totalRows() { return totalRows; }
+        @Override public int visibleRows() { return visibleRows; }
+        @Override public int scrollRow() { return scrollRow; }
+        @Override public void scrollRow(int v) { scrollRow = Math.clamp(v, 0, maxScrollRow()); }
+    });
 
     public FunctionMenuScreen(Screen parent) {
         this(parent, SymFunctionTags.ALL);
@@ -142,6 +149,10 @@ public class FunctionMenuScreen extends Screen {
                         .bounds(bx, nextY, fourW, BTN_H)
                         .build()
         );
+
+        scrollbar.setBounds(
+                Math.min(listLeft + listWidth + SCROLLBAR_GAP, this.width - SimpleScrollbar.WIDTH - 1),
+                listTop, listTop + listHeight);
     }
 
     /** 构建顶部标签栏：「全部」+ 各分类，居中排布。 */
@@ -235,6 +246,9 @@ public class FunctionMenuScreen extends Screen {
 
     @Override
     public boolean mouseClicked(@NonNull MouseButtonEvent event, boolean doubleClick) {
+        if (scrollbar.mouseClicked(event.x(), event.y())) {
+            return true;
+        }
         SymAbstractFunction f = findFunctionAt(event.x(), event.y());
         if (f != null) {
             // 中键：打开专用管理界面
@@ -261,6 +275,20 @@ public class FunctionMenuScreen extends Screen {
             }
         }
         return super.mouseClicked(event, doubleClick);
+    }
+
+    @Override
+    public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
+        if (scrollbar.mouseDragged(event.y())) {
+            relayoutFeatureButtons(); // 拖拽实时重排
+            return true;
+        }
+        return super.mouseDragged(event, dragX, dragY);
+    }
+
+    @Override
+    public boolean mouseReleased(MouseButtonEvent event) {
+        return scrollbar.mouseReleased() || super.mouseReleased(event);
     }
 
     private SymAbstractFunction findFunctionAt(double mx, double my) {
@@ -301,27 +329,7 @@ public class FunctionMenuScreen extends Screen {
         }
 
         graphics.outline(listLeft - 3, listTop - 3, listWidth + 6, listHeight + 6, 0x80FFFFFF);
-
-        drawScrollbar(graphics);
-    }
-
-    private void drawScrollbar(GuiGraphicsExtractor graphics) {
-        int maxScrollRow = maxScrollRow();
-        if (maxScrollRow <= 0) {
-            return;
-        }
-
-        int sbX = Math.min(listLeft + listWidth + SCROLLBAR_GAP, this.width - SCROLLBAR_W - 1);
-        int trackTop = listTop;
-        int trackBottom = listTop + listHeight;
-
-        graphics.fill(sbX, trackTop, sbX + SCROLLBAR_W, trackBottom, 0x40FFFFFF);
-
-        int trackH = trackBottom - trackTop;
-        int thumbH = Math.max(8, trackH * visibleRows / Math.max(1, totalRows));
-        int range = trackH - thumbH;
-        int thumbY = trackTop + (int) ((long) range * scrollRow / maxScrollRow);
-        graphics.fill(sbX, thumbY, sbX + SCROLLBAR_W, thumbY + thumbH, 0x80FFFFFF);
+        scrollbar.render(graphics);
     }
 
     @Override

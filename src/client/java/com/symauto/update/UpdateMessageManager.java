@@ -24,10 +24,7 @@ public class UpdateMessageManager {
 
     static void main() {
         sendUpdates(
-                "重写了黑白名单逻辑，并为“高亮特定村民”也添加了配置选项",
-                "旧的配置文件可能不兼容，请手动删除旧的配置文件（最好备份一下方便复制到新格式的配置文件） " + file("symauto/bwlist.json"),
-                "为“自动钓鱼”添加了配置选项",
-                "主菜单添加了打开配置文件夹按钮"
+                "为各个界面添加了滚动条"
         );
     }
 
