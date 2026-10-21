@@ -28,7 +28,8 @@ public class AutoDiscardMoreThingFunction extends SymAbstractFunction {
     @Override
     protected String tooltip() {
         return Tooltip.create()
-                .line(ChatFormatting.YELLOW, "对手持物品不作判定")
+                .line(ChatFormatting.YELLOW, "对主手持有物品不作判定")
+                .line(ChatFormatting.YELLOW, "功能为逐tick检查背包，不用时记得关掉，以免影响游戏体验")
                 .toString();
     }
 
