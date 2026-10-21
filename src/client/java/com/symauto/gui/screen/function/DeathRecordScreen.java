@@ -1,4 +1,4 @@
-package com.symauto.gui.screen;
+package com.symauto.gui.screen.function;
 
 import com.symauto.storage.DeathInfoStore;
 import com.symauto.storage.DeathInfoStore.DeathRecord;

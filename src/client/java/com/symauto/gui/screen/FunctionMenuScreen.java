@@ -4,6 +4,7 @@ import com.symauto.config.ConfigManager;
 import com.symauto.core.SymFunctionTags;
 import com.symauto.core.FunctionConfig;
 import com.symauto.function.base.SymAbstractFunction;
+import com.symauto.gui.UiStyle;
 import com.symauto.gui.widget.SimpleScrollbar;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -21,8 +22,6 @@ public class FunctionMenuScreen extends Screen {
     private final Screen parent;
     /** 当前选中的分类标签；SymFunctionTags.ALL(-1) 表示全部。 */
     private final int activeTag;
-
-    private static final int TITLE_COLOR = 0xFFFFFFFF;
 
     private static final int BTN_W = 120;
     private static final int BTN_H = 20;
@@ -43,6 +42,8 @@ public class FunctionMenuScreen extends Screen {
     private final List<Button> featureButtons = new ArrayList<>();
     private List<SymAbstractFunction> currentFunctions = List.of();
 
+    private UiStyle style;
+
     // 列表布局与滚动状态
     private int columns = 1;
     private int listLeft = 0;
@@ -61,14 +62,24 @@ public class FunctionMenuScreen extends Screen {
     });
 
     public FunctionMenuScreen(Screen parent) {
-        this(parent, SymFunctionTags.ALL);
+        this(parent, SymFunctionTags.ALL, UiStyle.DEFAULT);
     }
 
-    public FunctionMenuScreen(Screen parent, int activeTag) {
+    public FunctionMenuScreen(Screen parent, UiStyle style) {
+        this(parent, SymFunctionTags.ALL, style);
+    }
+
+    public FunctionMenuScreen(Screen parent, int activeTag, UiStyle style) {
         super(Component.literal("SymAuto 功能菜单")
                 .withStyle(ChatFormatting.BOLD, ChatFormatting.GOLD));
+        setStyle(style);
         this.parent = parent;
         this.activeTag = activeTag;
+    }
+
+    public FunctionMenuScreen setStyle(UiStyle style) {
+        this.style = style;
+        return this;
     }
 
     @Override
@@ -151,7 +162,7 @@ public class FunctionMenuScreen extends Screen {
         );
 
         scrollbar.setBounds(
-                Math.min(listLeft + listWidth + SCROLLBAR_GAP, this.width - SimpleScrollbar.WIDTH - 1),
+                Math.min(listLeft + listWidth + SCROLLBAR_GAP, this.width - style.scrollbarWidth - 1),
                 listTop, listTop + listHeight);
     }
 
@@ -177,7 +188,7 @@ public class FunctionMenuScreen extends Screen {
             final int tag = tagIds[i];
             this.addRenderableWidget(
                     Button.builder(Component.literal(tagText(tag)), b ->
-                                    this.minecraft.gui.setScreen(new FunctionMenuScreen(this.parent, tag)))
+                                    this.minecraft.gui.setScreen(new FunctionMenuScreen(this.parent, tag, this.style)))
                             .bounds(x, TAG_BAR_Y, widths[i], TAG_BTN_H)
                             .build()
             );
@@ -320,15 +331,15 @@ public class FunctionMenuScreen extends Screen {
         super.extractRenderState(graphics, mouseX, mouseY, delta);
 
         int titleX = (this.width - this.font.width(this.title)) / 2;
-        graphics.text(this.font, this.title, titleX, TITLE_Y, TITLE_COLOR, true);
+        graphics.text(this.font, this.title, titleX, TITLE_Y, this.style.title, true);
 
         // 空分类提示
         if (currentFunctions.isEmpty()) {
             String empty = "该分类下暂无功能";
-            graphics.text(this.font, empty, (this.width - this.font.width(empty)) / 2, listTop, 0xFFAAAAAA, false);
+            graphics.text(this.font, empty, (this.width - this.font.width(empty)) / 2, listTop, this.style.muted, false);
         }
 
-        graphics.outline(listLeft - 3, listTop - 3, listWidth + 6, listHeight + 6, 0x80FFFFFF);
+        graphics.outline(listLeft - 3, listTop - 3, listWidth + 6, listHeight + 6, this.style.panelOutline);
         scrollbar.render(graphics);
     }
 

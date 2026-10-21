@@ -1,4 +1,4 @@
-package com.symauto.gui.screen;
+package com.symauto.gui.screen.function;
 
 import com.symauto.function.auto.AutoCraftingFunction;
 import com.symauto.gui.base.SymBaseScreen;
@@ -17,8 +17,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import org.jspecify.annotations.NonNull;
 
-import java.util.List;
-
 public class CraftingPresetsManagerScreen extends SymBaseScreen {
     private final Screen parent;
 
@@ -34,9 +32,21 @@ public class CraftingPresetsManagerScreen extends SymBaseScreen {
     private ScrollableTextList logList;
 
     private final SimpleScrollbar scrollbar = new SimpleScrollbar(new SimpleScrollbar.ScrollTarget() {
-        @Override public int totalRows() { return entryCount(); }
-        @Override public int visibleRows() { return visibleRows; }
-        @Override public int scrollRow() { return scrollRow; }
+        @Override
+        public int totalRows() {
+            return entryCount();
+        }
+
+        @Override
+        public int visibleRows() {
+            return visibleRows;
+        }
+
+        @Override
+        public int scrollRow() {
+            return scrollRow;
+        }
+
         @Override
         public void scrollRow(int v) {
             scrollRow = v;
@@ -154,17 +164,16 @@ public class CraftingPresetsManagerScreen extends SymBaseScreen {
         super.extractRenderState(graphics, mouseX, mouseY, delta);
 
         int titleX = (this.width - this.font.width(this.title)) / 2;
-        graphics.text(this.font, this.title, titleX, TITLE_Y, 0xFFFFFFFF, true);
+        graphics.text(this.font, this.title, titleX, TITLE_Y, style.text, true);
 
         if (showLogs) {
             logList.render(graphics, this.font);
         } else if (CraftingPresetStore.size() == 0) {
             String empty = "暂无预设，点击底部将手持物品新增到预设管理器";
-            graphics.text(this.font, empty, (this.width - this.font.width(empty)) / 2, LIST_TOP + 4, 0xFFAAAAAA, false);
+            graphics.text(this.font, empty, (this.width - this.font.width(empty)) / 2, LIST_TOP + 4, style.muted, false);
         }
         scrollbar.render(graphics);
     }
-
 
 
     private int logColor(String line) {
@@ -213,7 +222,7 @@ public class CraftingPresetsManagerScreen extends SymBaseScreen {
         if (scrollY != 0 && maxScroll > 0) {
             if (showLogs) {
                 if (logList.mouseScrolled(scrollY)) {
-                    scrollRow = logList.scrollOffset(); // 同步给滚动条滑块
+                    scrollRow = logList.scrollOffset();
                     return true;
                 }
                 return false;

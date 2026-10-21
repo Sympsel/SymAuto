@@ -4,7 +4,7 @@ import com.symauto.config.option.BooleanOption;
 import com.symauto.function.base.SymAbstractFunction;
 import com.symauto.function.utils.Tooltip;
 import com.symauto.mixin.accessor.VaultServerDataAccessor;
-import com.symauto.model.SymList;
+import com.symauto.model.common.SymList;
 import lombok.Getter;
 import lombok.Setter;
 import net.minecraft.ChatFormatting;

@@ -1,27 +1,18 @@
 
 package com.symauto.storage;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
-import net.fabricmc.loader.api.FabricLoader;
+import com.symauto.storage.base.AbstractJsonStore;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 
 
-public final class VillagerTradeStore {
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-    private static final Path PATH =
-            FabricLoader.getInstance().getConfigDir()
-                    .resolve("symauto").resolve("highlight").resolve("villager_trades.json");
-    private static final Map<String, Entry> DATA = new ConcurrentHashMap<>();
-    private static boolean dirty = false;
+public final class VillagerTradeStore extends AbstractJsonStore {
+    public static final VillagerTradeStore INSTANCE = new VillagerTradeStore();
+    private static final Map<String, Entry> DATA = new java.util.concurrent.ConcurrentHashMap<>();
 
     private VillagerTradeStore() {
+        super("highlight", "villager_trades.json");
     }
 
     static class Entry {
@@ -45,8 +36,10 @@ public final class VillagerTradeStore {
         entry.updated = System.currentTimeMillis();
         DATA.put(key, entry);
 
-        dirty = true;
-        save();
+        synchronized (INSTANCE) {
+            INSTANCE.setDirty(true);
+            INSTANCE.save();
+        }
     }
 
     /**
@@ -66,43 +59,36 @@ public final class VillagerTradeStore {
     }
 
     public static int clear() {
-        int removed = DATA.size();
+        synchronized (INSTANCE) {
+            int removed = DATA.size();
+            DATA.clear();
+            INSTANCE.save();
+            return removed;
+        }
+    }
+
+    @Override
+    protected void clearData() {
         DATA.clear();
-        save();
-        return removed;
     }
 
-    public static void load() {
-        DATA.clear();
-        if (!Files.exists(PATH)) {
-            return;
-        }
-        try {
-            String json = Files.readString(PATH);
-            Map<String, Entry> parsed = GSON.fromJson(json,
-                    new TypeToken<Map<String, Entry>>() {
-                    }.getType());
-            if (parsed != null) {
-                DATA.putAll(parsed);
-            }
-        } catch (Exception e) {
-            System.err.println("[SymAuto] 读取村民交易缓存失败: " + e.getMessage());
+    @Override
+    protected Object snapshot() {
+        return DATA;
+    }
+
+    @Override
+    protected void restore(String json) {
+        Map<String, Entry> parsed = gson.fromJson(json,
+                new TypeToken<Map<String, Entry>>() {
+                }.getType());
+        if (parsed != null) {
+            DATA.putAll(parsed);
         }
     }
 
-    public static void save() {
-        try {
-            Files.createDirectories(PATH.getParent());
-            Files.writeString(PATH, GSON.toJson(DATA));
-            dirty = false;
-        } catch (IOException e) {
-            System.err.println("[SymAuto] 保存村民交易缓存失败: " + e.getMessage());
-        }
-    }
-
-    public static void saveIfDirty() {
-        if (dirty) {
-            save();
-        }
+    @Override
+    protected String describe() {
+        return "村民交易缓存";
     }
 }

@@ -5,6 +5,7 @@ import com.symauto.command.SymAutoCommand;
 import com.symauto.config.*;
 import com.symauto.core.Constants;
 import com.symauto.core.FunctionConfig;
+import com.symauto.core.StoreConfig;
 import com.symauto.function.base.SymAbstractFunction;
 import com.symauto.function.auto.AutoSwiftToolsFunction;
 import com.symauto.function.place.FixYPlaceOrDestroyFunction;
@@ -13,9 +14,7 @@ import com.symauto.function.utils.ScreenUtils;
 import com.symauto.function.utils.TradeCapture;
 import com.symauto.gui.screen.FunctionMenuScreen;
 import com.symauto.render.PlayerNameRenderer;
-import com.symauto.storage.CraftingPresetStore;
-import com.symauto.storage.DeathInfoStore;
-import com.symauto.storage.VillagerTradeStore;
+import com.symauto.storage.base.PersistentStore;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -44,9 +43,10 @@ public class SymautoClient implements ClientModInitializer {
         // 注册事件
         this.eventRegisters();
         ConfigManager.load();
-        VillagerTradeStore.load();
-        DeathInfoStore.load();
-        CraftingPresetStore.load();
+        // 读取用户配置或者预设
+        for (PersistentStore store : StoreConfig.ALL) {
+            store.load();
+        }
         SymAutoCommand.register();
         PlayerNameRenderer.register();
         Constants.LOG.info("SymAuto Client initialized");
@@ -66,9 +66,9 @@ public class SymautoClient implements ClientModInitializer {
             for (SymAbstractFunction f : FunctionConfig.AUTO_ALL) {
                 f.setEnable(false);
             }
-            VillagerTradeStore.saveIfDirty();
-            DeathInfoStore.saveIfDirty();
-            CraftingPresetStore.saveIfDirty();
+            for (PersistentStore store : StoreConfig.ALL) {
+                store.saveIfDirty();
+            }
         });
 
         // 容器界面事件分发：鼠标点击

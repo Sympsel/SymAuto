@@ -1,7 +1,7 @@
 package com.symauto.function.auto;
 
 import com.symauto.config.option.IntOption;
-import com.symauto.model.SymList;
+import com.symauto.model.common.SymList;
 import com.symauto.function.base.SymAbstractFunction;
 import com.symauto.function.utils.Tooltip;
 import lombok.Getter;

@@ -1,4 +1,4 @@
-package com.symauto.model;
+package com.symauto.model.common;
 
 import com.mojang.blaze3d.platform.InputConstants;
 

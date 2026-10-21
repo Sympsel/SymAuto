@@ -1,5 +1,6 @@
 package com.symauto.gui.widget;
 
+import com.symauto.gui.UiStyle;
 import lombok.Setter;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -16,6 +17,7 @@ public class ScrollableTextList {
     private static final int DEFAULT_ROW_H = 12;
 
     private final Supplier<List<Line>> lines;
+    private UiStyle style;
     private int rowH = DEFAULT_ROW_H;
 
     private int left = 8, top = 30, right = 100, bottom = 100;
@@ -38,7 +40,17 @@ public class ScrollableTextList {
     });
 
     public ScrollableTextList(Supplier<List<Line>> lines) {
+        this(lines, UiStyle.DEFAULT);
+    }
+
+    public ScrollableTextList(Supplier<List<Line>> lines, UiStyle style) {
         this.lines = lines;
+        setStyle(style);
+    }
+
+    public ScrollableTextList setStyle(UiStyle style) {
+        this.style = style;
+        return this;
     }
 
     public ScrollableTextList setBounds(int left, int top, int right, int bottom) {
@@ -69,7 +81,7 @@ public class ScrollableTextList {
     public void render(GuiGraphicsExtractor graphics, Font font) {
         // 有滚动条时内容区让出轨道宽度
         int contentRight = (scrollbarEnabled && maxScroll > 0)
-                ? right - SimpleScrollbar.WIDTH - 2
+                ? right - style.scrollbarWidth - 2
                 : right;
         int maxWidth = contentRight - left;
 
@@ -94,10 +106,10 @@ public class ScrollableTextList {
         maxScroll = Math.max(0, totalLines - visible);
         scrollOffset = Math.clamp(scrollOffset, 0, maxScroll);
 
-        graphics.fill(left - 2, top - 4, right + 2, bottom + 4, 0x60000000);
+        graphics.fill(left - 2, top - 4, right + 2, bottom + 4, style.panelBg);
 
         if (totalLines == 0 && !emptyText.isEmpty()) {
-            graphics.text(font, emptyText, (left + right - font.width(emptyText)) / 2, top, 0xFFAAAAAA, false);
+            graphics.text(font, emptyText, (left + right - font.width(emptyText)) / 2, top, style.muted, false);
         }
 
         int y = top;
@@ -108,11 +120,11 @@ public class ScrollableTextList {
         }
 
         if (!hintText.isEmpty()) {
-            graphics.text(font, hintText, right - font.width(hintText), bottom + 8, 0xFFAAAAAA, false);
+            graphics.text(font, hintText, right - font.width(hintText), bottom + 8, style.muted, false);
         }
 
         if (scrollbarEnabled) {
-            scrollbar.setBounds(right - SimpleScrollbar.WIDTH, top, bottom);
+            scrollbar.setBounds(right - style.scrollbarWidth, top, bottom);
             scrollbar.render(graphics);
         }
     }

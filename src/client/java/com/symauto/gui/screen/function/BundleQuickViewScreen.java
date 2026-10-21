@@ -1,4 +1,4 @@
-package com.symauto.gui.screen;
+package com.symauto.gui.screen.function;
 
 import com.betterbundle.util.BundleContentsHelper;
 import lombok.NonNull;

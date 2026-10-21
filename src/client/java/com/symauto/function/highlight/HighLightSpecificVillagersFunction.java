@@ -1,6 +1,6 @@
 package com.symauto.function.highlight;
 
-import com.symauto.model.SymList;
+import com.symauto.model.common.SymList;
 import com.symauto.storage.VillagerTradeStore;
 import com.symauto.config.option.BooleanOption;
 import com.symauto.config.option.IntOption;

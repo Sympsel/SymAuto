@@ -70,7 +70,7 @@ public class AutoRecordDeathInfoFunction extends SymAbstractFunction {
             String cause = extractDeathCause(client.gui.screen());
             if (cause != null) {
                 pending.deathCause = cause;
-                DeathInfoStore.save();
+                DeathInfoStore.INSTANCE.save();
                 notify(client, Component.literal("死亡原因: ").withStyle(ChatFormatting.LIGHT_PURPLE)
                         .append(Component.literal(cause).withStyle(ChatFormatting.RED)));
             }

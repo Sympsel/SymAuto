@@ -1,4 +1,4 @@
-package com.symauto.model;
+package com.symauto.model.common;
 
 import lombok.Data;
 

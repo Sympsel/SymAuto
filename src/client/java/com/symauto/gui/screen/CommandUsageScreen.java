@@ -20,7 +20,7 @@ public class CommandUsageScreen extends SymBaseScreen {
     @Override
     protected void init() {
         list = new ScrollableTextList(() -> SymAutoCommand.usageLines().stream()
-                .map(c -> new ScrollableTextList.Line(c, 0xFFFFFFFF)).toList())
+                .map(c -> new ScrollableTextList.Line(c, style.text)).toList())
                 .setBounds(8, 30, this.width - 8, this.height - 24)
                 .setEmptyText("暂无内容")
                 .setHintText("滚轮滚动")

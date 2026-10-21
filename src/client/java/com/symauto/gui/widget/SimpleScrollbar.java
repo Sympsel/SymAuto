@@ -1,10 +1,11 @@
 package com.symauto.gui.widget;
 
+import com.symauto.gui.UiStyle;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 /** 通用竖向滚动条：轨道 + 滑块 + 拖拽。行滚动单位由 ScrollTarget 换算。 */
 public class SimpleScrollbar {
-    public static final int WIDTH = 6;
+    private UiStyle style;
 
     public interface ScrollTarget {
         int totalRows();
@@ -19,7 +20,17 @@ public class SimpleScrollbar {
     private int dragOffset;
 
     public SimpleScrollbar(ScrollTarget target) {
+        this(target, UiStyle.DEFAULT);
+    }
+
+    public SimpleScrollbar(ScrollTarget target, UiStyle style) {
         this.target = target;
+        setStyle(style);
+    }
+
+    public SimpleScrollbar setStyle(UiStyle style) {
+        this.style = style;
+        return this;
     }
 
     public void setBounds(int left, int top, int bottom) {
@@ -45,16 +56,16 @@ public class SimpleScrollbar {
 
     public void render(GuiGraphicsExtractor graphics) {
         if (maxScroll() <= 0) return;
-        graphics.fill(trackLeft, trackTop, trackLeft + WIDTH, trackBottom, 0x40FFFFFF);
+        graphics.fill(trackLeft, trackTop, trackLeft + style.scrollbarWidth, trackBottom, style.scrollbarTrack);
         int thumbH = thumbHeight();
         int thumbY = thumbTop(thumbH);
-        graphics.fill(trackLeft, thumbY, trackLeft + WIDTH, thumbY + thumbH,
-                dragging ? 0xFFFFFFFF : 0xC0FFFFFF);
+        graphics.fill(trackLeft, thumbY, trackLeft + style.scrollbarWidth, thumbY + thumbH,
+                dragging ? style.scrollbarThumbActive : style.scrollbarThumb);
     }
 
     public boolean mouseClicked(double mouseX, double mouseY) {
         if (maxScroll() <= 0) return false;
-        boolean over = mouseX >= trackLeft - 3 && mouseX <= trackLeft + WIDTH + 3
+        boolean over = mouseX >= trackLeft - 3 && mouseX <= trackLeft + style.scrollbarWidth + 3
                 && mouseY >= trackTop && mouseY <= trackBottom;
         if (!over) return false;
         int thumbH = thumbHeight();

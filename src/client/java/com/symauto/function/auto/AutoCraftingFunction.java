@@ -2,10 +2,10 @@ package com.symauto.function.auto;
 
 import com.symauto.config.option.IntOption;
 import com.symauto.storage.CraftingPresetStore;
-import com.symauto.model.crafting.CraftingPreset;
+import com.symauto.model.preset.CraftingPreset;
 import com.symauto.function.base.SymAbstractFunction;
 import com.symauto.function.utils.Tooltip;
-import com.symauto.gui.screen.CraftingPresetsManagerScreen;
+import com.symauto.gui.screen.function.CraftingPresetsManagerScreen;
 import it.unimi.dsi.fastutil.ints.IntList;
 import lombok.Getter;
 import lombok.Setter;

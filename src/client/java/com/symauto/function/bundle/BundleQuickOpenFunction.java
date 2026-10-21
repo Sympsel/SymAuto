@@ -5,7 +5,7 @@ import com.mojang.blaze3d.platform.InputConstants;
 import com.symauto.config.SymAutoKeys;
 import com.symauto.function.base.SymAbstractFunction;
 import com.symauto.function.utils.Tooltip;
-import com.symauto.gui.screen.BundleQuickViewScreen;
+import com.symauto.gui.screen.function.BundleQuickViewScreen;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import org.lwjgl.glfw.GLFW;

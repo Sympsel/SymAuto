@@ -1,10 +1,11 @@
-package com.symauto.model.crafting;
+package com.symauto.model.preset;
 
 import com.symauto.function.utils.ClientRecipeMaps;
 import com.symauto.function.utils.ItemUtils;
 import it.unimi.dsi.fastutil.ints.IntList;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -15,6 +16,7 @@ import java.util.Comparator;
 import java.util.List;
 
 @AllArgsConstructor
+@NoArgsConstructor
 @Data
 public class CraftingPreset {
     public static final int UNTIL_EXHAUSTED = -1;

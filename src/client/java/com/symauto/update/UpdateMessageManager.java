@@ -24,7 +24,8 @@ public class UpdateMessageManager {
 
     static void main() {
         sendUpdates(
-                "为各个界面添加了滚动条"
+                "为" + func("自动丢弃物品") + "功能添加了可配置条目与配置菜单",
+                "迁移了旧的" +func("自动合成") + "功能的配置文件到新的目录（无需自己调整）"
         );
     }
 
@@ -38,6 +39,10 @@ public class UpdateMessageManager {
 
     private static String key(String key) {
         return ChatFormatting.GOLD + key + ChatFormatting.WHITE;
+    }
+
+    private static String func(String key) {
+        return ChatFormatting.GOLD + key + ChatFormatting.DARK_AQUA;
     }
 
     private static String item(String item, int id) {

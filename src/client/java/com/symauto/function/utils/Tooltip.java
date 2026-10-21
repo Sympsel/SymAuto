@@ -1,6 +1,6 @@
 package com.symauto.function.utils;
 
-import com.symauto.model.SymList;
+import com.symauto.model.common.SymList;
 import net.minecraft.ChatFormatting;
 
 import java.util.ArrayList;

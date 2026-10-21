@@ -11,7 +11,7 @@ import com.symauto.function.auto.AutoEatFunction;
 import com.symauto.function.highlight.HighLightItemDropFunction;
 import com.symauto.function.highlight.HighLightMasterFunction;
 import com.symauto.function.oneclick.OneClickDiscardItemsFunction;
-import com.symauto.model.SymList;
+import com.symauto.model.common.SymList;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;

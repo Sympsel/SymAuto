@@ -1,9 +1,8 @@
 package com.symauto.storage;
 
 import com.google.common.reflect.TypeToken;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.symauto.model.crafting.CraftingPreset;
+import com.symauto.model.preset.CraftingPreset;
+import com.symauto.storage.base.AbstractJsonStore;
 import lombok.AllArgsConstructor;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -11,9 +10,11 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -21,18 +22,25 @@ import java.util.function.Supplier;
 
 import static com.symauto.config.ConfigManager.parseItem;
 
-public class CraftingPresetStore {
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-    private static final Path PATH = FabricLoader.getInstance().getConfigDir()
-            .resolve("symauto").resolve("crafting").resolve("presets.json");
+public class CraftingPresetStore extends AbstractJsonStore {
+    public static final CraftingPresetStore INSTANCE = new CraftingPresetStore();
 
     private static final List<CraftingPresetData> PRESETS = new ArrayList<>();
-    private static boolean dirty = false;
     private static long revision = 0;
 
-    private static Supplier<List<CraftingPresetData>> defaultsSupplier =CraftingPresetStore::defaultPresets;
+    private static final Supplier<List<CraftingPresetData>> defaultsSupplier =CraftingPresetStore::defaultPresets;
+
+    // 旧版配置文件位置：symauto/crafting/presets.json（现已迁移到 symauto/preset/crafting.json）
+    private static final Path LEGACY_PATH =
+            FabricLoader.getInstance().getConfigDir()
+                    .resolve("symauto")
+                    .resolve("crafting")
+                    .resolve("presets.json");
 
     private CraftingPresetStore() {
+        // todo 一次性脚本：迁移旧版数据
+//        super("crafting", "presets.json");
+        super("preset", "crafting.json");
     }
 
     @AllArgsConstructor
@@ -119,12 +127,16 @@ public class CraftingPresetStore {
 
     public static synchronized String countText(int index) {
         CraftingPresetData d = getPreset(index);
-        if (d == null) return "";
+        if (d == null) {
+            return "";
+        }
         return d.executeCount == CraftingPreset.UNTIL_EXHAUSTED ? "∞" : String.valueOf(d.executeCount);
     }
 
     public static synchronized void addFromHeld(ItemStack held) {
-        if (held == null || held.isEmpty()) return;
+        if (held == null || held.isEmpty()) {
+            return;
+        }
         String id = BuiltInRegistries.ITEM.getKey(held.getItem()).toString();
         PRESETS.add(new CraftingPresetData(id, 1, 64, true, false, true));
         touch();
@@ -132,28 +144,36 @@ public class CraftingPresetStore {
 
     public static synchronized void setItem(int index, ItemStack held) {
         CraftingPresetData d = safeGet(index);
-        if (d == null || held == null || held.isEmpty()) return;
+        if (d == null || held == null || held.isEmpty()) {
+            return;
+        }
         d.itemId = BuiltInRegistries.ITEM.getKey(held.getItem()).toString();
         touch();
     }
 
     public static synchronized void setActive(int index, boolean value) {
         CraftingPresetData d = safeGet(index);
-        if (d == null) return;
+        if (d == null) {
+            return;
+        }
         d.active = value;
         touch();
     }
 
     public static synchronized void toggleRecursive(int index) {
         CraftingPresetData d = safeGet(index);
-        if (d == null) return;
+        if (d == null) {
+            return;
+        }
         d.recursive = !d.recursive;
         touch();
     }
 
     public static synchronized void toggleThrow(int index) {
         CraftingPresetData d = safeGet(index);
-        if (d == null) return;
+        if (d == null) {
+            return;
+        }
         d.throwResult = !d.throwResult;
         touch();
     }
@@ -177,7 +197,7 @@ public class CraftingPresetStore {
         if (d.executeCount == CraftingPreset.UNTIL_EXHAUSTED) return;
         if (d.executeCount == remaining) return;
         d.executeCount = remaining;
-        dirty = true;
+        INSTANCE.setDirty(true);
     }
 
     public static synchronized boolean isUnlimited(int index) {
@@ -194,21 +214,29 @@ public class CraftingPresetStore {
     }
 
     public static synchronized void remove(int index) {
-        if (index < 0 || index >= PRESETS.size()) return;
+        if (index < 0 || index >= PRESETS.size()) {
+            return;
+        }
         PRESETS.remove(index);
         touch();
     }
 
     public static synchronized void move(int index, int dir) {
-        if (index < 0 || index >= PRESETS.size()) return;
+        if (index < 0 || index >= PRESETS.size()) {
+            return;
+        }
         int target = index + dir;
-        if (target < 0 || target >= PRESETS.size()) return;
+        if (target < 0 || target >= PRESETS.size()) {
+            return;
+        }
         Collections.swap(PRESETS, index, target);
         touch();
     }
 
     public static synchronized void clearAll() {
-        if (PRESETS.isEmpty()) return;
+        if (PRESETS.isEmpty()) {
+            return;
+        }
         PRESETS.clear();
         touch();
     }
@@ -227,44 +255,77 @@ public class CraftingPresetStore {
     }
 
     private static void touch() {
-        dirty = true;
-        revision++;
-        save();
+        INSTANCE.setDirty(true);
+        ++revision;
+        INSTANCE.save();
     }
 
-    public static synchronized void load() {
+    @Override
+    protected void clearData() {
         PRESETS.clear();
-        if (!Files.exists(PATH)) {
-            restoreDefaults();
+    }
+
+    @Override
+    protected Object snapshot() {
+        return PRESETS;
+    }
+
+    @Override
+    protected void restore(String json) {
+        List<CraftingPresetData> parsed = gson.fromJson(json,
+                new TypeToken<List<CraftingPresetData>>() {
+                }.getType());
+        if (parsed != null) {
+            PRESETS.addAll(parsed);
+        }
+    }
+
+    @Override
+    protected void onMissingFile() {
+        // 新路径不存在时：优先尝试从旧版文件迁移，迁移不成再恢复默认预设
+        if (migrateFromLegacy()) {
             return;
         }
+        restoreDefaults();
+    }
+
+    private boolean migrateFromLegacy() {
+        if (!Files.exists(LEGACY_PATH)) {
+            return false;
+        }
         try {
-            String json = Files.readString(PATH);
-            List<CraftingPresetData> parsed = GSON.fromJson(json,
+            String json = Files.readString(LEGACY_PATH);
+            List<CraftingPresetData> parsed = gson.fromJson(json,
                     new TypeToken<List<CraftingPresetData>>() {
                     }.getType());
-            if (parsed != null) {
-                PRESETS.addAll(parsed);
+            if (parsed == null || parsed.isEmpty()) {
+                return false;
             }
-            revision++;
+            PRESETS.addAll(parsed);
+            touch();
+            try {
+                Files.move(LEGACY_PATH,
+                        LEGACY_PATH.resolveSibling("presets.json.migrated.bak"),
+                        StandardCopyOption.REPLACE_EXISTING);
+            } catch (IOException ignored) {
+            }
+            System.out.println("[SymAuto] 已迁移旧版合成预设 " + parsed.size() + " 条 -> " + path);
+            // 删除旧版文件
+            Files.delete(LEGACY_PATH);
+            return true;
         } catch (Exception e) {
-            System.err.println("[SymAuto] 读取合成预设失败: " + e.getMessage());
+            System.err.println("[SymAuto] 迁移旧版合成预设失败: " + e.getMessage());
+            return false;
         }
     }
 
-    public static synchronized void save() {
-        try {
-            Files.createDirectories(PATH.getParent());
-            Files.writeString(PATH, GSON.toJson(PRESETS));
-            dirty = false;
-        } catch (IOException e) {
-            System.err.println("[SymAuto] 保存合成预设失败: " + e.getMessage());
-        }
+    @Override
+    protected void afterLoad() {
+        revision++;
     }
 
-    public static synchronized void saveIfDirty() {
-        if (dirty) {
-            save();
-        }
+    @Override
+    protected String describe() {
+        return "合成预设";
     }
 }

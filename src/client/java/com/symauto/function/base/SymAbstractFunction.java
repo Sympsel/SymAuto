@@ -1,7 +1,7 @@
 package com.symauto.function.base;
 
 import com.symauto.config.option.ConfigOption;
-import com.symauto.model.TagList;
+import com.symauto.model.common.TagList;
 import com.symauto.core.FunctionConfig;
 import com.symauto.function.utils.Tooltip;
 import lombok.Getter;
