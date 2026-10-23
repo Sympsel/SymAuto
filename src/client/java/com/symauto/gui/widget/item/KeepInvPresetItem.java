@@ -12,8 +12,8 @@ import java.util.List;
  * 此处 Item 语义为 “条目”
  */
 public class KeepInvPresetItem {
-    private static final int W_NAME = 110;
-    private static final int W_GUARD = 44;
+    private static final int NAME_W = 110;
+    private static final int GUARD_W = 44;
 
     private final int index;
 
@@ -32,7 +32,7 @@ public class KeepInvPresetItem {
                 .appendEnableButton(() -> KeepInvPresetStore.isActive(index),
                         "点击切换该预设是否生效",
                         () -> KeepInvPresetStore.setActive(index, !active), refresh)
-                .appendLabelButton(ChatFormatting.WHITE, label, W_NAME,
+                .appendLabelButton(ChatFormatting.WHITE, label, NAME_W,
                         "点击切换制约模式：数量 → 槽位 → 两者",
                         () -> KeepInvPresetStore.toggleMode(index), refresh)
                 .appendEditBox(countVal, "最多保留的数量，当前 " + countVal, 5,
@@ -56,7 +56,7 @@ public class KeepInvPresetItem {
                         },
                         "应用输入框的槽位上限")
                 .appendLabelButton(guard ? ChatFormatting.GREEN : ChatFormatting.GRAY,
-                        guard ? "附魔保护" : "附魔不管", W_GUARD,
+                        guard ? "附魔保护" : "附魔不管", GUARD_W,
                         "是否保护带附魔的同类物品不被丢弃",
                         () -> KeepInvPresetStore.toggleGuard(index), refresh)
                 .appendDeleteButton("删除", "删除此预设",

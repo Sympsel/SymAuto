@@ -182,6 +182,7 @@ public class ConfigManager {
     private static void captureFeatures(ModConfig config) {
         for (SymAbstractFunction f : FunctionConfig.AUTO_ALL) {
             config.features.put(f.getId(), f.isEnable());
+            config.functionTags.put(f.getId(), f.getTagArray());
             if (f.hasConfig()) {
                 Map<String, String> opts = new LinkedHashMap<>();
                 for (ConfigOption o : f.getConfigOptions()) {
@@ -200,6 +201,12 @@ public class ConfigManager {
             } else {
                 config.features.put(f.getId(), f.isEnable());
             }
+            int[] savedTags = config.functionTags.get(f.getId());
+            if (savedTags != null) {
+                f.resetTags(savedTags);
+            } else {
+                config.functionTags.put(f.getId(), f.getTagArray());
+            }
             if (f.hasConfig()) {
                 Map<String, String> saved = config.featureOptions.get(f.getId());
                 if (saved != null) {
@@ -213,7 +220,6 @@ public class ConfigManager {
             }
         }
     }
-
     public static Item parseItem(String id) {
         Identifier identifier = Identifier.tryParse(id);
         if (identifier == null) {

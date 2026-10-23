@@ -4,6 +4,7 @@ import com.symauto.config.ConfigManager;
 import com.symauto.core.SymFunctionTags;
 import com.symauto.core.FunctionConfig;
 import com.symauto.function.base.SymAbstractFunction;
+import com.symauto.function.utils.KeyUtils;
 import com.symauto.gui.UiStyle;
 import com.symauto.gui.widget.SimpleScrollbar;
 import net.minecraft.ChatFormatting;
@@ -262,6 +263,11 @@ public class FunctionMenuScreen extends Screen {
         }
         SymAbstractFunction f = findFunctionAt(event.x(), event.y());
         if (f != null) {
+            // Shift + 左键：编辑该功能的分类归属
+            if (event.button() == 0 && KeyUtils.isShiftDown(this.minecraft)) {
+                this.minecraft.gui.setScreen(new FunctionTagEditScreen(this, f));
+                return true;
+            }
             // 中键：打开专用管理界面
             if (event.button() == 2 && f.hasConfigScreen()) {
                 Screen screen = f.createConfigScreen(this);
@@ -334,6 +340,9 @@ public class FunctionMenuScreen extends Screen {
         graphics.text(this.font, this.title, titleX, TITLE_Y, this.style.title, true);
 
         // 空分类提示
+        String tip = "Shift+左键 调整功能分类";
+        graphics.text(this.font, tip, this.width - this.font.width(tip) - 6, TITLE_Y + 1, this.style.muted, false);
+
         if (currentFunctions.isEmpty()) {
             String empty = "该分类下暂无功能";
             graphics.text(this.font, empty, (this.width - this.font.width(empty)) / 2, listTop, this.style.muted, false);

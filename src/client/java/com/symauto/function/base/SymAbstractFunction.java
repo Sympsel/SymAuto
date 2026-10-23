@@ -1,6 +1,7 @@
 package com.symauto.function.base;
 
 import com.symauto.config.option.ConfigOption;
+import com.symauto.core.SymFunctionTags;
 import com.symauto.model.common.TagList;
 import com.symauto.core.FunctionConfig;
 import com.symauto.function.utils.Tooltip;
@@ -162,6 +163,25 @@ public abstract class SymAbstractFunction {
         return this;
     }
 
+    /** 切换某分类的归属 */
+    public void toggleTag(int tag) {
+        tags.toggle(tag);
+    }
+
+    /** 显式设置某分类的归属 */
+    public void setTag(int tag, boolean value) {
+        tags.set(tag, value);
+    }
+
+    /** 导出当前归类 */
+    public int[] getTagArray() {
+        return tags.toIntArray();
+    }
+
+    public void resetTags(int[] tagArray) {
+        tags.replaceAll(tagArray);
+    }
+
     public boolean hasConfig() {
         return !configOptions.isEmpty();
     }
@@ -181,6 +201,9 @@ public abstract class SymAbstractFunction {
     public final String getTooltip() {
         Tooltip tooltip = Tooltip.create()
                 .line(ChatFormatting.GOLD, tooltipLineIfConfigurable());
+        if (hasTag(SymFunctionTags.COLLECTION)) {
+            tooltip.line(ChatFormatting.GREEN, "☆ 已收藏");
+        }
         String desc = tooltip();
         if (desc != null && !desc.isBlank()) {
             tooltip.line(desc);
