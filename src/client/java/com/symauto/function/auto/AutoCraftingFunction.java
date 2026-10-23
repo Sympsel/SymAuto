@@ -233,9 +233,6 @@ public class AutoCraftingFunction extends SymAbstractFunction {
     protected void onTrigger(Minecraft client) {
         syncPresetsFromStore();
         Player player = client.player;
-        if (player == null || client.gameMode == null) {
-            return;
-        }
         // 工作台未打开或光标占用：整体等待，不推进
         if (!(player.containerMenu instanceof CraftingMenu)) {
             return;

@@ -2,10 +2,11 @@ package com.symauto.gui.screen.function;
 
 import com.symauto.function.auto.AutoCraftingFunction;
 import com.symauto.gui.base.SymBaseScreen;
+import com.symauto.gui.widget.LineWidget;
 import com.symauto.gui.widget.ScrollableTextList;
 import com.symauto.gui.widget.SimpleScrollbar;
 import com.symauto.storage.CraftingPresetStore;
-import com.symauto.gui.widget.CraftingPresetItem;
+import com.symauto.gui.widget.item.CraftingPresetItem;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -73,7 +74,7 @@ public class CraftingPresetsManagerScreen extends SymBaseScreen {
         super.init();
 
         int contentBottom = this.height - BOTTOM_MARGIN;
-        int rowHeight = showLogs ? LOG_LINE_H : ROW_H + CraftingPresetItem.GAP;
+        int rowHeight = showLogs ? LOG_LINE_H : ROW_H + LineWidget.GAP;
         visibleRows = Math.max(1, (contentBottom - LIST_TOP) / rowHeight);
         int total = entryCount();
         int maxScroll = Math.max(0, total - visibleRows);
@@ -94,7 +95,7 @@ public class CraftingPresetsManagerScreen extends SymBaseScreen {
             int y = LIST_TOP;
             for (int i = scrollRow; i < total && i < scrollRow + visibleRows; i++) {
                 buildRow(i, y);
-                y += ROW_H + CraftingPresetItem.GAP;
+                y += ROW_H + LineWidget.GAP;
             }
         }
 
@@ -138,10 +139,8 @@ public class CraftingPresetsManagerScreen extends SymBaseScreen {
     }
 
     private void buildRow(int index, int y) {
-        CraftingPresetItem.RowWidgets rw =
-                new CraftingPresetItem(index).build(6, y, ROW_H, this.font, this::currentHeld, this::reopen);
-        rw.buttons.forEach(this::addRenderableWidget);
-        addRenderableWidget(rw.input);
+        new CraftingPresetItem(index).build(6, y, this.font, this::currentHeld, this::reopen)
+                .forEach(this::addRenderableWidget);
     }
 
     private void reopen() {
