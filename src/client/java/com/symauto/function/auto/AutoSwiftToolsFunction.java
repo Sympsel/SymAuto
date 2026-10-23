@@ -53,17 +53,12 @@ public class AutoSwiftToolsFunction extends SymAbstractFunction {
     @Override
     protected void onDisable() {
         Minecraft client = Minecraft.getInstance();
-        if (client.player != null) {
-            switchBack(client);
-        }
+        switchBack(client);
         resetTarget();
     }
 
     @Override
     protected void onTrigger(Minecraft client) {
-        if (client.player == null || client.level == null) {
-            return;
-        }
         if (client.player.isCreative()) {
             switchBack(client);
             return;
@@ -134,9 +129,6 @@ public class AutoSwiftToolsFunction extends SymAbstractFunction {
     }
 
     public void earlySwitchBack(Minecraft client) {
-        if (prevSlot == -1 || client.player == null) {
-            return;
-        }
         if (client.options.keyAttack.isDown()) {
             return;
         }
@@ -168,9 +160,6 @@ public class AutoSwiftToolsFunction extends SymAbstractFunction {
     }
 
     private void swapInventoryIntoSelectedHotbar(Minecraft client, int inventorySlot) {
-        if (client.player == null || client.gameMode == null) {
-            return;
-        }
         if (inventorySlot < Constants.INV_START || inventorySlot >= Constants.INV_END) {
             return;
         }

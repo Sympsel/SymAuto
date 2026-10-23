@@ -36,7 +36,6 @@ public class OneClickDiscardSameItemsFunction extends SymAbstractFunction {
     public boolean allowContainerMouseClick(Minecraft client,
                                             AbstractContainerScreen<?> cs,
                                             double mouseX, double mouseY, int button) {
-        if (client.player == null || client.gameMode == null) return true;
         AbstractContainerMenu menu = cs.getMenu();
         ItemStack carried = menu.getCarried();
         if (carried.isEmpty()) return true;

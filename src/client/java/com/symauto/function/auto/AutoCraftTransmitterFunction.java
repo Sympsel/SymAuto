@@ -61,10 +61,6 @@ public class AutoCraftTransmitterFunction extends SymAbstractFunction {
 
     @Override
     protected void onTrigger(Minecraft client) {
-        if (client.player == null || client.gameMode == null) {
-            reset();
-            return;
-        }
         // 光标有物品时直接返回
         if (!client.player.containerMenu.getCarried().isEmpty()) {
             return;

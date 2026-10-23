@@ -64,10 +64,6 @@ public class AutoFishingFunction extends SymAbstractFunction {
 
     @Override
     protected void onTrigger(Minecraft client) {
-        if (client.player == null || client.level == null || client.gameMode == null) {
-            return;
-        }
-
         boolean mainRod = client.player.getMainHandItem().is(Items.FISHING_ROD);
         boolean offRod = client.player.getOffhandItem().is(Items.FISHING_ROD);
         if (!mainRod && !offRod) {
@@ -204,9 +200,6 @@ public class AutoFishingFunction extends SymAbstractFunction {
     }
 
     private void judgeIsInOpenWater(Minecraft client) {
-        if (client.player == null) {
-            return;
-        }
         FishingHook hook = client.player.fishing;
         if (hook == null) {
             return;
@@ -219,18 +212,12 @@ public class AutoFishingFunction extends SymAbstractFunction {
     }
 
     private void castRod(Minecraft client) {
-        if (client.player == null || client.gameMode == null) {
-            return;
-        }
         InteractionHand hand = client.player.getMainHandItem().is(Items.FISHING_ROD)
                 ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND;
         client.gameMode.useItem(client.player, hand);
     }
 
     private void reelIn(Minecraft client) {
-        if (client.player == null || client.gameMode == null) {
-            return;
-        }
         InteractionHand hand = client.player.getMainHandItem().is(Items.FISHING_ROD)
                 ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND;
         client.gameMode.useItem(client.player, hand);

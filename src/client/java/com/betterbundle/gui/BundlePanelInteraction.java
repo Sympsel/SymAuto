@@ -89,7 +89,6 @@ public final class BundlePanelInteraction {
         if (hoveredSlot == null || !hoveredSlot.hasItem()) return false;
 
         Minecraft client = Minecraft.getInstance();
-        if (client.player == null) return false;
 
         long window = client.getWindow().handle();
         if (GLFW.glfwGetKey(window, GLFW.GLFW_KEY_SPACE) != GLFW.GLFW_PRESS) return false;

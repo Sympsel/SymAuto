@@ -42,7 +42,7 @@ public class AutoRunFunction extends SymAbstractFunction {
     }
 
     private void correctViewBeforeMovement(Minecraft client) {
-        if (!isActive || client.player == null || client.level == null) {
+        if (!isActive) {
             return;
         }
         if (client.gui.screen() != null || client.player.isDeadOrDying()) {
@@ -63,10 +63,6 @@ public class AutoRunFunction extends SymAbstractFunction {
     @Override
     protected void onTrigger(Minecraft client) {
         if (!isActive) return;
-        if (client.player == null || client.level == null) {
-            stop(client);
-            return;
-        }
 
         if (client.player.isDeadOrDying()) {
             stop(client);

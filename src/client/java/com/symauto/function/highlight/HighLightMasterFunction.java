@@ -80,9 +80,6 @@ public class HighLightMasterFunction extends HighLightFunction {
 
     @Override
     protected @Nullable Set<UUID> collectGlowIds(Minecraft client) {
-        if (client.player == null) {
-            return Set.of();
-        }
         if (onlyWhenHoldingWeapon && !isHoldingWeapon(client.player.getMainHandItem())) {
             return Set.of();
         }

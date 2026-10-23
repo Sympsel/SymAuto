@@ -26,11 +26,6 @@ public class AutoFillItemClassificationMachineFunction extends SymAbstractFuncti
 
     @Override
     protected void onTrigger(Minecraft client) {
-        if (client.player == null || client.gameMode == null) {
-            executed = false;
-            return;
-        }
-
         if (!(client.gui.screen() instanceof HopperScreen)) {
             executed = false;
             return;

@@ -103,9 +103,6 @@ public class HighLightSpecificVillagersFunction extends HighLightFunction {
 
     @Override
     protected @Nullable Set<UUID> collectGlowIds(Minecraft client) {
-        if (client.player == null || client.level == null || client.gameMode == null) {
-            return Set.of();
-        }
         ItemStack stack = client.player.getMainHandItem();
         if (stack.isEmpty()) {
             return Set.of();

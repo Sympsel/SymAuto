@@ -56,10 +56,6 @@ public class HighLightPlayerFunction extends HighLightFunction {
 
     @Override
     protected @Nullable Set<UUID> collectGlowIds(Minecraft client) {
-        if (client.player == null || client.level == null) {
-            revealedIds.clear();
-            return Set.of();
-        }
         UUID self = client.player.getUUID();
         revealedIds.clear();
         Set<UUID> out = new HashSet<>();

@@ -19,10 +19,6 @@ public class AutoLootContainerFunction extends SymAbstractFunction {
 
     @Override
     protected void onTrigger(Minecraft client) {
-        if (client.player == null || client.gameMode == null) {
-            executed = false;
-            return;
-        }
         AbstractContainerMenu menu = client.player.containerMenu;
         if (menu == client.player.inventoryMenu) {
             executed = false;

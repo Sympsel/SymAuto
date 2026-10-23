@@ -35,7 +35,7 @@ public class AutoRecordDeathInfoFunction extends SymAbstractFunction {
                 .line("生存模式下死亡时自动记录死亡地点")
                 .line("保存坐标、维度、游戏时间、真实时间戳与死亡原因")
                 .line("最多保留最近" + MAX_SIZE_DEFAULT + "条，超出自动淘汰最旧记录")
-                .line(ChatFormatting.YELLOW, "若服务器不返回死亡原因，则无法记录")
+                .line(ChatFormatting.YELLOW, "若服务器不返回死亡原因，则无法记录死亡原因")
                 .toString();
         super("auto_record_death_info", "自动记录死亡信息", tooltip);
         addOption(new IntOption("death_info_record_max_size", "最多保存死亡记录的条目数",

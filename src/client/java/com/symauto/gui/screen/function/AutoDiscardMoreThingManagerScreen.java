@@ -27,7 +27,7 @@ public class AutoDiscardMoreThingManagerScreen extends SymBaseScreen {
     private static final int W_INPUT = 34;
     private static final int W_APPLY = 30;
     private static final int W_GUARD = 44;
-    private static final int W_DEL = 20;
+    private static final int W_DEL = 46;
     private static final int GAP = 2;
 
     private int scrollRow = 0;
@@ -175,7 +175,7 @@ public class AutoDiscardMoreThingManagerScreen extends SymBaseScreen {
                 .build());
         x += W_GUARD + GAP;
 
-        addRenderableWidget(Button.builder(Component.literal("删除").withStyle(ChatFormatting.RED), b -> {
+        addRenderableWidget(Button.builder(Component.literal("删除预设").withStyle(ChatFormatting.RED), b -> {
             KeepInvPresetStore.remove(index);
             reopen();
         }).bounds(x, y, W_DEL, ROW_H).build());

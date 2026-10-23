@@ -9,6 +9,7 @@ import com.symauto.core.StoreConfig;
 import com.symauto.function.base.SymAbstractFunction;
 import com.symauto.function.auto.AutoSwiftToolsFunction;
 import com.symauto.function.place.FixYPlaceOrDestroyFunction;
+import com.symauto.function.utils.ClientGuard;
 import com.symauto.function.utils.KeyUtils;
 import com.symauto.function.utils.ScreenUtils;
 import com.symauto.function.utils.TradeCapture;
@@ -87,14 +88,17 @@ public class SymautoClient implements ClientModInitializer {
         });
 
         ClientTickEvents.START_CLIENT_TICK.register(client -> {
-            if (FunctionConfig.AUTO_SWIFT_TOOLS_FUNCTION.isEnable() && client.player != null) {
+            if (!ClientGuard.ready(client)) {
+                return;
+            }
+            if (FunctionConfig.AUTO_SWIFT_TOOLS_FUNCTION.isEnable()) {
                 ((AutoSwiftToolsFunction) FunctionConfig.AUTO_SWIFT_TOOLS_FUNCTION).earlySwitchBack(client);
             }
         });
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             TradeCapture.tick(client);
-            if (client.level == null || client.gameMode == null || client.player == null) {
+            if (!ClientGuard.ready(client)) {
                 return;
             }
 
@@ -114,7 +118,9 @@ public class SymautoClient implements ClientModInitializer {
 
             // 遍历所有功能：持续型 tick + 事件型 key
             for (SymAbstractFunction f : FunctionConfig.AUTO_ALL) {
-                if (!f.isEnable()) continue;
+                if (!f.isEnable()) {
+                    continue;
+                }
                 f.tick();
                 dispatchKey(client, f);
             }

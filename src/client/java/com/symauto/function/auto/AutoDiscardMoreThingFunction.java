@@ -74,9 +74,6 @@ public class AutoDiscardMoreThingFunction extends SymAbstractFunction {
     }
 
     private void processPreset(Minecraft client, AbstractContainerMenu menu, int containerId, KeepInvPreset preset) {
-        if (client.player == null || client.gameMode == null) {
-            return;
-        }
         Item item = preset.getItem();
         boolean guard = preset.isEnchantedItemGuard();
         KeepInvPreset.Mode mode = preset.getMode();

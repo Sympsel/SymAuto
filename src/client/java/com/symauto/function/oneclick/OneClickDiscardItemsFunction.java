@@ -57,11 +57,6 @@ public class OneClickDiscardItemsFunction extends SymAbstractFunction {
 
     @Override
     protected void onTrigger(Minecraft client) {
-        if (client.player == null || client.gameMode == null) {
-            wasDown = false;
-            return;
-        }
-
         if (!isCombinationDown(client)) {
             wasDown = false;
             return;
@@ -77,9 +72,6 @@ public class OneClickDiscardItemsFunction extends SymAbstractFunction {
     }
 
     private void discardWhitelisted(Minecraft client) {
-        if (client.player == null || client.gameMode == null) {
-            return;
-        }
         AbstractContainerMenu menu = client.player.containerMenu;
         int containerId = menu.containerId;
 
@@ -119,9 +111,6 @@ public class OneClickDiscardItemsFunction extends SymAbstractFunction {
      */
     private void extractFromBundles(Minecraft client, AbstractContainerMenu menu, int containerId) {
         // todo 逻辑待优化
-        if (client.player == null || client.gameMode == null) {
-            return;
-        }
         ClientPacketListener connection = client.getConnection();
         if (connection == null) return;
 

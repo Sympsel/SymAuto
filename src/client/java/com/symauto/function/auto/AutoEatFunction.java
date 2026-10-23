@@ -72,7 +72,7 @@ public class AutoEatFunction extends SymAbstractFunction {
     protected void onDisable() {
         Minecraft client = Minecraft.getInstance();
         client.options.keyUse.setDown(false);
-        if (client.player != null && client.player.isUsingItem() && client.getConnection() != null) {
+        if (client.player.isUsingItem() && client.getConnection() != null) {
             client.player.stopUsingItem();
         }
         resetState();
@@ -80,9 +80,6 @@ public class AutoEatFunction extends SymAbstractFunction {
 
     @Override
     protected void onTrigger(Minecraft client) {
-        if (client.player == null || client.level == null || client.gameMode == null) {
-            return;
-        }
         if (client.player.isCreative()) {
             return;
         }
@@ -109,9 +106,6 @@ public class AutoEatFunction extends SymAbstractFunction {
     }
 
     private void handleEating(Minecraft client) {
-        if (client.player == null) {
-            return;
-        }
         ItemStack heldStack = client.player.getItemInHand(eatingHand);
 
         if (heldStack.isEmpty() || !heldStack.has(DataComponents.FOOD)) {
@@ -146,7 +140,7 @@ public class AutoEatFunction extends SymAbstractFunction {
 
     private void stopEating(Minecraft client) {
         client.options.keyUse.setDown(false);
-        if (client.player != null && client.player.isUsingItem()) {
+        if (client.player.isUsingItem()) {
             client.player.stopUsingItem();
         }
         resetState();
@@ -160,9 +154,6 @@ public class AutoEatFunction extends SymAbstractFunction {
     }
 
     private InteractionHand findFoodHand(Minecraft client) {
-        if (client.player == null) {
-            return null;
-        }
         if (isEdible(client.player.getMainHandItem())) {
             return InteractionHand.MAIN_HAND;
         }

@@ -41,9 +41,6 @@ public class BundleQuickOpenFunction extends SymAbstractFunction {
 
     @Override
     public void onKeyAction(Minecraft client) {
-        if (client.player == null) {
-            return;
-        }
         if (BundleContentsHelper.isNonEmptyBundle(client.player.getMainHandItem())) {
             int bundleSlot = 36 + client.player.getInventory().getSelectedSlot();
             client.gui.setScreen(new BundleQuickViewScreen(bundleSlot));

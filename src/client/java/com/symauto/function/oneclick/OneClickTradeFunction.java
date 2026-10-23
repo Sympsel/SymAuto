@@ -37,10 +37,6 @@ public class OneClickTradeFunction extends SymAbstractFunction {
 
     @Override
     protected void onTrigger(Minecraft client) {
-        if (client.player == null || client.gameMode == null) {
-            resetState();
-            return;
-        }
         if (!(client.gui.screen() instanceof MerchantScreen merchantScreen)) {
             resetState();
             return;

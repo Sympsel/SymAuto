@@ -42,10 +42,6 @@ public abstract class HighLightFunction extends SymAbstractFunction {
 
     @Override
     protected final void onTrigger(Minecraft client) {
-        if (client.player == null || client.level == null) {
-            EntityGlowRegistry.clear(getId());
-            return;
-        }
         Set<UUID> ids = collectGlowIds(client);
         EntityGlowRegistry.replace(getId(), glowColor(), hideNameTag(), ids == null ? Set.of() : ids);
    }

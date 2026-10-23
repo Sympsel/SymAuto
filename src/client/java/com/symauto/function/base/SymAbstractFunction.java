@@ -19,8 +19,6 @@ import java.util.concurrent.ConcurrentHashMap;
 public abstract class SymAbstractFunction {
     private static final Map<Class<?>, SymAbstractFunction> REGISTRY = new ConcurrentHashMap<>();
 
-    protected static final Random RANDOM = new Random();
-
     @Getter
     private final String id;
     @Getter

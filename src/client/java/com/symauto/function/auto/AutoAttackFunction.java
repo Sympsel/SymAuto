@@ -47,9 +47,6 @@ public class AutoAttackFunction extends SymAbstractFunction {
 
     @Override
     protected void onTrigger(Minecraft client) {
-        if (client.player == null || client.level == null || client.gameMode == null) {
-            return;
-        }
         if (client.player.isCreative()) {
             return;
         }

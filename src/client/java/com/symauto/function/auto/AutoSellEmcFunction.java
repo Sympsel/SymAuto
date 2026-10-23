@@ -65,11 +65,6 @@ public class AutoSellEmcFunction extends SymAbstractFunction {
 
     @Override
     protected void onTrigger(Minecraft client) {
-        if (client.player == null || client.level == null || client.gameMode == null) {
-            reset();
-            return;
-        }
-
         // 任何非商店界面出现时中止，避免误操作聊天框等
         if (client.gui.screen() != null && !isShopMenuOpen(client)) {
             reset();
@@ -151,8 +146,8 @@ public class AutoSellEmcFunction extends SymAbstractFunction {
     }
 
     private boolean isShopMenuOpen(Minecraft client) {
-        AbstractContainerMenu menu = client.player != null ? client.player.containerMenu : null;
-        return menu != null && menu.slots.size() >= 54;
+        AbstractContainerMenu menu = client.player.containerMenu;
+        return menu.slots.size() >= 54;
     }
 
     private void openShop() {
@@ -169,9 +164,6 @@ public class AutoSellEmcFunction extends SymAbstractFunction {
     }
 
     private void clickSlot(Minecraft client, int slotIndex) {
-        if (client.player == null || client.gameMode == null) {
-            return;
-        }
         AbstractContainerMenu menu = client.player.containerMenu;
         if (slotIndex < 0 || slotIndex >= menu.slots.size()) {
             return;

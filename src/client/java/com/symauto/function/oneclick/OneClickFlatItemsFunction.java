@@ -60,9 +60,6 @@ public class OneClickFlatItemsFunction extends SymAbstractFunction {
 
     @Override
     public void onKeyAction(Minecraft client) {
-        if (client.player == null || client.gameMode == null) {
-            return;
-        }
         if (!(client.gui.screen() instanceof AbstractContainerScreen<?> cs)) {
             return;
         }
