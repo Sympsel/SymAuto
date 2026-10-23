@@ -62,16 +62,16 @@ public class HighLightMasterFunction extends HighLightFunction {
                 EntityTypes.WARDEN // 监守者（不属于怪物分类，强制高亮）
         );
         addOption(new IntOption("scan_radius", "扫描半径",
-                this::getScanRadius, this::setScanRadius, 1, 50, 1));
+                this::getScanRadius, this::setScanRadius, 1, 100, 1));
         addOption(new BooleanOption("only_when_holding_weapon", "仅在主手持有武器时高亮",
                 this::isOnlyWhenHoldingWeapon, this::setOnlyWhenHoldingWeapon, false));
     }
 
     @Override
     protected String tooltip() {
-        int diameter = getScanRadius() * 2;
         return Tooltip.create()
-                .line("高亮扫描范围（边长" + diameter + "格）内、分类为敌对的怪物")
+                .line("高亮矩形范围内分类为敌对的怪物")
+                .keyValueLine(ChatFormatting.YELLOW, "扫描半径", ChatFormatting.GRAY, String.valueOf(getScanRadius()))
                 .keyValueLine(ChatFormatting.YELLOW, "仅在主手持有武器时高亮", ChatFormatting.GRAY, onlyWhenHoldingWeapon ? "是" : "否")
                 .display(BLACK_LIST, type -> BuiltInRegistries.ENTITY_TYPE.getKey(type).toString())
                 .display(WHITE_LIST, type -> BuiltInRegistries.ENTITY_TYPE.getKey(type).toString())

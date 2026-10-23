@@ -34,7 +34,7 @@ public class HighLightItemDropFunction extends HighLightFunction {
         WHITE_LIST = new SymList<>(getId(), SymList.Type.WHITELIST);
         BLACK_LIST = new SymList<>(getId(), SymList.Type.BLACKLIST);
         addOption(new IntOption("scan_radius", "扫描半径",
-                this::getScanRadius, this::setScanRadius, 1, 50, 1));
+                this::getScanRadius, this::setScanRadius, 1, 100, 1));
         addOption(new BooleanOption("only_whitelist", "仅高亮白名单物品",
                 this::isOnlyWhitelist, this::setOnlyWhitelist, false));
     }
@@ -42,7 +42,8 @@ public class HighLightItemDropFunction extends HighLightFunction {
     @Override
     protected String tooltip() {
         return Tooltip.create()
-                .line("高亮扫描范围（边长" + getScanRadius() * 2 + "格）内的物品掉落物")
+                .line("高亮扫描矩形范围内的物品掉落物")
+                .keyValueLine(ChatFormatting.YELLOW, "扫描半径", ChatFormatting.GRAY, String.valueOf(getScanRadius()))
                 .keyValueLine(ChatFormatting.YELLOW, "仅高亮白名单物品", ChatFormatting.GRAY, onlyWhitelist ? "是" : "否")
                 .display(WHITE_LIST, item -> BuiltInRegistries.ITEM.getKey(item).toString())
                 .display(BLACK_LIST, item -> BuiltInRegistries.ITEM.getKey(item).toString())

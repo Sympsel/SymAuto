@@ -30,7 +30,7 @@ public class HighLightPlayerFunction extends HighLightFunction {
 
     private HighLightPlayerFunction() {
         super("high_light_player",
-                "高亮周围玩家",
+                "高亮矩形范围内玩家",
                 SCAN_RADIUS,
                 Tooltip.create()
                         .line("高亮范围内除自己以外的其他玩家")
@@ -38,17 +38,17 @@ public class HighLightPlayerFunction extends HighLightFunction {
                         .line(ChatFormatting.RED, "本质透视，有反作弊服务器慎用")
                         .toString());
         addOption(new IntOption("scan_radius", "扫描半径",
-                this::getScanRadius, this::setScanRadius, 1, 50, 1));
+                this::getScanRadius, this::setScanRadius, 1, 100, 1));
         addOption(new BooleanOption("is_highlight_self", "高亮自己",
                 this::isHighlightSelf, this::setHighlightSelf, false));
     }
 
     @Override
     protected String tooltip() {
-        int diameter = getScanRadius() * 2;
         return Tooltip.create()
-                .line("高亮范围（边长" + diameter + "格）内，除自己以外的其他玩家")
+                .line("高亮范围格内的玩家")
                 .line(ChatFormatting.GRAY, "可以高亮隐身玩家，并为其单独渲染了HUD")
+                .keyValueLine(ChatFormatting.YELLOW, "扫描半径", ChatFormatting.GRAY, String.valueOf(getScanRadius()))
                 .keyValueLine(ChatFormatting.YELLOW, "高亮自己", ChatFormatting.GRAY, isHighlightSelf ? "是" : "否")
                 .line(ChatFormatting.RED, "本质透视，有反作弊服务器慎用，启用此功能即同意以下：禁止用于 PVP，后果自负，出事别找本 Mod 作者")
                 .toString();

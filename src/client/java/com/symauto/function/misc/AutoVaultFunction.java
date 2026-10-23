@@ -1,4 +1,4 @@
-package com.symauto.function.auto;
+package com.symauto.function.misc;
 
 import com.symauto.config.option.BooleanOption;
 import com.symauto.function.base.SymAbstractFunction;

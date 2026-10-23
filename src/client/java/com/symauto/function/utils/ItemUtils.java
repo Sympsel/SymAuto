@@ -27,7 +27,7 @@ public class ItemUtils {
     /**
      * 判断是否是同种物品，不包含数据组件或NBT
      */
-    public static boolean isSameItem(ItemStack a, ItemStack b) {
+    public static boolean isSameItemWithoutDataComponent(ItemStack a, ItemStack b) {
         if (!ItemStack.isSameItem(a, b)) {
             return false;
         }
@@ -37,6 +37,10 @@ public class ItemUtils {
         }
         // 都是潜影盒
         return isSameShulkerContent(a, b);
+    }
+
+    public static boolean isSameItemWithDataComponent(ItemStack a, ItemStack b) {
+        return ItemStack.isSameItemSameComponents(a, b);
     }
 
     /**
@@ -87,7 +91,7 @@ public class ItemUtils {
         int containerSlotCount = menu.slots.size() - Constants.PLAYER_SLOT_COUNT;
         for (int i = 0; i < containerSlotCount; ++i) {
             Slot slot = menu.slots.get(i);
-            if (slot.hasItem() && isSameItem(slot.getItem(), slot0.getItem())) {
+            if (slot.hasItem() && isSameItemWithoutDataComponent(slot.getItem(), slot0.getItem())) {
                 return true;
             }
         }
@@ -101,7 +105,7 @@ public class ItemUtils {
         int containerSlotCount = menu.slots.size() - Constants.PLAYER_SLOT_COUNT;
         for (int i = containerSlotCount; i < menu.slots.size(); ++i) {
             Slot slot = menu.slots.get(i);
-            if (slot.hasItem() && isSameItem(slot.getItem(), slot0.getItem())) {
+            if (slot.hasItem() && isSameItemWithoutDataComponent(slot.getItem(), slot0.getItem())) {
                 return true;
             }
         }

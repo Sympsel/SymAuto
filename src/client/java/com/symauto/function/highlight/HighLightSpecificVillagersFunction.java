@@ -69,7 +69,7 @@ public class HighLightSpecificVillagersFunction extends HighLightFunction {
     private HighLightSpecificVillagersFunction() {
         String id = "high_light_specific_villagers";
         super("high_light_specific_villagers",
-                "高亮特定村民",
+                "高亮矩形范围内特定村民",
                 SCAN_RADIUS);
         BLACK_LIST = new SymList<>(id, SymList.Type.BLACKLIST);
         // 绑定诅咒、消失诅咒
@@ -78,22 +78,21 @@ public class HighLightSpecificVillagersFunction extends HighLightFunction {
                 Enchantments.VANISHING_CURSE
         );
         addOption(new IntOption("scan_radius", "扫描半径",
-                this::getScanRadius, this::setScanRadius, 1, 50, 1));
+                this::getScanRadius, this::setScanRadius, 1, 100, 1));
         addOption(new BooleanOption("only_need_better_enchantment", "仅高亮拥有更高相关附魔村民",
                 this::isOnlyNeedBetterEnchantment, this::setOnlyNeedBetterEnchantment, true));
         addOption(new BooleanOption("intercepting_conflicting_enchantment", "非创造模式下排除带有冲突附魔的村民",
                 this::isInterceptingConflictingEnchantment, this::setInterceptingConflictingEnchantment, true));
         addOption(new BooleanOption("apply_to_any_items", "是否对任何可交易物品生效（仅单人模式生效）",
                 this::isApplyToAnyItemsCouldTrade, this::setApplyToAnyItemsCouldTrade, false));
-
     }
 
     @Override
     protected String tooltip() {
-        int diameter = getScanRadius() * 2;
         return Tooltip.create()
-                .line("主手持可附魔物品时，高亮范围内（" + diameter + "格）卖相关附魔书的村民")
+                .line("主手持可附魔物品时，高亮范围内卖相关附魔书的村民")
                 .line(ChatFormatting.YELLOW, "多人模式下仅高亮\"曾交易过\"、\"且出售与主手物品相关附魔书\"的村民")
+                .keyValueLine(ChatFormatting.YELLOW, "扫描半径", ChatFormatting.GRAY, String.valueOf(getScanRadius()))
                 .keyValueLine(ChatFormatting.YELLOW, "仅高亮拥有更高等级相关附魔村民", ChatFormatting.GRAY, onlyNeedBetterEnchantment ? "是" : "否")
                 .keyValueLine(ChatFormatting.YELLOW, "非创造模式下排除带有冲突附魔的村民", ChatFormatting.GRAY, interceptingConflictingEnchantment ? "是" : "否")
                 .keyValueLine(ChatFormatting.YELLOW, "单人模式增强，是否对任何可交易物品生效", ChatFormatting.GRAY, applyToAnyItemsCouldTrade ? "是" : "否")

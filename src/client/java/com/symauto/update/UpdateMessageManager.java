@@ -24,8 +24,8 @@ public class UpdateMessageManager {
 
     static void main() {
         sendUpdates(
-                "支持自定义标签类型，使用" + key("Shift + 鼠标左键") + "可以修改功能的分类",
-                "添加了" + colored(ChatFormatting.GREEN, "收藏") + "分类，方便查找自己常用的功能"
+                "将高亮相关功能的上限半径提升至" + colored(ChatFormatting.GREEN, "100") + "同时修改了功能描述",
+                "为含比较相同物品相关逻辑加了" + colored(ChatFormatting.GREEN, "是否比较数据组件" + "的配置项")
         );
     }
 
