@@ -38,8 +38,6 @@ public class CraftingPresetStore extends AbstractJsonStore {
                     .resolve("presets.json");
 
     private CraftingPresetStore() {
-        // todo 一次性脚本：迁移旧版数据
-//        super("crafting", "presets.json");
         super("preset", "crafting.json");
     }
 

@@ -31,10 +31,6 @@
     {
       "config": "symauto.client.mixins.json",
       "environment": "client"
-    },
-    {
-      "config": "betterbundle.client.mixins.json",
-      "environment": "client"
     }
   ],
   "depends": {

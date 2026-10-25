@@ -1,6 +1,6 @@
 package com.symauto.gui.screen.function;
 
-import com.betterbundle.util.BundleContentsHelper;
+import com.symauto.function.utils.BundleContentsHelper;
 import lombok.NonNull;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;

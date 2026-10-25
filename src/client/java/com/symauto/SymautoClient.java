@@ -13,6 +13,7 @@ import com.symauto.function.utils.ClientGuard;
 import com.symauto.function.utils.KeyUtils;
 import com.symauto.function.utils.ScreenUtils;
 import com.symauto.function.utils.TradeCapture;
+import com.symauto.gui.container.ContainerPanel;
 import com.symauto.gui.screen.FunctionMenuScreen;
 import com.symauto.render.PlayerNameRenderer;
 import com.symauto.storage.base.PersistentStore;
@@ -85,6 +86,9 @@ public class SymautoClient implements ClientModInitializer {
                 }
                 return true;
             });
+            ScreenMouseEvents.allowMouseRelease(screen).register((s, event) ->
+                    event.button() != 0 || !ContainerPanel.consumeReleaseGuard());
+
         });
 
         ClientTickEvents.START_CLIENT_TICK.register(client -> {

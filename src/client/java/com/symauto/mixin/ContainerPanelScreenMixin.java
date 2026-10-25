@@ -4,9 +4,10 @@ import com.symauto.core.FunctionConfig;
 import com.symauto.gui.container.ContainerPanel;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.world.inventory.Slot;
+import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -28,6 +29,8 @@ public abstract class ContainerPanelScreenMixin {
     @Shadow
     @Final
     protected int imageHeight;
+    @Shadow
+    protected @Nullable Slot hoveredSlot;
 
     @Inject(method = "extractContents", at = @At("TAIL"))
     private void symauto$renderPanel(GuiGraphicsExtractor graphics, int mouseX, int mouseY,
@@ -62,7 +65,13 @@ public abstract class ContainerPanelScreenMixin {
         if (!ContainerPanel.isVisible()) {
             return;
         }
-        if (ContainerPanel.handleClick(mx, my, leftPos, topPos, imageHeight, event.button())) {
+        boolean shift = (event.modifiers() & 0x1) != 0;
+        if (ContainerPanel.handleClick(mx, my, leftPos, topPos, imageHeight, event.button(), shift)) {
+            cir.setReturnValue(true);
+            return;
+        }
+        if (event.button() == 0 && (event.modifiers() & 0x1) != 0
+                && ContainerPanel.tryShiftInsert(hoveredSlot)) {
             cir.setReturnValue(true);
         }
     }

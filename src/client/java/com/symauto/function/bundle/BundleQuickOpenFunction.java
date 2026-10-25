@@ -1,9 +1,9 @@
 package com.symauto.function.bundle;
 
-import com.betterbundle.util.BundleContentsHelper;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.symauto.config.SymAutoKeys;
 import com.symauto.function.base.SymAbstractFunction;
+import com.symauto.function.utils.BundleContentsHelper;
 import com.symauto.function.utils.Tooltip;
 import com.symauto.gui.screen.function.BundleQuickViewScreen;
 import net.minecraft.client.KeyMapping;

@@ -1,13 +1,12 @@
 package com.symauto.function.oneclick;
 
-import com.betterbundle.gui.BundlePanelInteraction;
-import com.betterbundle.gui.BundlePanelRenderer;
 import com.symauto.config.option.BooleanOption;
 import com.symauto.core.FunctionConfig;
 import com.symauto.function.base.SymAbstractFunction;
 import com.symauto.core.Constants;
 import com.symauto.function.utils.ItemUtils;
 import com.symauto.function.utils.Tooltip;
+import com.symauto.gui.container.ContainerPanel;
 import com.symauto.mixin.accessor.AbstractContainerScreenAccessor;
 import lombok.Getter;
 import lombok.Setter;
@@ -62,8 +61,8 @@ public class OneClickDiscardSameItemsFunction extends SymAbstractFunction {
         if (!outside) return true;
 
         if (FunctionConfig.BETTER_BUNDLE_FUNCTION.isEnable()
-                && BundlePanelRenderer.visible
-                && BundlePanelInteraction.isInsidePanel(mouseX, mouseY, xo, yo, imgH)) {
+                && ContainerPanel.isVisible()
+                && ContainerPanel.isInsidePanel(mouseX, mouseY, xo, yo, imgH)) {
             return true;
         }
 

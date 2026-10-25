@@ -1,6 +1,5 @@
 package com.symauto.function.container;
 
-import com.betterbundle.gui.BundleCategory;
 import com.symauto.config.option.BooleanOption;
 import com.symauto.function.base.SymAbstractFunction;
 import com.symauto.function.utils.Tooltip;

@@ -1,6 +1,7 @@
 package com.symauto.gui.container;
 
-import com.betterbundle.gui.BundlePanelInteraction;
+import com.symauto.function.container.BundleAccess;
+import com.symauto.function.utils.ClientGuard;
 import com.symauto.mixin.accessor.AbstractRecipeBookScreenAccessor;
 import com.symauto.function.base.SymContainer;
 import com.symauto.function.container.ContainerPanelFunction;
@@ -26,9 +27,9 @@ import net.minecraft.util.Util;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
 import org.lwjgl.glfw.GLFW;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public final class ContainerPanel {
@@ -61,6 +62,7 @@ public final class ContainerPanel {
     @Getter
     private static boolean searchFocused = false;
     private static String query = "";
+    private static boolean pendingReleaseGuard = false;
 
     private static final GuiEventListener SEARCH_HANDLER = new GuiEventListener() {
         @Override
@@ -108,7 +110,13 @@ public final class ContainerPanel {
     private ContainerPanel() {
     }
 
-    // --- 状态 ---
+    public static boolean consumeReleaseGuard() {
+        if (pendingReleaseGuard) {
+            pendingReleaseGuard = false;
+            return true;
+        }
+        return false;
+    }
 
     public static SymContainer.Type activeType() {
         return activeType;
@@ -122,7 +130,9 @@ public final class ContainerPanel {
         resetSearch();
     }
 
-    /** 清空搜索状态 */
+    /**
+     * 清空搜索状态
+     */
     private static void resetSearch() {
         updateSearchFocus(false);
         query = "";
@@ -151,7 +161,9 @@ public final class ContainerPanel {
         }
     }
 
-    /** 搜索框有焦点时接收字符键入 */
+    /**
+     * 搜索框有焦点时接收字符键入
+     */
     public static void handleCharTyped(int codepoint) {
         if (!searchFocused) {
             return;
@@ -167,7 +179,9 @@ public final class ContainerPanel {
         }
     }
 
-    /** 搜索框有焦点时处理功能键 */
+    /**
+     * 搜索框有焦点时处理功能键
+     */
     public static void handleSearchKey(int key) {
         if (!searchFocused) {
             return;
@@ -302,16 +316,18 @@ public final class ContainerPanel {
      * 消费面板区域内的点击
      */
     public static boolean handleClick(double mx, double my, int leftPos, int topPos,
-                                      int imageHeight, int button) {
+                                      int imageHeight, int button, boolean shift) {
         int px = panelX(leftPos);
         ContainerCategory cat = categoryAt(mx, my, px, topPos, imageHeight);
         if (cat != null) {
             model.setCategory(cat);
             scrollOffset = 0;
+            pendingReleaseGuard = true;
             return true;
         }
         if (isInsideSearchBar(mx, my, px, topPos)) {
             updateSearchFocus(true);
+            pendingReleaseGuard = true;
             return true;
         }
         updateSearchFocus(false);
@@ -326,12 +342,20 @@ public final class ContainerPanel {
             List<ContainerPanelModel.Entry> items = model.visible();
             if (idx >= 0 && idx < items.size()) {
                 if (button == 0) {
-                    onEntryClicked(items.get(idx));
+                    onEntryClicked(items.get(idx), shift);
                 }
+                pendingReleaseGuard = true;
                 return true;
             }
         }
-        return isInsidePanel(mx, my, leftPos, topPos, imageHeight);
+        if (isInsidePanel(mx, my, leftPos, topPos, imageHeight)) {
+            if (button == 0 && activeType == SymContainer.Type.BUNDLE) {
+                tryInsertCarried();
+            }
+            pendingReleaseGuard = true;
+            return true;
+        }
+        return false;
     }
 
     public static void handleScroll(double mx, double my, double scrollDelta,
@@ -354,28 +378,79 @@ public final class ContainerPanel {
     }
 
     /**
-     * 收纳袋：取回该物品；潜影盒等：只读，无动作
+     * 收纳袋：左键面板物品；空光标 = 倒出一整条（Shift 则直接进入背包），有光标 = 塞入最佳收纳袋
      */
-    private static void onEntryClicked(ContainerPanelModel.Entry entry) {
+    private static void onEntryClicked(ContainerPanelModel.Entry entry, boolean shift) {
         if (activeType != SymContainer.Type.BUNDLE) {
             return;
         }
         Minecraft client = Minecraft.getInstance();
-        Player player = client.player;
-        if (player == null) {
+        if (!ClientGuard.ready(client)) {
             return;
         }
-        List<BundlePanelInteraction.ExtractTarget> targets = new ArrayList<>();
-        for (ContainerPanelModel.SourceRef sr : entry.sources()) {
-            int menuSlot = menuSlotFor(player, sr.hostInvIndex());
-            if (menuSlot < 0) {
-                continue;
+        Player player = client.player;
+        if (!player.containerMenu.getCarried().isEmpty()) {
+            tryInsertCarried();
+            return;
+        }
+        if (entry.sources().isEmpty()) {
+            return;
+        }
+        ContainerPanelModel.SourceRef src = entry.sources().getFirst();
+        int menuSlot = menuSlotFor(player, src.hostInvIndex());
+        if (menuSlot >= 0) {
+            if (shift) {
+                BundleAccess.extractToInventory(menuSlot, src.entryIndex(), entry.stack());
+            } else {
+                BundleAccess.extract(menuSlot, src.entryIndex());
             }
-            targets.add(new BundlePanelInteraction.ExtractTarget(menuSlot, sr.entryIndex(), sr.count()));
         }
-        if (!targets.isEmpty()) {
-            BundlePanelInteraction.extract(targets, entry.stack().getMaxStackSize());
+    }
+
+    /**
+     * 拖入面板区域，把光标物品塞入最优收纳袋（优先同种聚集）
+     */
+    private static void tryInsertCarried() {
+        Minecraft client = Minecraft.getInstance();
+        if (!ClientGuard.ready(client)) {
+            return;
         }
+        ItemStack carried = client.player.containerMenu.getCarried();
+        if (carried.isEmpty()) {
+            return;
+        }
+        int bundleSlot = BundleAccess.findBestBundle(client.player, carried, -1);
+        if (bundleSlot >= 0) {
+            BundleAccess.insertCarried(bundleSlot);
+        }
+    }
+
+    /**
+     * 面板可见时：Shift + 左键 背包物品槽，存入最佳收纳袋
+     */
+    public static boolean tryShiftInsert(Slot hovered) {
+        Minecraft client = Minecraft.getInstance();
+        Player player = client.player;
+        if (player == null || !visible) {
+            return false;
+        }
+        // 纯背包界面才启用自动入袋，否则改变原版行为
+        if (player.containerMenu != player.inventoryMenu) {
+            return false;
+        }
+        if (hovered == null || !hovered.hasItem() || hovered.container != player.getInventory()) {
+            return false;
+        }
+        ItemStack stack = hovered.getItem();
+        if (stack.getMaxStackSize() <= 1) {
+            return false;
+        }
+        int bundleSlot = BundleAccess.findBestBundle(player, stack, hovered.index);
+        if (bundleSlot < 0) {
+            return false;
+        }
+        BundleAccess.insert(hovered.index, bundleSlot);
+        return true;
     }
 
     private static int menuSlotFor(Player player, int invIndex) {
@@ -550,7 +625,7 @@ public final class ContainerPanel {
     }
 
     private static void renderSearch(GuiGraphicsExtractor g, Font font, int px, int py, int pw,
-                                                           int mouseX, int mouseY) {
+                                     int mouseX, int mouseY) {
         int sbx = px + PADDING + CAT_BAR_WIDTH + 2;
         int sby = py + 2;
         int sbw = pw - PADDING - CAT_BAR_WIDTH - 2 - PADDING - 10;

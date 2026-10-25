@@ -1,6 +1,6 @@
 package com.symauto.model.container;
 
-import com.betterbundle.gui.BundleCategory;
+import com.symauto.function.container.BundleCategory;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.item.ItemStack;
 

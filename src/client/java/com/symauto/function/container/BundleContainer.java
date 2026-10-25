@@ -2,7 +2,6 @@ package com.symauto.function.container;
 
 import com.symauto.function.base.SymContainer;
 import net.minecraft.core.component.DataComponents;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.BundleContents;
 import org.apache.commons.lang3.math.Fraction;
@@ -38,7 +37,7 @@ public class BundleContainer implements SymContainer {
 
     @Override
     public boolean supportsDirectWrite() {
-        return true;
+        return false;
     }
 
     @Override

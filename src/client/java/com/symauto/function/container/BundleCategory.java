@@ -1,4 +1,4 @@
-package com.betterbundle.gui;
+package com.symauto.function.container;
 
 import lombok.Getter;
 import net.minecraft.world.item.Item;

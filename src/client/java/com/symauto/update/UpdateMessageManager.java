@@ -24,7 +24,8 @@ public class UpdateMessageManager {
 
     static void main() {
         sendUpdates(
-                "添加新功能：" + func("快捷容器面板") + "，替换掉原有的" + func("更好的收纳袋") + "，新功能支持潜影盒"
+                "完善了" + func("快捷容器面板") + "，优化了收纳袋界面的存取逻辑",
+                "为" + func("一键丢弃垃圾物品") + "添加了配置项" + colored(ChatFormatting.GRAY, "是否丢弃收纳袋内垃圾")
         );
     }
 
