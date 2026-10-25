@@ -24,6 +24,9 @@ public class FunctionMenuScreen extends Screen {
     /** 当前选中的分类标签；SymFunctionTags.ALL(-1) 表示全部。 */
     private final int activeTag;
 
+    /** 缓存：记住最后一次选中的分类 */
+    private static int cachedTag = SymFunctionTags.ALL;
+
     private static final int BTN_W = 120;
     private static final int BTN_H = 20;
     private static final int GAP_X = 6;
@@ -63,11 +66,11 @@ public class FunctionMenuScreen extends Screen {
     });
 
     public FunctionMenuScreen(Screen parent) {
-        this(parent, SymFunctionTags.ALL, UiStyle.DEFAULT);
+        this(parent, cachedTag, UiStyle.DEFAULT);
     }
 
     public FunctionMenuScreen(Screen parent, UiStyle style) {
-        this(parent, SymFunctionTags.ALL, style);
+        this(parent, cachedTag, style);
     }
 
     public FunctionMenuScreen(Screen parent, int activeTag, UiStyle style) {
@@ -76,6 +79,7 @@ public class FunctionMenuScreen extends Screen {
         setStyle(style);
         this.parent = parent;
         this.activeTag = activeTag;
+        cachedTag = activeTag;
     }
 
     public FunctionMenuScreen setStyle(UiStyle style) {

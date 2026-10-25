@@ -24,8 +24,7 @@ public class UpdateMessageManager {
 
     static void main() {
         sendUpdates(
-                "完善了" + func("快捷容器面板") + "，优化了收纳袋界面的存取逻辑",
-                "为" + func("一键丢弃垃圾物品") + "添加了配置项" + colored(ChatFormatting.GRAY, "是否丢弃收纳袋内垃圾")
+                "添加了总功能菜单的路由缓存，现在它可以记住关闭时打开的标签了"
         );
     }
 
