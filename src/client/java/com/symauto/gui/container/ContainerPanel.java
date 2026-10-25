@@ -29,8 +29,10 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
+import org.jspecify.annotations.NonNull;
 import org.lwjgl.glfw.GLFW;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public final class ContainerPanel {
@@ -64,7 +66,65 @@ public final class ContainerPanel {
     @Getter
     private static boolean searchFocused = false;
     private static String query = "";
+
+    /**
+     * 分类栏纵向滚动偏移
+     */
+    private static int catScrollOffset = 0;
     private static boolean pendingReleaseGuard = false;
+
+    private record CategoryBar(int top, int slots, int scrollMax, boolean scrollable) {
+    }
+
+    /**
+     * 当前类型下有内容的分类列表："全部" 恒在；
+     * 其余分类仅当至少一件属于它的物品时保留
+     */
+    private static List<ContainerCategory> visibleCategories() {
+        List<ContainerCategory> out = new ArrayList<>();
+        for (ContainerCategory c : ContainerCategory.list()) {
+            if (c.isAll() || model.hasContent(c)) {
+                out.add(c);
+            }
+        }
+        return out;
+    }
+
+    private static CategoryBar categoryBar(int py, int ph) {
+        int total = Math.max(1, (ph - PADDING + 3) / CAT_BAR_WIDTH);
+        int size = visibleCategories().size();
+        boolean scrollable = size > total;
+        int slots = scrollable ? Math.max(1, total - 2) : total;
+        int scrollMax = Math.max(0, size - slots);
+        catScrollOffset = Math.clamp(catScrollOffset, 0, scrollMax);
+        return new CategoryBar(py + PADDING - 3, slots, scrollMax, scrollable);
+    }
+
+    private static int categorySlotY(CategoryBar bar, int slot) {
+        return bar.top() + (bar.scrollable() ? 1 + slot : slot) * CAT_BAR_WIDTH;
+    }
+
+    /**
+     * 命中上下翻钮：返回 -1 / 1，未命中返回 0
+     */
+    private static int categoryArrowAt(double mx, double my, int px, int py, int ph) {
+        CategoryBar bar = categoryBar(py, ph);
+        if (!bar.scrollable()) {
+            return 0;
+        }
+        int x0 = px + PADDING - 5;
+        if (mx < x0 - 5 || mx > x0 + CAT_BAR_WIDTH + 5) {
+            return 0;
+        }
+        if (my >= bar.top() && my < bar.top() + CAT_BAR_WIDTH) {
+            return catScrollOffset > 0 ? -1 : 0;
+        }
+        int downY = categorySlotY(bar, bar.slots());
+        if (my >= downY && my < downY + CAT_BAR_WIDTH) {
+            return catScrollOffset < bar.scrollMax() ? 1 : 0;
+        }
+        return 0;
+    }
 
     private static final GuiEventListener SEARCH_HANDLER = new GuiEventListener() {
         @Override
@@ -120,12 +180,8 @@ public final class ContainerPanel {
         return false;
     }
 
-    public static SymContainer.Type activeType() {
-        return activeType;
-    }
-
     /**
-     * 隐藏面板（功能关闭时调用）。
+     * 隐藏面板
      */
     public static void hide() {
         visible = false;
@@ -151,16 +207,24 @@ public final class ContainerPanel {
             visible = true;
             activeType = first;
             scrollOffset = 0;
+            catScrollOffset = 0;
             return;
         }
         SymContainer.Type next = nextEnabledType(activeType);
         if (next == null) {
-            visible = false;
-            resetSearch();
+            hide();
         } else {
             activeType = next;
             scrollOffset = 0;
+            catScrollOffset = 0;
         }
+    }
+
+    private static SymContainer.Type nextEnabledType(SymContainer.Type current) {
+        if (current == SymContainer.Type.BUNDLE && typeEnabled(SymContainer.Type.SHULKER_BOX)) {
+            return SymContainer.Type.SHULKER_BOX;
+        }
+        return null;
     }
 
     /**
@@ -216,7 +280,7 @@ public final class ContainerPanel {
             RecipeBookComponent component = ((AbstractRecipeBookScreenAccessor) screen).getRecipeBookComponent();
             if (component != null && component.isVisible()) {
                 component.toggleVisibility();
-                ((ScreenRebuildWidgetsAccessor) (Object) screen).symauto$rebuildWidgets();
+                ((ScreenRebuildWidgetsAccessor) screen).symauto$rebuildWidgets();
             }
         }
     }
@@ -231,13 +295,6 @@ public final class ContainerPanel {
             return SymContainer.Type.BUNDLE;
         }
         if (typeEnabled(SymContainer.Type.SHULKER_BOX)) {
-            return SymContainer.Type.SHULKER_BOX;
-        }
-        return null;
-    }
-
-    private static SymContainer.Type nextEnabledType(SymContainer.Type current) {
-        if (current == SymContainer.Type.BUNDLE && typeEnabled(SymContainer.Type.SHULKER_BOX)) {
             return SymContainer.Type.SHULKER_BOX;
         }
         return null;
@@ -320,6 +377,12 @@ public final class ContainerPanel {
     public static boolean handleClick(double mx, double my, int leftPos, int topPos,
                                       int imageHeight, int button, boolean shift) {
         int px = panelX(leftPos);
+        int arrow = categoryArrowAt(mx, my, px, topPos, panelHeight(imageHeight));
+        if (arrow != 0) {
+            catScrollOffset += arrow;
+            pendingReleaseGuard = true;
+            return true;
+        }
         ContainerCategory cat = categoryAt(mx, my, px, topPos, imageHeight);
         if (cat != null) {
             model.setCategory(cat);
@@ -363,6 +426,12 @@ public final class ContainerPanel {
     public static void handleScroll(double mx, double my, double scrollDelta,
                                     int leftPos, int topPos, int imageHeight) {
         if (!isInsidePanel(mx, my, leftPos, topPos, imageHeight)) {
+            return;
+        }
+        int px = panelX(leftPos);
+        CategoryBar bar = categoryBar(topPos, panelHeight(imageHeight));
+        if (bar.scrollable() && mx < px + PADDING + CAT_BAR_WIDTH + 2) {
+            catScrollOffset = Math.clamp(catScrollOffset + (scrollDelta > 0 ? 1 : -1), 0, bar.scrollMax());
             return;
         }
         scrollBy(scrollDelta > 0 ? -1 : 1);
@@ -470,18 +539,24 @@ public final class ContainerPanel {
 
     private static ContainerCategory categoryAt(double mx, double my, int px, int topPos, int imageHeight) {
         int ph = panelHeight(imageHeight);
-        int catX = px + PADDING - 5;
-        ContainerCategory[] cats = ContainerCategory.values();
-        for (int i = 0; i < cats.length; i++) {
-            int by = topPos + PADDING - 3 + i * CAT_BAR_WIDTH;
-            if (by + CAT_BAR_WIDTH > topPos + ph) {
+        CategoryBar bar = categoryBar(topPos, ph);
+        List<ContainerCategory> cats = visibleCategories();
+        int x0 = px + PADDING - 5;
+        for (int i = 0; i < bar.slots(); i++) {
+            int idx = catScrollOffset + i;
+            if (idx >= cats.size()) {
                 break;
             }
-            boolean selected = cats[i] == model.category();
-            int bx = selected ? catX - 5 : catX;
+            int by = categorySlotY(bar, i);
+            if (my < by || my >= by + CAT_BAR_WIDTH) {
+                continue;
+            }
+            ContainerCategory c = cats.get(idx);
+            boolean selected = c == model.category();
+            int bx = selected ? x0 - 5 : x0;
             int bw = selected ? CAT_BAR_WIDTH + 5 : CAT_BAR_WIDTH;
-            if (mx >= bx && mx < bx + bw && my >= by && my < by + CAT_BAR_WIDTH) {
-                return cats[i];
+            if (mx >= bx && mx < bx + bw) {
+                return c;
             }
         }
         return null;
@@ -517,6 +592,9 @@ public final class ContainerPanel {
         }
         model.setType(activeType);
         model.rebuild();
+        if (!visibleCategories().contains(model.category())) {
+            model.setCategory(ContainerCategory.all());
+        }
 
         int pw = panelWidth();
         int px = panelX(leftPos);
@@ -540,9 +618,7 @@ public final class ContainerPanel {
 
         List<ContainerPanelModel.Entry> items = model.visible();
         if (items.isEmpty()) {
-            String hint = model.containerCount() == 0
-                    ? (activeType == SymContainer.Type.BUNDLE ? "背包中没有收纳袋" : "背包中没有潜影盒")
-                    : "（当前筛选为空）";
+            String hint = getHint();
             int textW = font.width(hint);
             g.text(font, hint, px + (pw - textW) / 2, py + ph / 2 - font.lineHeight / 2, 0xFF888888, false);
             return;
@@ -610,7 +686,29 @@ public final class ContainerPanel {
         g.text(font, countText, countX, countY, 0xFFAAAAAA, false);
     }
 
-    /** 计数显示，<=999 用原版角标；> 1000 缩写为 k/M */
+    private static @NonNull String getHint() {
+        String hint = "";
+        if (model.containerCount() == 0) {
+            if (activeType == SymContainer.Type.BUNDLE) {
+                hint = "背包中没有收纳袋";
+            } else if (activeType == SymContainer.Type.SHULKER_BOX) {
+                hint = "背包中没有潜影盒";
+            }
+        } else if (model.totalItems() == 0) {
+            if (activeType == SymContainer.Type.BUNDLE) {
+                hint = "收纳袋暂无物品";
+            } else if (activeType == SymContainer.Type.SHULKER_BOX) {
+                hint = "潜影盒暂无物品";
+            }
+        } else {
+            hint = "（当前筛选为空）";
+        }
+        return hint;
+    }
+
+    /**
+     * 计数显示，<=999 用原版角标；> 1000 缩写为 k/M
+     */
     private static void renderEntryCount(GuiGraphicsExtractor g, Font font, ItemStack stack, int x, int y) {
         int count = stack.getCount();
         if (count <= 0) {
@@ -634,21 +732,43 @@ public final class ContainerPanel {
 
     private static void renderCategories(GuiGraphicsExtractor g, Font font, int px, int py, int ph,
                                          int mouseX, int mouseY) {
-        int catX = px + PADDING - 5;
-        ContainerCategory[] cats = ContainerCategory.values();
-        for (int i = 0; i < cats.length; i++) {
-            int by = py + PADDING - 3 + i * CAT_BAR_WIDTH;
-            if (by + CAT_BAR_WIDTH > py + ph) {
+        CategoryBar bar = categoryBar(py, ph);
+        List<ContainerCategory> cats = visibleCategories();
+        int x0 = px + PADDING - 5;
+        if (bar.scrollable()) {
+            renderArrow(g, x0, bar.top(), true, catScrollOffset > 0);
+            renderArrow(g, x0, categorySlotY(bar, bar.slots()), false, catScrollOffset < bar.scrollMax());
+        }
+        for (int i = 0; i < bar.slots(); i++) {
+            int idx = catScrollOffset + i;
+            if (idx >= cats.size()) {
                 break;
             }
-            boolean selected = cats[i] == model.category();
-            int bx = selected ? catX - 5 : catX;
+            ContainerCategory c = cats.get(idx);
+            int by = categorySlotY(bar, i);
+            boolean selected = c == model.category();
+            int bx = selected ? x0 - 5 : x0;
             int bw = selected ? CAT_BAR_WIDTH + 5 : CAT_BAR_WIDTH;
             boolean hovered = mouseX >= bx && mouseX < bx + bw && mouseY >= by && mouseY < by + CAT_BAR_WIDTH;
             int bg = selected ? 0x25101010 : (hovered ? 0x40FFFFFF : 0x30FFFFFF);
             g.fill(bx, by, bx + bw, by + CAT_BAR_WIDTH, bg);
             int off = (CAT_BAR_WIDTH - 16) / 2;
-            g.item(cats[i].icon(), bx + off, by + off);
+            g.item(c.icon(), bx + off, by + off);
+            if (hovered) {
+                g.setComponentTooltipForNextFrame(font, List.of(Component.literal(c.displayName())),
+                        mouseX, mouseY);
+            }
+        }
+    }
+
+    private static void renderArrow(GuiGraphicsExtractor g, int x, int y, boolean up, boolean enabled) {
+        int cx = x + CAT_BAR_WIDTH / 2;
+        int cy = y + CAT_BAR_WIDTH / 2;
+        int color = enabled ? 0xFFFFFFFF : 0xFF555555;
+        for (int i = 0; i < 5; i++) {
+            int w = 9 - 2 * i;
+            int row = up ? cy + 2 - i : cy - 2 + i;
+            g.fill(cx - w / 2, row, cx - w / 2 + w, row + 1, color);
         }
     }
 

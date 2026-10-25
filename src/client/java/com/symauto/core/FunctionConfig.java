@@ -49,7 +49,8 @@ public class FunctionConfig {
     public static final SymAbstractFunction AUTO_SELL_EMC_FUNCTION = AutoSellEmcFunction.INSTANCE
             .addTag(SymFunctionTags.OTHER);
     public static final SymAbstractFunction BETTER_BUNDLE_FUNCTION = FasterContainerPanelFunction.INSTANCE
-            .addTag(SymFunctionTags.CONVENIENCE_OPERATION);
+            .addTag(SymFunctionTags.CONVENIENCE_OPERATION)
+            .addTag(SymFunctionTags.HUD);
     public static final SymAbstractFunction BUNDLE_QUICK_OPEN_FUNCTION = BundleQuickOpenFunction.INSTANCE
             .addTag(SymFunctionTags.CONVENIENCE_OPERATION);
     public static final SymAbstractFunction SPEED_BRIDGE_FUNCTION = SpeedBridgeFunction.INSTANCE

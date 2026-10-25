@@ -24,8 +24,7 @@ public class UpdateMessageManager {
 
     static void main() {
         sendUpdates(
-                "修复了" + func("快捷容器界面") + "的启用图标显示异常问题",
-                "修复了" + func("快捷容器界面") + "在物品数量过多时会被相邻的物品图标遮盖的问题"
+                "修改了" + func("快捷容器界面") + "的分类标签，依据创造模式物品栏分类，但是如果该分类下无物品，则不显示该分类"
         );
     }
 

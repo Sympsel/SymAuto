@@ -2,7 +2,6 @@ package com.symauto.function.container;
 
 import com.symauto.config.option.BooleanOption;
 import com.symauto.function.base.SymAbstractFunction;
-import com.symauto.function.container.depend.BundleCategory;
 import com.symauto.function.utils.Tooltip;
 import com.symauto.gui.container.ContainerPanel;
 import lombok.Getter;
@@ -22,7 +21,6 @@ public class FasterContainerPanelFunction extends SymAbstractFunction {
 
     private FasterContainerPanelFunction() {
         super("faster_container_panel", "快捷容器面板");
-        BundleCategory.registerCategoryItems();
         addOption(new BooleanOption("bundle_panel_enabled", "收纳袋面板",
                 this::isBundlePanelEnabled, this::setBundlePanelEnabled, true));
         addOption(new BooleanOption("shulker_box_panel_enabled", "潜影盒面板",

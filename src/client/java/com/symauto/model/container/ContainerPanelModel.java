@@ -40,7 +40,7 @@ public final class ContainerPanelModel {
 
     @Setter
     private SymContainer.Type type;
-    private ContainerCategory category = ContainerCategory.ALL;
+    private ContainerCategory category = ContainerCategory.all();
     private String query = "";
     private int containerCount = 0;
 
@@ -135,6 +135,21 @@ public final class ContainerPanelModel {
             n += e.totalCount();
         }
         return n;
+    }
+
+    /**
+     * 当前类型的聚合条目里，是否存在属于该分类的物品
+     */
+    public boolean hasContent(ContainerCategory cat) {
+        if (cat == null || cat.isAll()) {
+            return !all.isEmpty();
+        }
+        for (Entry e : all) {
+            if (cat.matches(e.stack())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void applyFilter() {

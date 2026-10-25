@@ -1,53 +1,128 @@
 package com.symauto.model.container;
 
-import com.symauto.function.container.depend.BundleCategory;
-import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.Holder;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.world.flag.FeatureFlagSet;
+import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.Level;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.function.Predicate;
 
 /**
- * SymAuto 通用容器面板使用的物品分类。
- *
- * <p>分类引擎当前委托给 betterbundle 的 {@link BundleCategory}（其集合镜像原版创造模式的物品分类），
- * 上层面板只依赖本枚举，从而与 betterbundle 的 GUI 实现解耦；后续可平滑替换为运行时查询原版创造标签。
+ * 面板物品分类：固定的"全部"标签页 + 运行时读取的原版创造物品栏标签页
  */
-public enum ContainerCategory {
-    ALL(BundleCategory.ALL),
-    BLOCKS(BundleCategory.BLOCKS),
-    NON_FULL_BLOCKS(BundleCategory.NON_FULL_BLOCKS),
-    PLANTS(BundleCategory.PLANTS),
-    FOOD(BundleCategory.FOOD),
-    TOOLS_AND_EQUIPMENT(BundleCategory.TOOLS_AND_EQUIPMENT),
-    MISC(BundleCategory.MISC),
-    MINERALS(BundleCategory.MINERALS);
+public final class ContainerCategory {
 
-    private final BundleCategory delegate;
+    private static final ContainerCategory ALL =
+            new ContainerCategory("全部", new ItemStack(Items.COMPASS), stack -> true);
 
-    ContainerCategory(BundleCategory delegate) {
-        this.delegate = delegate;
+    private static List<ContainerCategory> cache = List.of();
+    private static List<CreativeModeTab> cacheSource = List.of();
+
+    private final String displayName;
+    private final ItemStack icon;
+    private final Predicate<ItemStack> matcher;
+
+    private ContainerCategory(String displayName, ItemStack icon, Predicate<ItemStack> matcher) {
+        this.displayName = displayName;
+        this.icon = icon;
+        this.matcher = matcher;
     }
 
-    public String displayName() {
-        return delegate.getDisplayName();
-    }
-
-    public ItemStack icon() {
-        return delegate.getIcon();
+    public static ContainerCategory all() {
+        return ALL;
     }
 
     public boolean isAll() {
         return this == ALL;
     }
 
-    /** 判断物品是否归属本分类（ALL 恒为真）。 */
-    public boolean matches(ItemStack stack) {
-        if (stack == null || stack.isEmpty()) {
-            return false;
-        }
-        return delegate.matches(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString());
+    public String displayName() {
+        return displayName;
     }
 
-    public static ContainerCategory next(ContainerCategory current) {
-        ContainerCategory[] values = values();
-        return values[(current.ordinal() + 1) % values.length];
+    public ItemStack icon() {
+        return icon.copy();
+    }
+
+    public boolean matches(ItemStack stack) {
+        return stack != null && !stack.isEmpty() && matcher.test(stack);
+    }
+
+    /** "全部" 在最前，其后按注册顺序列出所有可见创造标签页 */
+    public static List<ContainerCategory> list() {
+        List<CreativeModeTab> tabs = visibleTabs();
+        if (!tabs.equals(cacheSource)) {
+            cacheSource = tabs;
+            List<ContainerCategory> out = new ArrayList<>(tabs.size() + 1);
+            out.add(ALL);
+            for (CreativeModeTab tab : tabs) {
+                out.add(new ContainerCategory(
+                        tab.getDisplayName().getString(),
+                        tab.getIconItem(),
+                        itemSetMatcher(tab)));
+            }
+            cache = List.copyOf(out);
+        }
+        return cache;
+    }
+
+    private static Predicate<ItemStack> itemSetMatcher(CreativeModeTab tab) {
+        ensureBuilt(tab);
+        Set<Item> items = new HashSet<>();
+        for (ItemStack s : tab.getSearchTabDisplayItems()) {
+            if (!s.isEmpty()) {
+                items.add(s.getItem());
+            }
+        }
+        if (items.isEmpty()) {
+            for (ItemStack s : tab.getDisplayItems()) {
+                if (!s.isEmpty()) {
+                    items.add(s.getItem());
+                }
+            }
+        }
+        return stack -> items.contains(stack.getItem());
+    }
+
+    private static void ensureBuilt(CreativeModeTab tab) {
+        if (tab.hasAnyItems()) {
+            return;
+        }
+        Minecraft client = Minecraft.getInstance();
+        Level level = client.level;
+        if (level == null) {
+            return;
+        }
+        FeatureFlagSet flags = level.enabledFeatures();
+        boolean hasPermissions = client.player != null && client.player.isCreative();
+        tab.buildContents(new CreativeModeTab.ItemDisplayParameters(
+                flags, hasPermissions, level.registryAccess()));
+    }
+
+    private static List<CreativeModeTab> visibleTabs() {
+        Minecraft client = Minecraft.getInstance();
+        Level level = client.level;
+        if (level == null) {
+            return List.of();
+        }
+        List<CreativeModeTab> out = new ArrayList<>();
+        for (Holder<CreativeModeTab> holder : level.registryAccess()
+                .lookupOrThrow(Registries.CREATIVE_MODE_TAB).listElements().toList()) {
+            CreativeModeTab tab = holder.value();
+            if (tab.getType() != CreativeModeTab.Type.CATEGORY) {
+                continue;
+            }
+            out.add(tab);
+        }
+        return out;
     }
 }
