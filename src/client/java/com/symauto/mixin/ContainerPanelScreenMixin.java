@@ -56,7 +56,7 @@ public abstract class ContainerPanelScreenMixin {
         int bx = ContainerPanel.toggleX(leftPos, imageWidth);
         int by = ContainerPanel.toggleY(topPos);
         if (mx >= bx && mx < bx + ContainerPanel.TOGGLE_SIZE
-                && my >= by && my < by + ContainerPanel.TOGGLE_SIZE) {
+                && my >= by && my < by + ContainerPanel.TOGGLE_HEIGHT) {
             ContainerPanel.toggle();
             cir.setReturnValue(true);
             return;

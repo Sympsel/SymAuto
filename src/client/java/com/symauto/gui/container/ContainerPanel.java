@@ -9,6 +9,7 @@ import com.symauto.mixin.accessor.ScreenRebuildWidgetsAccessor;
 import com.symauto.model.container.ContainerCategory;
 import com.symauto.model.container.ContainerPanelModel;
 import lombok.Getter;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -42,6 +43,7 @@ public final class ContainerPanel {
     public static final int CAT_BAR_WIDTH = 18;
     public static final int SEARCH_BAR_HEIGHT = 14;
     public static final int TOGGLE_SIZE = 20;
+    public static final int TOGGLE_HEIGHT = 18;
 
     private static final WidgetSprites NONE_SPRITES = new WidgetSprites(
             Identifier.fromNamespaceAndPath("symauto", "empty_button"),
@@ -280,13 +282,13 @@ public final class ContainerPanel {
         int screenHeight = client.getWindow().getGuiScaledHeight();
         int desired;
         if (screen instanceof InventoryScreen) {
-            desired = topPos + 60;
+            desired = topPos + 61;
         } else if (screen instanceof CreativeModeInventoryScreen) {
             desired = topPos + 4;
         } else {
-            desired = topPos - 22;
+            desired = topPos - 20;
         }
-        return Math.clamp(desired, 4, screenHeight - TOGGLE_SIZE - 4);
+        return Math.clamp(desired, 4, screenHeight - TOGGLE_HEIGHT - 4);
     }
 
     private static int panelX(int leftPos) {
@@ -578,7 +580,7 @@ public final class ContainerPanel {
                 g.fill(sx + 1, sy + 1, sx + SLOT_SIZE - 1, sy + SLOT_SIZE - 1, 0x50FFFFFF);
                 ContainerPanelModel.Entry e = items.get(idx);
                 g.item(e.stack(), sx + 1, sy + 1);
-                g.itemDecorations(font, e.stack(), sx + 1, sy + 1);
+                renderEntryCount(g, font, e.stack(), sx + 1, sy + 1);
                 if (mouseX >= sx && mouseX < sx + SLOT_SIZE && mouseY >= sy && mouseY < sy + SLOT_SIZE) {
                     hovered = idx;
                 }
@@ -591,7 +593,11 @@ public final class ContainerPanel {
             int hx = gridX + hCol * (SLOT_SIZE + SLOT_SPACING);
             int hy = gridY + hRow * (SLOT_SIZE + SLOT_SPACING);
             g.fill(hx, hy, hx + SLOT_SIZE, hy + SLOT_SIZE, 0x60FFFFFF);
-            g.setTooltipForNextFrame(font, items.get(hovered).stack(), mouseX, mouseY);
+            ItemStack hoveredStack = items.get(hovered).stack();
+            g.setComponentTooltipForNextFrame(font, List.of(
+                    hoveredStack.getDisplayName(),
+                    Component.literal("数量: " + hoveredStack.getCount()).withStyle(ChatFormatting.GRAY)
+            ), mouseX, mouseY);
         }
 
         // 底部统计：已展示数量 + 面板类型
@@ -602,6 +608,28 @@ public final class ContainerPanel {
         int countY = py + ph - 11;
         g.fill(countX - 2, countY, countX + textW + 2, countY + font.lineHeight, 0x30FFFFFF);
         g.text(font, countText, countX, countY, 0xFFAAAAAA, false);
+    }
+
+    /** 计数显示，<=999 用原版角标；> 1000 缩写为 k/M */
+    private static void renderEntryCount(GuiGraphicsExtractor g, Font font, ItemStack stack, int x, int y) {
+        int count = stack.getCount();
+        if (count <= 0) {
+            return;
+        }
+        if (count < 1000) {
+            g.itemDecorations(font, stack, x, y);
+            return;
+        }
+        String text = abbreviate(count);
+        g.text(font, text, x + SLOT_SIZE - 3 - font.width(text), y + SLOT_SIZE - 3 - font.lineHeight / 2,
+                0xFFFFFFFF, true);
+    }
+
+    private static String abbreviate(int count) {
+        if (count < 1_000_000) {
+            return (count / 1000) + "k";
+        }
+        return (count / 1_000_000) + "M";
     }
 
     private static void renderCategories(GuiGraphicsExtractor g, Font font, int px, int py, int ph,
@@ -657,7 +685,7 @@ public final class ContainerPanel {
      * 渲染切换按钮
      */
     public static void renderToggleButton(GuiGraphicsExtractor g, int x, int y, int mouseX, int mouseY) {
-        boolean hovered = mouseX >= x && mouseX < x + TOGGLE_SIZE && mouseY >= y && mouseY < y + TOGGLE_SIZE;
+        boolean hovered = mouseX >= x && mouseX < x + TOGGLE_SIZE && mouseY >= y && mouseY < y + TOGGLE_HEIGHT;
         ContainerPanelFunction instance = ContainerPanelFunction.INSTANCE;
         boolean isBundlePanelEnabled = instance.isBundlePanelEnabled();
         boolean isShulkerBoxPanelEnabled = instance.isShulkerBoxPanelEnabled();
@@ -679,6 +707,6 @@ public final class ContainerPanel {
         } else {
             sprite = NONE_SPRITES.get(true, hovered);
         }
-        g.blitSprite(RenderPipelines.GUI_TEXTURED, sprite, x, y, TOGGLE_SIZE, TOGGLE_SIZE);
+        g.blitSprite(RenderPipelines.GUI_TEXTURED, sprite, x, y, TOGGLE_SIZE, TOGGLE_HEIGHT);
     }
 }
