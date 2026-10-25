@@ -5,10 +5,7 @@
   "compatibilityLevel": "JAVA_25",
   "client": [
     "AbstractContainerScreenAccessor",
-    "AbstractContainerScreenMixin",
-    "AbstractRecipeBookScreenAccessor",
-    "AbstractRecipeBookScreenMixin",
-    "InventoryScreenMixin"
+    "AbstractRecipeBookScreenAccessor"
   ],
   "injectors": {
     "defaultRequire": 1

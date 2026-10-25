@@ -5,6 +5,7 @@ import com.betterbundle.gui.BundlePanelInteraction;
 import com.betterbundle.gui.BundlePanelRenderer;
 import com.betterbundle.sort.exec.SortStateMachine;
 import com.symauto.core.FunctionConfig;
+import com.symauto.gui.container.ContainerPanel;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.input.KeyEvent;

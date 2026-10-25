@@ -186,4 +186,8 @@ public class ItemUtils {
         }
         return true;
     }
+
+    public static String getItemId(ItemStack stack) {
+        return BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
+    }
 }

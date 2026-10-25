@@ -63,8 +63,8 @@ public final class BundlePanelInteraction {
     }
 
     public static boolean handlePanelClick(double mouseX, double mouseY, int button, int modifiers,
-                                            int leftPos, int topPos,
-                                            net.minecraft.client.gui.screens.inventory.AbstractContainerScreen<?> screen) {
+                                           int leftPos, int topPos,
+                                           net.minecraft.client.gui.screens.inventory.AbstractContainerScreen<?> screen) {
         BundlePanelRenderer.FlatItem clicked = getClickedItem(mouseX, mouseY, leftPos, topPos);
         if (clicked == null) return false;
 
@@ -83,6 +83,28 @@ public final class BundlePanelInteraction {
 
         extractFromSources(connection, containerId, player, sources, maxStack);
         return true;
+    }
+
+    public record ExtractTarget(int bundleSlot, int itemIndex, int itemCount) {}
+
+    public static void extract(List<ExtractTarget> targets, int maxStack) {
+        if (targets == null || targets.isEmpty()) {
+            return;
+        }
+        Minecraft client = Minecraft.getInstance();
+        Player player = client.player;
+        if (player == null) {
+            return;
+        }
+        ClientPacketListener connection = client.getConnection();
+        if (connection == null) {
+            return;
+        }
+        List<BundlePanelRenderer.SourceEntry> sources = new ArrayList<>();
+        for (ExtractTarget t : targets) {
+            sources.add(new BundlePanelRenderer.SourceEntry(t.bundleSlot(), t.itemIndex(), t.itemCount()));
+        }
+        extractFromSources(connection, player.containerMenu.containerId, player, sources, Math.max(1, maxStack));
     }
 
     public static boolean handleSpaceClick(Slot hoveredSlot) {

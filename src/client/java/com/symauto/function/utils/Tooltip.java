@@ -76,6 +76,10 @@ public class Tooltip {
         return line(keyColor.toString() + key + ChatFormatting.RESET + ": " + valueColor.toString() + value + ChatFormatting.RESET);
     }
 
+    public Tooltip keyValueLine(String key, String value) {
+        return keyValueLine(ChatFormatting.YELLOW, key, ChatFormatting.GRAY, value);
+    }
+
     /**
      * 空行
      */

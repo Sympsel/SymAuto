@@ -11,9 +11,15 @@ public class Containers {
     private Containers() {}
 
     public static Optional<SymContainer> of(ItemStack stack) {
-        if (stack == null || stack.isEmpty()) return Optional.empty();
-        if (ItemUtils.isShulkerBox(stack)) return Optional.of(new ShulkerContainer(stack));
-        if (stack.getItem() instanceof BundleItem) return Optional.of(new BundleContainer(stack));
+        if (stack == null || stack.isEmpty()) {
+            return Optional.empty();
+        }
+        if (ItemUtils.isShulkerBox(stack)) {
+            return Optional.of(new ShulkerContainer(stack));
+        }
+        if (stack.getItem() instanceof BundleItem) {
+            return Optional.of(new BundleContainer(stack));
+        }
         return Optional.empty();
     }
 

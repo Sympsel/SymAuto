@@ -2,7 +2,7 @@ package com.symauto.core;
 
 import com.symauto.function.auto.*;
 import com.symauto.function.base.SymAbstractFunction;
-import com.symauto.function.bundle.BetterBundleFunction;
+import com.symauto.function.container.ContainerPanelFunction;
 import com.symauto.function.bundle.BundleQuickOpenFunction;
 import com.symauto.function.highlight.HighLightItemDropFunction;
 import com.symauto.function.highlight.HighLightMasterFunction;
@@ -48,7 +48,7 @@ public class FunctionConfig {
             .addTag(SymFunctionTags.BUILDING_AND_DESTROYING);
     public static final SymAbstractFunction AUTO_SELL_EMC_FUNCTION = AutoSellEmcFunction.INSTANCE
             .addTag(SymFunctionTags.OTHER);
-    public static final SymAbstractFunction BETTER_BUNDLE_FUNCTION = BetterBundleFunction.INSTANCE
+    public static final SymAbstractFunction BETTER_BUNDLE_FUNCTION = ContainerPanelFunction.INSTANCE
             .addTag(SymFunctionTags.CONVENIENCE_OPERATION);
     public static final SymAbstractFunction BUNDLE_QUICK_OPEN_FUNCTION = BundleQuickOpenFunction.INSTANCE
             .addTag(SymFunctionTags.CONVENIENCE_OPERATION);

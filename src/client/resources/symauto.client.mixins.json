@@ -9,9 +9,13 @@
     "accessor.MinecraftAccessor",
     "InterceptDropKeyMixin",
     "accessor.AbstractContainerScreenAccessor",
+    "accessor.AbstractRecipeBookScreenAccessor",
+    "accessor.ScreenRebuildWidgetsAccessor",
     "EntityGlowMixin",
     "accessor.MerchantScreenAccessor",
-    "accessor.VaultServerDataAccessor"
+    "accessor.VaultServerDataAccessor",
+    "ContainerPanelScreenMixin",
+    "ContainerPanelCreativeMixin"
   ],
   "injectors": {
     "defaultRequire": 1

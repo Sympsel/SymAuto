@@ -24,8 +24,7 @@ public class UpdateMessageManager {
 
     static void main() {
         sendUpdates(
-                "将高亮相关功能的上限半径提升至" + colored(ChatFormatting.GREEN, "100") + "同时修改了功能描述",
-                "为含比较相同物品相关逻辑加了" + colored(ChatFormatting.GREEN, "是否比较数据组件" + "的配置项")
+                "添加新功能：" + func("快捷容器面板") + "，替换掉原有的" + func("更好的收纳袋") + "，新功能支持潜影盒"
         );
     }
 
