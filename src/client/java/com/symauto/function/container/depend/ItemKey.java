@@ -1,4 +1,4 @@
-package com.symauto.function.container;
+package com.symauto.function.container.depend;
 
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.item.ItemStack;

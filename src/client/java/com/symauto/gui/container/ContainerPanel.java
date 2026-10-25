@@ -1,6 +1,6 @@
 package com.symauto.gui.container;
 
-import com.symauto.function.container.BundleAccess;
+import com.symauto.function.container.depend.BundleAccess;
 import com.symauto.function.utils.ClientGuard;
 import com.symauto.mixin.accessor.AbstractRecipeBookScreenAccessor;
 import com.symauto.function.base.SymContainer;

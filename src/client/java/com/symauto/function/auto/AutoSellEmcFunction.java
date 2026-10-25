@@ -2,6 +2,7 @@ package com.symauto.function.auto;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import com.symauto.function.base.SymAbstractFunction;
+import com.symauto.function.utils.ContainerActions;
 import com.symauto.function.utils.Tooltip;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
@@ -40,8 +41,6 @@ public class AutoSellEmcFunction extends SymAbstractFunction {
     private static final int SELL_INTERVAL_TICKS = 200;
     // 等待菜单超时 5s
     private static final int MENU_TIMEOUT_TICKS = 100;
-    // 鼠标左键
-    private static final int MOUSE_LEFT = 0;
 
     // 各步骤对应的槽位
     private static final int SLOT_TO_SHOPS = 21;
@@ -172,13 +171,7 @@ public class AutoSellEmcFunction extends SymAbstractFunction {
         if (!slot.hasItem()) {
             return;
         }
-        client.gameMode.handleContainerInput(
-                menu.containerId,
-                slotIndex,
-                MOUSE_LEFT,
-                ContainerInput.PICKUP,
-                client.player
-        );
+        ContainerActions.leftClickSlot(slotIndex);
     }
 
     private void reset() {

@@ -2,6 +2,7 @@ package com.symauto.function.container;
 
 import com.symauto.config.option.BooleanOption;
 import com.symauto.function.base.SymAbstractFunction;
+import com.symauto.function.container.depend.BundleCategory;
 import com.symauto.function.utils.Tooltip;
 import com.symauto.gui.container.ContainerPanel;
 import lombok.Getter;
@@ -18,7 +19,6 @@ public class ContainerPanelFunction extends SymAbstractFunction {
     @Getter
     @Setter
     private boolean shulkerBoxPanelEnabled;
-
 
     private ContainerPanelFunction() {
         super("container_panel", "快捷容器面板");

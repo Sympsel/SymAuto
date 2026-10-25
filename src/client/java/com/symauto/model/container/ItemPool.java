@@ -1,7 +1,7 @@
 package com.symauto.model.container;
 
 import com.symauto.function.base.SymContainer;
-import com.symauto.function.container.ItemKey;
+import com.symauto.function.container.depend.ItemKey;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Getter;

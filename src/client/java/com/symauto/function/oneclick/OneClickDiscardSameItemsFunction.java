@@ -4,6 +4,7 @@ import com.symauto.config.option.BooleanOption;
 import com.symauto.core.FunctionConfig;
 import com.symauto.function.base.SymAbstractFunction;
 import com.symauto.core.Constants;
+import com.symauto.function.utils.ContainerActions;
 import com.symauto.function.utils.ItemUtils;
 import com.symauto.function.utils.Tooltip;
 import com.symauto.gui.container.ContainerPanel;
@@ -34,12 +35,12 @@ public class OneClickDiscardSameItemsFunction extends SymAbstractFunction {
 
     @Override
     protected String tooltip() {
-       return Tooltip.create().line("一键丢弃容器和背包的相同物品，不丢副手（只需要一件的物品可以放副手当黑名单）")
-               .line(ChatFormatting.AQUA, "触发方式：选中其中一组拖拽式丢弃")
-               .keyValueLine(ChatFormatting.YELLOW, "比较物品数据组件",
-                       ChatFormatting.GRAY, compareWithDataComponent ? "是" : "否")
-               .line("在比较数据组件模式关闭时，对于潜影盒，当盒内只有一种物品且两盒物品种类相同时视作同一物品")
-               .toString();
+        return Tooltip.create().line("一键丢弃容器和背包的相同物品，不丢副手（只需要一件的物品可以放副手当黑名单）")
+                .line(ChatFormatting.AQUA, "触发方式：选中其中一组拖拽式丢弃")
+                .keyValueLine(ChatFormatting.YELLOW, "比较物品数据组件",
+                        ChatFormatting.GRAY, compareWithDataComponent ? "是" : "否")
+                .line("在比较数据组件模式关闭时，对于潜影盒，当盒内只有一种物品且两盒物品种类相同时视作同一物品")
+                .toString();
     }
 
     @Override
@@ -71,22 +72,24 @@ public class OneClickDiscardSameItemsFunction extends SymAbstractFunction {
         }
 
         ItemStack target = carried.copy();
-        client.gameMode.handleContainerInput(menu.containerId, -999, 0, ContainerInput.PICKUP, client.player);
+        ContainerActions.dropCarried();
 
         if (menu == client.player.inventoryMenu) {
             // 背包界面：跳过副手，丢弃主背包 + 快捷栏里相同物品
             for (int i = Constants.MAIN_INVENTORY_START; i < menu.slots.size(); i++) {
-                if (i == Constants.OFFHAND) continue;
+                if (i == Constants.OFFHAND) {
+                    continue;
+                }
                 Slot slot = menu.getSlot(i);
                 if (slot.hasItem() && ItemUtils.isSameItemWithoutDataComponent(target, slot.getItem())) {
-                    client.gameMode.handleContainerInput(menu.containerId, i, 1, ContainerInput.THROW, client.player);
+                    ContainerActions.dropSlotSingle(i);
                 }
             }
         } else {
             for (int i = 0; i < menu.slots.size(); i++) {
                 Slot slot = menu.getSlot(i);
                 if (slot.hasItem() && ItemUtils.isSameItemWithoutDataComponent(target, slot.getItem())) {
-                    client.gameMode.handleContainerInput(menu.containerId, i, 1, ContainerInput.THROW, client.player);
+                    ContainerActions.dropSlotSingle(i);
                 }
             }
         }

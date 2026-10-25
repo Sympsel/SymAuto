@@ -1,6 +1,7 @@
 package com.symauto.gui.screen.function;
 
 import com.symauto.function.utils.BundleContentsHelper;
+import com.symauto.function.utils.ContainerActions;
 import lombok.NonNull;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
@@ -12,7 +13,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ServerboundSelectBundleItemPacket;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.BundleContents;
@@ -125,21 +125,16 @@ public class BundleQuickViewScreen extends Screen {
         if (conn == null) return;
 
         AbstractContainerMenu menu = client.player.inventoryMenu;
-        int containerId = menu.containerId; // 0
 
         conn.send(new ServerboundSelectBundleItemPacket(bundleSlot, -1));
         conn.send(new ServerboundSelectBundleItemPacket(bundleSlot, itemIndex));
-        click(client, containerId, bundleSlot, 0, ContainerInput.PICKUP);
+        ContainerActions.leftClickSlot(menu, bundleSlot);
 
         int empty = findFirstEmptyInventorySlot(client.player.getInventory(), menu);
         if (empty >= 0) {
-            click(client, containerId, empty, 0, ContainerInput.PICKUP);
+            ContainerActions.leftClickSlot(menu, empty);
         }
-        // 若没有空槽，物品会留在光标；关闭界面时下面 onClose 兜底处理
-    }
-
-    private void click(Minecraft client, int containerId, int slot, int button, ContainerInput type) {
-        client.gameMode.handleContainerInput(containerId, slot, button, type, client.player);
+        // 若没有空槽，物品会留在光标
     }
 
     /** 主背包(9-35) 优先，其次快捷栏(0-8) 找空槽，返回 inventoryMenu 槽号。 */
@@ -161,14 +156,15 @@ public class BundleQuickViewScreen extends Screen {
     public void onClose() {
         Minecraft client = Minecraft.getInstance();
         if (client.player != null && client.gameMode != null) {
+            AbstractContainerMenu menu = client.player.inventoryMenu;
             ItemStack carried = client.player.inventoryMenu.getCarried();
             if (!carried.isEmpty()) {
-                int empty = findFirstEmptyInventorySlot(client.player.getInventory(), client.player.inventoryMenu);
+                int empty = findFirstEmptyInventorySlot(client.player.getInventory(), menu);
                 if (empty >= 0) {
-                    client.gameMode.handleContainerInput(0, empty, 0, ContainerInput.PICKUP, client.player);
+                    ContainerActions.leftClickSlot(menu, empty);
                 } else {
                     // 背包满：整组丢出，避免关闭后卡在光标
-                    client.gameMode.handleContainerInput(0, -999, 0, ContainerInput.PICKUP, client.player);
+                    ContainerActions.dropCarried(menu);
                 }
             }
         }

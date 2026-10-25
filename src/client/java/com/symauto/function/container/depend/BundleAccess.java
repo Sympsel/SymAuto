@@ -1,12 +1,12 @@
-package com.symauto.function.container;
+package com.symauto.function.container.depend;
 
 import com.symauto.function.utils.BundleContentsHelper;
 import com.symauto.function.utils.ClientGuard;
+import com.symauto.function.utils.ContainerActions;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.protocol.game.ServerboundSelectBundleItemPacket;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
@@ -16,8 +16,9 @@ public class BundleAccess {
 
     /**
      * 原版取出：选中袋内 {@code itemIndex} 项物品后右键袋槽位，取出整项物品到光标
+     *
      * @param bundleSlot 收纳袋槽位
-     * @param itemIndex 收纳袋内物品索引
+     * @param itemIndex  收纳袋内物品索引
      */
     public static void extract(int bundleSlot, int itemIndex) {
         Minecraft client = Minecraft.getInstance();
@@ -25,27 +26,18 @@ public class BundleAccess {
         if (!ClientGuard.ready(client)) {
             return;
         }
-        int containerId = player.containerMenu.containerId;
         client.getConnection().send(new ServerboundSelectBundleItemPacket(bundleSlot, -1));
         client.getConnection().send(new ServerboundSelectBundleItemPacket(bundleSlot, itemIndex));
-        client.gameMode.handleContainerInput(containerId, bundleSlot, 1, ContainerInput.PICKUP, player);
+        ContainerActions.rightClickSlot(bundleSlot);
     }
 
-    /** 原版存入：拿起 {@code itemSlot} 整叠 → 点袋槽由服务端自动吸收 → 余量放回原槽 */
+    /**
+     * 原版存入：拿起 {@code itemSlot} 整叠 → 点袋槽由服务端自动吸收 → 余量放回原槽
+     */
     public static void insert(int itemSlot, int bundleSlot) {
-        Minecraft client = Minecraft.getInstance();
-        if (!ClientGuard.ready(client)) {
-            return;
-        }
-        int containerId = client.player.containerMenu.containerId;
-        click(containerId, itemSlot, 0);
-        click(containerId, bundleSlot, 0);
-        click(containerId, itemSlot, 0);
-    }
-
-    private static void click(int containerId, int slot, int button) {
-        Minecraft client = Minecraft.getInstance();
-        client.gameMode.handleContainerInput(containerId, slot, button, ContainerInput.PICKUP, client.player);
+        ContainerActions.leftClickSlot(itemSlot);
+        ContainerActions.leftClickSlot(bundleSlot);
+        ContainerActions.leftClickSlot(itemSlot);
     }
 
     public static int findBestBundle(Player player, ItemStack stack, int excludeSlot) {
@@ -71,16 +63,16 @@ public class BundleAccess {
         return fallback;
     }
 
-    /** 光标已有物品时 */
+    /**
+     * 光标已有物品时
+     */
     public static void insertCarried(int bundleSlot) {
-        Minecraft client = Minecraft.getInstance();
-        if (!ClientGuard.ready(client)) {
-            return;
-        }
-        click(client.player.containerMenu.containerId, bundleSlot, 0);
+        ContainerActions.leftClickSlot(bundleSlot);
     }
 
-    /** Shift + 左键 直接取出到背包 */
+    /**
+     * Shift + 左键 直接取出到背包
+     */
     public static void extractToInventory(int bundleSlot, int itemIndex, ItemStack probe) {
         extract(bundleSlot, itemIndex);
         Minecraft client = Minecraft.getInstance();
@@ -89,7 +81,7 @@ public class BundleAccess {
         }
         int dest = findDestination(client.player, probe);
         if (dest >= 0) {
-            click(client.player.containerMenu.containerId, dest, 0);
+            ContainerActions.leftClickSlot(dest);
         }
     }
 

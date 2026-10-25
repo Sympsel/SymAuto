@@ -1,4 +1,4 @@
-package com.symauto.function.container;
+package com.symauto.function.container.depend;
 
 import com.symauto.function.base.SymContainer;
 import net.minecraft.core.component.DataComponents;

@@ -1,6 +1,7 @@
 package com.symauto.function.auto;
 
 import com.symauto.config.option.IntOption;
+import com.symauto.function.utils.ContainerActions;
 import com.symauto.storage.CraftingPresetStore;
 import com.symauto.model.preset.CraftingPreset;
 import com.symauto.function.base.SymAbstractFunction;
@@ -16,7 +17,6 @@ import net.minecraft.core.Holder;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.CraftingMenu;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.Item;
@@ -98,7 +98,7 @@ public class AutoCraftingFunction extends SymAbstractFunction {
             }
             result.append(message, start, marker);
             if (argIndex < args.length) {
-                result.append(String.valueOf(args[argIndex++]));
+                result.append(args[argIndex++]);
             } else {
                 result.append("{}");
             }
@@ -270,7 +270,7 @@ public class AutoCraftingFunction extends SymAbstractFunction {
             return;
         }
 
-        Decision d = advance(current, task, player, client, idx);
+        Decision d = advance(current, task, player, idx);
         cursor = (d == Decision.ADVANCE) ? idx + 1 : idx;
     }
 
@@ -278,7 +278,7 @@ public class AutoCraftingFunction extends SymAbstractFunction {
      * 推进单个预设状态机的一步，返回本 tick 结束后游标是否应让位
      */
     private Decision advance(CraftingPreset assumption, TaskState task,
-                             Player player, Minecraft client, int storeIndex) {
+                             Player player, int storeIndex) {
         if (task.completed) {
             return Decision.ADVANCE;
         }
@@ -298,12 +298,12 @@ public class AutoCraftingFunction extends SymAbstractFunction {
         }
         CraftingRecipe recipe = pickRecipe(assumption, player);
         if (recipe == null) {
-            clearGrid(client, player.containerMenu);
+            clearGrid(player.containerMenu);
             task.cooldown = waitTicks;
             // 暂时做不了就让位，退避后再试
             return Decision.ADVANCE;
         }
-        return doCraftStep(assumption, task, recipe, player, client, storeIndex);
+        return doCraftStep(assumption, task, recipe, player, storeIndex);
     }
 
     /**
@@ -311,18 +311,18 @@ public class AutoCraftingFunction extends SymAbstractFunction {
      * 成功则继续当前预设；缺料/失败就让位重试
      */
     private Decision doCraftStep(CraftingPreset assumption, TaskState task, CraftingRecipe recipe,
-                                 Player player, Minecraft client, int storeIndex) {
+                                 Player player, int storeIndex) {
         // 以当前预设产物为根重建本链保留集，禁止靠“拆自己/拆祖先”凑料
         int targetOps = (task.remainingOps == CraftingPreset.UNTIL_EXHAUSTED)
                 ? Integer.MAX_VALUE : task.remainingOps;
-        int crafted = tryBatchCraft(assumption, recipe, player, client, targetOps);
+        int crafted = tryBatchCraft(assumption, recipe, player, targetOps);
         if (crafted > 0) {
             debug("批量合成完成：{}，执行 {} 次", describeItem(assumption.getResult().getItem()), crafted);
             return finishBatch(task, crafted, storeIndex);
         }
 
         // 需要中间产物或存货不足以堆叠时，逐件合成
-        MaterialCheck materials = ensureMaterials(assumption, recipe, player, client,
+        MaterialCheck materials = ensureMaterials(assumption, recipe, player,
                 Set.of(assumption.getResult().getItem()), task);
         if (materials == MaterialCheck.WAITING) {
             debug("等待中间材料同步：{}", describeItem(assumption.getResult().getItem()));
@@ -332,14 +332,14 @@ public class AutoCraftingFunction extends SymAbstractFunction {
         if (materials == MaterialCheck.UNAVAILABLE) {
             debug("暂时无法补齐材料：{}（{}）",
                     describeItem(assumption.getResult().getItem()), describeRecipe(recipe));
-            clearGrid(client, player.containerMenu);
+            clearGrid(player.containerMenu);
             task.cooldown = waitTicks;
             return Decision.ADVANCE;
         }
-        if (!doCraft(assumption, recipe, player, client)) {
+        if (!doCraft(assumption, recipe, player)) {
             debug("合成操作失败：{}（{}）",
                     describeItem(assumption.getResult().getItem()), describeRecipe(recipe));
-            clearGrid(client, player.containerMenu);
+            clearGrid(player.containerMenu);
             task.cooldown = waitTicks;
             return Decision.ADVANCE;
         }
@@ -413,12 +413,11 @@ public class AutoCraftingFunction extends SymAbstractFunction {
      * @return 实际合成的配方执行次数；0 表示本次不适合批量
      */
     private int tryBatchCraft(CraftingPreset assumption, CraftingRecipe recipe,
-                              Player player, Minecraft client, int targetOps) {
+                              Player player, int targetOps) {
         AbstractContainerMenu menu = player.containerMenu;
         if (!(menu instanceof CraftingMenu)) {
             return 0;
         }
-        int containerId = menu.containerId;
         Inventory inventory = player.getInventory();
 
         PlacementInfo placement = recipe.placementInfo();
@@ -504,7 +503,7 @@ public class AutoCraftingFunction extends SymAbstractFunction {
             }
         }
 
-        clearGrid(client, menu);
+        clearGrid(menu);
 
         Map<Integer, List<int[]>> planBySource = new LinkedHashMap<>();
         for (int[] entry : plan) {
@@ -512,29 +511,29 @@ public class AutoCraftingFunction extends SymAbstractFunction {
         }
         for (Map.Entry<Integer, List<int[]>> sourcePlan : planBySource.entrySet()) {
             int src = sourcePlan.getKey();
-            click(client, containerId, src, 0, ContainerInput.PICKUP);
+            ContainerActions.leftClickSlot(src);
             for (int[] entry : sourcePlan.getValue()) {
                 int gridSlot = entry[0];
                 int count = entry[2];
-                for (int i = 0; i < count; i++) {
-                    click(client, containerId, gridSlot, 1, ContainerInput.PICKUP);
+                for (int i = 0; i < count; ++i) {
+                    ContainerActions.rightClickSlot(gridSlot);
                 }
             }
             if (!menu.getCarried().isEmpty()) {
-                click(client, containerId, src, 0, ContainerInput.PICKUP);
+                ContainerActions.leftClickSlot(src);
             }
         }
 
         // 网格每格恰好 batch 个，结果槽一次取出即执行 batch 次
         if (assumption.isThrowResult()) {
             for (int i = 0; i < batch; i++) {
-                click(client, containerId, RESULT_SLOT, 0, ContainerInput.THROW);
+                ContainerActions.dropSlotStack(RESULT_SLOT);
             }
         } else {
-            click(client, containerId, RESULT_SLOT, 0, ContainerInput.QUICK_MOVE);
+            ContainerActions.quickMove(RESULT_SLOT);
         }
 
-        clearGrid(client, menu);
+        clearGrid(menu);
         return batch;
     }
 
@@ -624,13 +623,6 @@ public class AutoCraftingFunction extends SymAbstractFunction {
         return -1;
     }
 
-    private void click(Minecraft client, int containerId, int slot, int button, ContainerInput type) {
-        if (client.gameMode == null || client.player == null) {
-            return;
-        }
-        client.gameMode.handleContainerInput(containerId, slot, button, type, client.player);
-    }
-
     /**
      * 取一个能满足该 Ingredient 的具体物品，用于递归定位其配方
      */
@@ -692,7 +684,7 @@ public class AutoCraftingFunction extends SymAbstractFunction {
     }
 
     private MaterialCheck ensureMaterials(CraftingPreset assumption, CraftingRecipe recipe,
-                                          Player player, Minecraft client, Set<Item> path,
+                                          Player player, Set<Item> path,
                                           TaskState task) {
         Inventory inventory = player.getInventory();
         MaterialCheck pending = pendingMaterialStatus(task, inventory);
@@ -740,11 +732,11 @@ public class AutoCraftingFunction extends SymAbstractFunction {
                 return MaterialCheck.UNAVAILABLE;
             }
             debug("准备合成中间材料：{}（{}）", describeItem(representative), describeRecipe(subRecipe));
-            MaterialCheck subMaterials = ensureMaterials(sub, subRecipe, player, client, subPath, task);
+            MaterialCheck subMaterials = ensureMaterials(sub, subRecipe, player, subPath, task);
             if (subMaterials != MaterialCheck.READY) {
                 return subMaterials;
             }
-            boolean craftedSub = doCraft(sub, subRecipe, player, client);
+            boolean craftedSub = doCraft(sub, subRecipe, player);
             if (!craftedSub) {
                 debug("中间材料合成失败：{}", describeItem(representative));
                 return MaterialCheck.UNAVAILABLE;
@@ -758,10 +750,11 @@ public class AutoCraftingFunction extends SymAbstractFunction {
 
     /**
      * 逐件合成：依据配方网格把材料各放 1 个进 3x3 工作台并产出一次
+     *
      * @return 是否成功产出一次
      */
     private boolean doCraft(CraftingPreset assumption, CraftingRecipe recipe,
-                            Player player, Minecraft client) {
+                            Player player) {
         AbstractContainerMenu menu = player.containerMenu;
         if (!(menu instanceof CraftingMenu)) {
             return false;
@@ -771,9 +764,8 @@ public class AutoCraftingFunction extends SymAbstractFunction {
             debug("材料不足以填满合成格：{}", describeRecipe(recipe));
             return false;
         }
-        int containerId = menu.containerId;
         // 清理网格残留
-        clearGrid(client, menu);
+        clearGrid(menu);
         PlacementInfo placement = recipe.placementInfo();
         List<Ingredient> ingredients = placement.ingredients();
         IntList slotsToIngredientIndex = placement.slotsToIngredientIndex();
@@ -799,14 +791,14 @@ public class AutoCraftingFunction extends SymAbstractFunction {
             if (src < 0) {
                 return false;
             }
-            click(client, containerId, src, 0, ContainerInput.PICKUP); // 取整叠
-            click(client, containerId, gridSlot, 1, ContainerInput.PICKUP); // 放 1 个
-            click(client, containerId, src, 0, ContainerInput.PICKUP); // 剩余放回
+            ContainerActions.leftClickSlot(src); // 取整叠
+            ContainerActions.rightClickSlot(gridSlot); // 放 1 个
+            ContainerActions.leftClickSlot(src); // 剩余放回
         }
         if (assumption.isThrowResult()) {
-            click(client, containerId, RESULT_SLOT, 0, ContainerInput.THROW); // 合成并丢出
+            ContainerActions.dropSlotStack(RESULT_SLOT); // 合成并丢出
         } else {
-            click(client, containerId, RESULT_SLOT, 0, ContainerInput.QUICK_MOVE); // 合成入背包
+            ContainerActions.quickMove(RESULT_SLOT); // 合成入背包
         }
         return true;
     }
@@ -814,13 +806,12 @@ public class AutoCraftingFunction extends SymAbstractFunction {
     /**
      * 清理工作台网格残留
      */
-    private void clearGrid(Minecraft client, AbstractContainerMenu menu) {
+    private void clearGrid(AbstractContainerMenu menu) {
         if (menu instanceof CraftingMenu) {
-            int containerId = menu.containerId;
             for (int pos = 0; pos < GRID_SIZE; pos++) {
                 int gridSlot = GRID_FIRST_SLOT + pos;
                 if (menu.getSlot(gridSlot).hasItem()) {
-                    click(client, containerId, gridSlot, 0, ContainerInput.QUICK_MOVE);
+                    ContainerActions.quickMove(gridSlot);
                 }
             }
         }

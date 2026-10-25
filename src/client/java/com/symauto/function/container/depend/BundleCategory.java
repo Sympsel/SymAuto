@@ -1,4 +1,4 @@
-package com.symauto.function.container;
+package com.symauto.function.container.depend;
 
 import lombok.Getter;
 import net.minecraft.world.item.Item;

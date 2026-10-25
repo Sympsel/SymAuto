@@ -3,8 +3,9 @@ package com.symauto.function.oneclick;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.platform.Window;
 import com.symauto.config.option.BooleanOption;
-import com.symauto.function.container.BundleAccess;
+import com.symauto.function.container.depend.BundleAccess;
 import com.symauto.function.utils.BundleContentsHelper;
+import com.symauto.function.utils.ContainerActions;
 import com.symauto.model.common.SymList;
 import com.symauto.model.common.KeyCombination;
 import com.symauto.core.FunctionConfig;
@@ -146,13 +147,13 @@ public class OneClickDiscardItemsFunction extends SymAbstractFunction {
             List<ItemStack> items = contents.itemCopyStream().toList();
 
             for (int i = items.size() - 1; i >= 0; i--) {
-                if (!WHITE_LIST.contains(items.get(i).getItem())) continue;
+                if (!WHITE_LIST.contains(items.get(i).getItem())) {
+                    continue;
+                }
 
                 BundleAccess.extract(s, i);
-                client.gameMode.handleContainerInput(
-                        containerId, emptySlot, 0, ContainerInput.PICKUP, client.player);
-                client.gameMode.handleContainerInput(
-                        containerId, emptySlot, 0, ContainerInput.THROW, client.player);
+                ContainerActions.leftClickSlot(emptySlot);
+                ContainerActions.dropSlotStack(emptySlot);
             }
         }
     }

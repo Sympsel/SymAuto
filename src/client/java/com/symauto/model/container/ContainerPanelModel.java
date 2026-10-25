@@ -1,7 +1,7 @@
 package com.symauto.model.container;
 
 import com.symauto.function.base.SymContainer;
-import com.symauto.function.container.Containers;
+import com.symauto.function.container.depend.Containers;
 import lombok.Setter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -15,7 +15,6 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * 通用容器面板的视图模型：从玩家背包收集所有 {@link SymContainer}，汇总为 {@link ItemPool}，
