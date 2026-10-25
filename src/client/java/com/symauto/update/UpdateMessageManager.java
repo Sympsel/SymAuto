@@ -24,7 +24,8 @@ public class UpdateMessageManager {
 
     static void main() {
         sendUpdates(
-                "添加了总功能菜单的路由缓存，现在它可以记住关闭时打开的标签了"
+                "修复了" + func("快捷容器界面") + "的启用图标显示异常问题",
+                "修复了" + func("快捷容器界面") + "在物品数量过多时会被相邻的物品图标遮盖的问题"
         );
     }
 

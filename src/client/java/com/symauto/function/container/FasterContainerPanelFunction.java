@@ -9,8 +9,8 @@ import lombok.Getter;
 import lombok.Setter;
 import net.minecraft.client.Minecraft;
 
-public class ContainerPanelFunction extends SymAbstractFunction {
-    public static final ContainerPanelFunction INSTANCE = new ContainerPanelFunction();
+public class FasterContainerPanelFunction extends SymAbstractFunction {
+    public static final FasterContainerPanelFunction INSTANCE = new FasterContainerPanelFunction();
 
     @Getter
     @Setter
@@ -20,8 +20,8 @@ public class ContainerPanelFunction extends SymAbstractFunction {
     @Setter
     private boolean shulkerBoxPanelEnabled;
 
-    private ContainerPanelFunction() {
-        super("container_panel", "快捷容器面板");
+    private FasterContainerPanelFunction() {
+        super("faster_container_panel", "快捷容器面板");
         BundleCategory.registerCategoryItems();
         addOption(new BooleanOption("bundle_panel_enabled", "收纳袋面板",
                 this::isBundlePanelEnabled, this::setBundlePanelEnabled, true));

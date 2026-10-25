@@ -4,7 +4,7 @@ import com.symauto.function.container.depend.BundleAccess;
 import com.symauto.function.utils.ClientGuard;
 import com.symauto.mixin.accessor.AbstractRecipeBookScreenAccessor;
 import com.symauto.function.base.SymContainer;
-import com.symauto.function.container.ContainerPanelFunction;
+import com.symauto.function.container.FasterContainerPanelFunction;
 import com.symauto.mixin.accessor.ScreenRebuildWidgetsAccessor;
 import com.symauto.model.container.ContainerCategory;
 import com.symauto.model.container.ContainerPanelModel;
@@ -222,7 +222,7 @@ public final class ContainerPanel {
     }
 
     private static boolean typeEnabled(SymContainer.Type t) {
-        ContainerPanelFunction f = ContainerPanelFunction.INSTANCE;
+        FasterContainerPanelFunction f = FasterContainerPanelFunction.INSTANCE;
         return t == SymContainer.Type.BUNDLE ? f.isBundlePanelEnabled() : f.isShulkerBoxPanelEnabled();
     }
 
@@ -686,7 +686,7 @@ public final class ContainerPanel {
      */
     public static void renderToggleButton(GuiGraphicsExtractor g, int x, int y, int mouseX, int mouseY) {
         boolean hovered = mouseX >= x && mouseX < x + TOGGLE_SIZE && mouseY >= y && mouseY < y + TOGGLE_HEIGHT;
-        ContainerPanelFunction instance = ContainerPanelFunction.INSTANCE;
+        FasterContainerPanelFunction instance = FasterContainerPanelFunction.INSTANCE;
         boolean isBundlePanelEnabled = instance.isBundlePanelEnabled();
         boolean isShulkerBoxPanelEnabled = instance.isShulkerBoxPanelEnabled();
         Identifier sprite;
