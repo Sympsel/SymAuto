@@ -29,7 +29,7 @@ public class UpdateMessageManager {
                         + colored(ChatFormatting.GREEN, "高亮包含此物品的容器")
                         + colored(ChatFormatting.GREEN, "Shift + 左键优先转移到收纳袋") + "仅在背包界面和收纳袋面板打开时触发，兼容鼠标手势"
                 + colored(ChatFormatting.GREEN, "手持容器中键预览"),
-                "删除了" + func("中间快捷预览收纳袋")
+                "删除了" + func("中键快捷预览收纳袋")
         );
     }
 
@@ -56,6 +56,10 @@ public class UpdateMessageManager {
 
     private static String colored(ChatFormatting color, String text) {
         return color + text + ChatFormatting.WHITE;
+    }
+
+    private static String configuration(String config) {
+        return ChatFormatting.YELLOW + config + ChatFormatting.WHITE;
     }
 
     private static String item(String item, int id) {
