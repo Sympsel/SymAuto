@@ -77,9 +77,11 @@ public class AutoHarvestCropFunction extends SymAbstractFunction {
 
     private static final Set<Item> DISCARDABLE_BYPRODUCTS = Set.of(
             Items.WHEAT,
+            Items.POISONOUS_POTATO, // 毒马铃薯
             Items.MELON_SLICE,
             Items.MELON,
-            Items.PUMPKIN
+            Items.PUMPKIN,
+            Items.BEETROOT
     );
 
     private AutoHarvestCropFunction() {
@@ -132,7 +134,9 @@ public class AutoHarvestCropFunction extends SymAbstractFunction {
         }
     }
 
-    /** 自动丢出副产物 */
+    /**
+     * 自动丢出副产物
+     */
     private void discardByproducts(Minecraft client) {
         Inventory inv = client.player.getInventory();
         for (int i = Constants.HOTBAR_START; i < Constants.INV_END; i++) {
@@ -200,7 +204,9 @@ public class AutoHarvestCropFunction extends SymAbstractFunction {
         return false;
     }
 
-    /** 仅当主手骨粉、副手是可催熟作物且骨粉不足时，补充骨粉到主手 */
+    /**
+     * 仅当主手骨粉、副手是可催熟作物且骨粉不足时，补充骨粉到主手
+     */
     private void refillMainhandBoneMeal(Minecraft client) {
         if (!isPlantable(client.player.getOffhandItem())) {
             return;
@@ -236,7 +242,9 @@ public class AutoHarvestCropFunction extends SymAbstractFunction {
         }
     }
 
-    /** 把光标残留物品放回背包 */
+    /**
+     * 把光标残留物品放回背包
+     */
     private void stashCarried(Minecraft client, ItemStack carried) {
         Inventory inv = client.player.getInventory();
         int empty = -1;
@@ -302,7 +310,9 @@ public class AutoHarvestCropFunction extends SymAbstractFunction {
         return null;
     }
 
-    /** 找到收纳袋中首个含 probe 的条目，返回 {收纳袋菜单槽号, 袋内条目索引}，无则 null */
+    /**
+     * 找到收纳袋中首个含 probe 的条目，返回 {收纳袋菜单槽号, 袋内条目索引}，无则 null
+     */
     private int[] findBundleSlotFor(Minecraft client, ItemStack probe) {
         AbstractContainerMenu menu = client.player.inventoryMenu;
         Inventory inv = client.player.getInventory();
@@ -386,6 +396,15 @@ public class AutoHarvestCropFunction extends SymAbstractFunction {
                 continue;
             }
 
+            // 甘蔗：只收第二层及以上，保留最底层继续生长
+            if (state.is(Blocks.SUGAR_CANE)) {
+                if (client.level.getBlockState(target.below()).is(Blocks.SUGAR_CANE)) {
+                    breakInstant(client, target);
+                    return true;
+                }
+                continue;
+            }
+
             // 地狱疣
             if (state.is(Blocks.NETHER_WART)) {
                 if (!isFullyGrown(state)) {
@@ -433,7 +452,9 @@ public class AutoHarvestCropFunction extends SymAbstractFunction {
         );
     }
 
-    /** 主手优先取可种植物的手，无可种植物返回 null */
+    /**
+     * 主手优先取可种植物的手，无可种植物返回 null
+     */
     private InteractionHand resolvePlantHand(Minecraft client) {
         if (isPlantable(client.player.getMainHandItem())) {
             return InteractionHand.MAIN_HAND;
@@ -474,32 +495,56 @@ public class AutoHarvestCropFunction extends SymAbstractFunction {
         ItemStack plantStack = hand == InteractionHand.MAIN_HAND
                 ? client.player.getMainHandItem()
                 : client.player.getOffhandItem();
-        Block surface = plantStack.is(Items.NETHER_WART) ? Blocks.SOUL_SAND : Blocks.FARMLAND;
+        boolean cane = plantStack.is(Items.SUGAR_CANE);
+        Block surface = cane ? null
+                : (plantStack.is(Items.NETHER_WART) ? Blocks.SOUL_SAND : Blocks.FARMLAND);
+
         for (BlockPos pos : BlockPos.betweenClosed(
                 center.offset(-r, -r, -r), center.offset(r, r, r))) {
             if (pos.distToCenterSqr(eye) > reachSq) {
                 continue;
             }
-            if (!client.level.getBlockState(pos).is(surface)) {
-                continue;
+            BlockState state = client.level.getBlockState(pos);
+            BlockPos target;
+            if (cane) {
+                if (!state.isAir()) {
+                    continue;
+                }
+                // 脚下已是甘蔗，跳过
+                if (client.level.getBlockState(pos.below()).is(Blocks.SUGAR_CANE)) {
+                    continue;
+                }
+                if (!Blocks.SUGAR_CANE.defaultBlockState().canSurvive(client.level, pos)) {
+                    continue;
+                }
+                target = pos;
+            } else {
+                if (!state.is(surface)) {
+                    continue;
+                }
+                target = pos.above();
+                if (!client.level.getBlockState(target).isAir()) {
+                    continue;
+                }
             }
-            if (!client.level.getBlockState(pos.above()).isAir()) {
-                continue;
-            }
-            BlockPos target = pos.immutable();
-            Vec3 hitVec = new Vec3(target.getX() + 0.5, target.getY() + 1.0, target.getZ() + 0.5);
-            client.gameMode.useItemOn(
+
+            BlockPos support = target.below();
+            Vec3 hitVec = new Vec3(support.getX() + 0.5, support.getY() + 1.0, support.getZ() + 0.5);
+            InteractionResult result = client.gameMode.useItemOn(
                     client.player,
                     hand,
-                    new BlockHitResult(hitVec, Direction.UP, target, false)
+                    new BlockHitResult(hitVec, Direction.UP, support.immutable(), false)
             );
             return true;
         }
         return false;
     }
 
-    private static boolean isPlantable(ItemStack stack) {
-        return stack.is(Items.NETHER_WART) || PLANTABLE_ON_FARMLAND.contains(stack.getItem());
+    private boolean isPlantable(ItemStack stack) {
+        return !stack.isEmpty()
+                && (PLANTABLE_ON_FARMLAND.contains(stack.getItem())
+                || stack.is(Items.NETHER_WART)
+                || stack.is(Items.SUGAR_CANE));
     }
 
     /**
@@ -523,7 +568,9 @@ public class AutoHarvestCropFunction extends SymAbstractFunction {
         return false;
     }
 
-    /** 催熟 */
+    /**
+     * 催熟
+     */
     private void boneMealOne(Minecraft client, Vec3 eye, double reachSq, int r, BlockPos center) {
         if (!client.player.getMainHandItem().is(Items.BONE_MEAL)) {
             return;
