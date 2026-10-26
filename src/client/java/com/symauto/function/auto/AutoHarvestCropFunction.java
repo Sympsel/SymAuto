@@ -24,7 +24,6 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.BundleContents;
-import net.minecraft.world.item.component.Tool;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.CropBlock;
@@ -59,6 +58,10 @@ public class AutoHarvestCropFunction extends SymAbstractFunction {
     @Setter
     private boolean autoRefill;
 
+    @Getter
+    @Setter
+    private boolean onlyRipeningCrop;
+
     private int boneMealSlot = -1;
 
     private static final Set<Item> PLANTABLE_ON_FARMLAND = Set.of(
@@ -85,6 +88,9 @@ public class AutoHarvestCropFunction extends SymAbstractFunction {
                 this::isAutoRefill, this::setAutoRefill, true));
         addOption(new BooleanOption("enable_discard_result_if_not_seed", "自动丢出非种子产物",
                 this::isEnableDiscardResultIfNotSeed, this::setEnableDiscardResultIfNotSeed, false));
+        addOption(new BooleanOption("only_ripening_crop", "仅使用骨粉催熟作物",
+                this::isOnlyRipeningCrop, this::setOnlyRipeningCrop, false));
+
     }
 
     @Override
@@ -92,6 +98,7 @@ public class AutoHarvestCropFunction extends SymAbstractFunction {
         return Tooltip.create()
                 .keyValueLine("自动补充种子和骨粉", autoRefill ? "是" : "否")
                 .keyValueLine("自动丢出非种子产物", enableDiscardResultIfNotSeed ? "是" : "否")
+                .keyValueLine("仅使用骨粉催熟作物", onlyRipeningCrop ? "是" : "否")
                 .toString();
     }
 
@@ -114,11 +121,13 @@ public class AutoHarvestCropFunction extends SymAbstractFunction {
         int r = (int) Math.ceil(reach);
         BlockPos center = client.player.blockPosition();
 
-        if (harvestOne(client, eye, reachSq, r, center)) {
-            return;
-        }
-        if (replantOne(client, eye, reachSq, r, center)) {
-            return;
+        if (!onlyRipeningCrop) {
+            if (harvestOne(client, eye, reachSq, r, center)) {
+                return;
+            }
+            if (replantOne(client, eye, reachSq, r, center)) {
+                return;
+            }
         }
         boneMealOne(client, eye, reachSq, r, center);
         if (autoRefill) {
@@ -386,6 +395,7 @@ public class AutoHarvestCropFunction extends SymAbstractFunction {
                     continue;
                 }
                 if (breakInstant(client, target)) {
+                    replantHarvestedTile(client, target.below());
                     return true;
                 }
                 continue;
@@ -394,11 +404,47 @@ public class AutoHarvestCropFunction extends SymAbstractFunction {
             // 通用作物
             if (state.getBlock() instanceof CropBlock crop && crop.isMaxAge(state)) {
                 if (breakInstant(client, target)) {
+                    replantHarvestedTile(client, target.below());
                     return true;
                 }
             }
         }
         return false;
+    }
+
+    /**
+     * 定向补种，收获当 tick 立即补种
+     */
+    private void replantHarvestedTile(Minecraft client, BlockPos surfacePos) {
+        InteractionHand hand = resolvePlantHand(client);
+        if (hand == null) {
+            return;
+        }
+        ItemStack plantStack = hand == InteractionHand.MAIN_HAND
+                ? client.player.getMainHandItem()
+                : client.player.getOffhandItem();
+        Block surface = plantStack.is(Items.NETHER_WART) ? Blocks.SOUL_SAND : Blocks.FARMLAND;
+        if (!client.level.getBlockState(surfacePos).is(surface)) {
+            return;
+        }
+        BlockPos target = surfacePos.immutable();
+        Vec3 hitVec = new Vec3(target.getX() + 0.5, target.getY() + 1.0, target.getZ() + 0.5);
+        client.gameMode.useItemOn(
+                client.player,
+                hand,
+                new BlockHitResult(hitVec, Direction.UP, target, false)
+        );
+    }
+
+    /** 主手优先取可种植物的手，无可种植物返回 null */
+    private InteractionHand resolvePlantHand(Minecraft client) {
+        if (isPlantable(client.player.getMainHandItem())) {
+            return InteractionHand.MAIN_HAND;
+        }
+        if (isPlantable(client.player.getOffhandItem())) {
+            return InteractionHand.OFF_HAND;
+        }
+        return null;
     }
 
     private static boolean isFullyGrown(BlockState state) {
@@ -424,19 +470,13 @@ public class AutoHarvestCropFunction extends SymAbstractFunction {
     }
 
     private boolean replantOne(Minecraft client, Vec3 eye, double reachSq, int r, BlockPos center) {
-        ItemStack main = client.player.getMainHandItem();
-        ItemStack off = client.player.getOffhandItem();
-        InteractionHand hand;
-        ItemStack plantStack;
-        if (isPlantable(main)) {
-            hand = InteractionHand.MAIN_HAND;
-            plantStack = main;
-        } else if (isPlantable(off)) {
-            hand = InteractionHand.OFF_HAND;
-            plantStack = off;
-        } else {
+        InteractionHand hand = resolvePlantHand(client);
+        if (hand == null) {
             return false;
         }
+        ItemStack plantStack = hand == InteractionHand.MAIN_HAND
+                ? client.player.getMainHandItem()
+                : client.player.getOffhandItem();
         Block surface = plantStack.is(Items.NETHER_WART) ? Blocks.SOUL_SAND : Blocks.FARMLAND;
         for (BlockPos pos : BlockPos.betweenClosed(
                 center.offset(-r, -r, -r), center.offset(r, r, r))) {

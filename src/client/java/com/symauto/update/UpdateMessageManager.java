@@ -24,8 +24,8 @@ public class UpdateMessageManager {
 
     static void main() {
         sendUpdates(
-            "添加新功能：" + func("自动收获/补种作物"),
-            "修复了" + func("一键丢弃相同物品") + bug("丢弃一个和丢弃全部原语写反") + "的bug"
+                "提高了" + func("自动收获/补种作物") + "的效率，同一tick完成收获和补种，效率翻倍",
+                "为" + func("自动收获/补种作物") + "添加了配置项" + configuration("仅使用骨粉催熟")
         );
     }
 
