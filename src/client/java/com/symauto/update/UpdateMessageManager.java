@@ -24,8 +24,8 @@ public class UpdateMessageManager {
 
     static void main() {
         sendUpdates(
-                "提高了" + func("自动收获/补种作物") + "的效率，同一tick完成收获和补种，效率翻倍",
-                "为" + func("自动收获/补种作物") + "添加了配置项" + configuration("仅使用骨粉催熟")
+                "修复了误把甜菜根作为种子导致无法种植甜菜根的bug",
+                "对退出游戏时偶现的异常问题进行了兜底防护，提升程序健壮性"
         );
     }
 

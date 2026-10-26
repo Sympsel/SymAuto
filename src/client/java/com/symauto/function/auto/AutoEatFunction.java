@@ -72,7 +72,7 @@ public class AutoEatFunction extends SymAbstractFunction {
     protected void onDisable() {
         Minecraft client = Minecraft.getInstance();
         client.options.keyUse.setDown(false);
-        if (client.player.isUsingItem() && client.getConnection() != null) {
+        if (client.player != null && client.player.isUsingItem() && client.getConnection() != null) {
             client.player.stopUsingItem();
         }
         resetState();

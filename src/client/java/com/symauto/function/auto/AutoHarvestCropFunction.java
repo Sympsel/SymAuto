@@ -68,7 +68,7 @@ public class AutoHarvestCropFunction extends SymAbstractFunction {
             Items.WHEAT_SEEDS,
             Items.CARROT,
             Items.POTATO,
-            Items.BEETROOT,
+            Items.BEETROOT_SEEDS,
             Items.PUMPKIN_SEEDS,
             Items.MELON_SEEDS,
             Items.SWEET_BERRIES,
@@ -104,14 +104,11 @@ public class AutoHarvestCropFunction extends SymAbstractFunction {
 
     @Override
     protected void onTrigger(Minecraft client) {
-        // 当玩家提起物品时不干扰玩家
-        if (!client.player.containerMenu.getCarried().isEmpty()) {
+        // 不打断自动进食
+        if (AutoEatFunction.INSTANCE.isEating()) {
             return;
         }
-        // 当玩家鼠标悬浮物品时不干扰玩家
-        if (isHoveringItem(client)) {
-            return;
-        }
+
         if (enableDiscardResultIfNotSeed) {
             discardByproducts(client);
         }
