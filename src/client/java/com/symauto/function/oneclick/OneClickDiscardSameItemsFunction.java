@@ -81,14 +81,14 @@ public class OneClickDiscardSameItemsFunction extends SymAbstractFunction {
                 }
                 Slot slot = menu.getSlot(i);
                 if (slot.hasItem() && ItemUtils.isSameItemWithoutDataComponent(target, slot.getItem())) {
-                    ContainerActions.dropSlotSingle(i);
+                    ContainerActions.dropSlotStack(i);
                 }
             }
         } else {
             for (int i = 0; i < menu.slots.size(); i++) {
                 Slot slot = menu.getSlot(i);
                 if (slot.hasItem() && ItemUtils.isSameItemWithoutDataComponent(target, slot.getItem())) {
-                    ContainerActions.dropSlotSingle(i);
+                    ContainerActions.dropSlotStack(i);
                 }
             }
         }

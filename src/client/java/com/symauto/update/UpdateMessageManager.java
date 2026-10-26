@@ -24,13 +24,13 @@ public class UpdateMessageManager {
 
     static void main() {
         sendUpdates(
-                "为" + func("快捷容器界面") + "功能添加了新的配置项："
-                        + colored(ChatFormatting.GREEN, "容器预览") + key("Shift + 悬浮") + "触发，"
-                        + colored(ChatFormatting.GREEN, "高亮包含此物品的容器")
-                        + colored(ChatFormatting.GREEN, "Shift + 左键优先转移到收纳袋") + "仅在背包界面和收纳袋面板打开时触发，兼容鼠标手势"
-                + colored(ChatFormatting.GREEN, "手持容器中键预览"),
-                "删除了" + func("中键快捷预览收纳袋")
+            "添加新功能：" + func("自动收获/补种作物"),
+            "修复了" + func("一键丢弃相同物品") + bug("丢弃一个和丢弃全部原语写反") + "的bug"
         );
+    }
+
+    private static String bug(String bug) {
+        return ChatFormatting.DARK_GRAY + bug + ChatFormatting.WHITE;
     }
 
     private static String file(String path) {

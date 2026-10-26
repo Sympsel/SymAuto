@@ -31,12 +31,12 @@ public class ContainerActions {
 
     /** 把某槽位的整堆丢出 */
     public static void dropSlotStack(int slotId) {
-        click(slotId, 0, ContainerInput.THROW);
+        click(slotId, 1, ContainerInput.THROW);
     }
 
     /** 把某槽位丢出一件 */
     public static void dropSlotSingle(int slotId) {
-        click(slotId, 1, ContainerInput.THROW);
+        click(slotId, 0, ContainerInput.THROW);
     }
 
     /** Shift+左键，容器与背包间快速转移 */
