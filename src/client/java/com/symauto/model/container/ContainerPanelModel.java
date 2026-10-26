@@ -17,9 +17,7 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
- * 通用容器面板的视图模型：从玩家背包收集所有 {@link SymContainer}，汇总为 {@link ItemPool}，
- * 再按 {@link ContainerCategory} 与搜索词产出可渲染的扁平条目列表。
- *
+ * 通用容器面板的视图模型
  */
 public final class ContainerPanelModel {
 
@@ -27,10 +25,10 @@ public final class ContainerPanelModel {
     public record Entry(ItemStack stack, int totalCount, List<SourceRef> sources) {}
 
     /**
-     * 聚合物品的一个来源。
+     * 聚合物品的一个来源
      * @param container 来源容器
-     * @param hostInvIndex  该容器宿主物品在背包中的槽位（0-35），无法定位时为 -1
-     * @param count     该来源上的数量
+     * @param hostInvIndex  该容器宿主物品在背包中的槽位，无法定位时为 -1
+     * @param count 该来源上的数量
      */
     public record SourceRef(SymContainer container, int hostInvIndex, int entryIndex, int count) {}
 
@@ -48,7 +46,7 @@ public final class ContainerPanelModel {
         return type;
     }
 
-    /** 重新扫描背包并重建全部数据（保留当前分类/搜索状态）。 */
+    /** 重新扫描背包并重建全部数据 */
     public void rebuild() {
         all.clear();
         hostIndexToInv.clear();

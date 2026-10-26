@@ -3,7 +3,6 @@ package com.symauto.core;
 import com.symauto.function.auto.*;
 import com.symauto.function.base.SymAbstractFunction;
 import com.symauto.function.container.FasterContainerPanelFunction;
-import com.symauto.function.bundle.BundleQuickOpenFunction;
 import com.symauto.function.highlight.HighLightItemDropFunction;
 import com.symauto.function.highlight.HighLightMasterFunction;
 import com.symauto.function.highlight.HighLightPlayerFunction;
@@ -48,11 +47,9 @@ public class FunctionConfig {
             .addTag(SymFunctionTags.BUILDING_AND_DESTROYING);
     public static final SymAbstractFunction AUTO_SELL_EMC_FUNCTION = AutoSellEmcFunction.INSTANCE
             .addTag(SymFunctionTags.OTHER);
-    public static final SymAbstractFunction BETTER_BUNDLE_FUNCTION = FasterContainerPanelFunction.INSTANCE
+    public static final SymAbstractFunction FASTER_CONTAINER_PANEL_FUNCTION = FasterContainerPanelFunction.INSTANCE
             .addTag(SymFunctionTags.CONVENIENCE_OPERATION)
             .addTag(SymFunctionTags.HUD);
-    public static final SymAbstractFunction BUNDLE_QUICK_OPEN_FUNCTION = BundleQuickOpenFunction.INSTANCE
-            .addTag(SymFunctionTags.CONVENIENCE_OPERATION);
     public static final SymAbstractFunction SPEED_BRIDGE_FUNCTION = SpeedBridgeFunction.INSTANCE
             .addTag(SymFunctionTags.CONVENIENCE_OPERATION)
             .addTag(SymFunctionTags.BUILDING_AND_DESTROYING);
@@ -89,8 +86,7 @@ public class FunctionConfig {
             ONE_CLICK_FLAT_ITEMS_FUNCTION,
             FIX_Y_PLACE_OR_DESTROY_FUNCTION,
             AUTO_SELL_EMC_FUNCTION,
-            BETTER_BUNDLE_FUNCTION,
-            BUNDLE_QUICK_OPEN_FUNCTION,
+            FASTER_CONTAINER_PANEL_FUNCTION,
             SPEED_BRIDGE_FUNCTION,
             ONE_CLICK_TRADE_FUNCTION,
             HIGH_LIGHT_SPECIFIC_VILLAGERS_FUNCTION,

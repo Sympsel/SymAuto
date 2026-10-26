@@ -19,7 +19,7 @@ public abstract class ContainerPanelCreativeMixin {
      */
     @Inject(method = "keyPressed", at = @At("HEAD"), cancellable = true)
     private void symauto$guardCreativeKeys(KeyEvent event, CallbackInfoReturnable<Boolean> cir) {
-        if (!FunctionConfig.BETTER_BUNDLE_FUNCTION.isEnable()
+        if (!FunctionConfig.FASTER_CONTAINER_PANEL_FUNCTION.isEnable()
                 || !ContainerPanel.isVisible() || !ContainerPanel.isSearchFocused()) {
             return;
         }
@@ -30,7 +30,7 @@ public abstract class ContainerPanelCreativeMixin {
 
     @Inject(method = "charTyped", at = @At("HEAD"), cancellable = true)
     private void symauto$guardCreativeChars(CharacterEvent event, CallbackInfoReturnable<Boolean> cir) {
-        if (!FunctionConfig.BETTER_BUNDLE_FUNCTION.isEnable()
+        if (!FunctionConfig.FASTER_CONTAINER_PANEL_FUNCTION.isEnable()
                 || !ContainerPanel.isVisible() || !ContainerPanel.isSearchFocused()) {
             return;
         }

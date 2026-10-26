@@ -15,7 +15,8 @@
     "accessor.MerchantScreenAccessor",
     "accessor.VaultServerDataAccessor",
     "ContainerPanelScreenMixin",
-    "ContainerPanelCreativeMixin"
+    "ContainerPanelCreativeMixin",
+    "MouseTweaksCompatMixin"
   ],
   "injectors": {
     "defaultRequire": 1

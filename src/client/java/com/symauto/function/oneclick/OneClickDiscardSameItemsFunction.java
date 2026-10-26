@@ -16,7 +16,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
 import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
@@ -61,7 +60,7 @@ public class OneClickDiscardSameItemsFunction extends SymAbstractFunction {
         boolean outside = mouseX < xo || mouseY < yo || mouseX >= xo + imgW || mouseY >= yo + imgH;
         if (!outside) return true;
 
-        if (FunctionConfig.BETTER_BUNDLE_FUNCTION.isEnable()
+        if (FunctionConfig.FASTER_CONTAINER_PANEL_FUNCTION.isEnable()
                 && ContainerPanel.isVisible()
                 && ContainerPanel.isInsidePanel(mouseX, mouseY, xo, yo, imgH)) {
             return true;

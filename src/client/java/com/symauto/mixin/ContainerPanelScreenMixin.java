@@ -1,7 +1,9 @@
 package com.symauto.mixin;
 
 import com.symauto.core.FunctionConfig;
+import com.symauto.function.container.FasterContainerPanelFunction;
 import com.symauto.gui.container.ContainerPanel;
+import com.symauto.gui.container.ContainerPreviewRenderer;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.input.KeyEvent;
@@ -35,19 +37,27 @@ public abstract class ContainerPanelScreenMixin {
     @Inject(method = "extractContents", at = @At("TAIL"))
     private void symauto$renderPanel(GuiGraphicsExtractor graphics, int mouseX, int mouseY,
                                      float partialTick, CallbackInfo ci) {
-        if (!FunctionConfig.BETTER_BUNDLE_FUNCTION.isEnable()) {
+        if (!FunctionConfig.FASTER_CONTAINER_PANEL_FUNCTION.isEnable()) {
             return;
         }
         ContainerPanel.render(graphics, leftPos, topPos, imageHeight, mouseX, mouseY);
         ContainerPanel.renderToggleButton(graphics,
                 ContainerPanel.toggleX(leftPos, imageWidth),
                 ContainerPanel.toggleY(topPos), mouseX, mouseY);
+        ContainerPanel.renderHostHighlights(graphics, leftPos, topPos);
+        ContainerPanel.handleShiftDragInsert(hoveredSlot);
+        if (FasterContainerPanelFunction.INSTANCE.isHighlightContainerContainsThisItem()) {
+            ContainerPanel.renderHoveredItemHighlights(graphics, hoveredSlot, leftPos, topPos);
+        }
+        if (FasterContainerPanelFunction.INSTANCE.isEnableContainerPreview()) {
+            ContainerPreviewRenderer.render(graphics, hoveredSlot, mouseX, mouseY);
+        }
     }
 
     @Inject(method = "mouseClicked", at = @At("HEAD"), cancellable = true)
     private void symauto$onClick(MouseButtonEvent event, boolean doubleClick,
                                  CallbackInfoReturnable<Boolean> cir) {
-        if (!FunctionConfig.BETTER_BUNDLE_FUNCTION.isEnable()) {
+        if (!FunctionConfig.FASTER_CONTAINER_PANEL_FUNCTION.isEnable()) {
             return;
         }
         double mx = event.x();
@@ -79,7 +89,7 @@ public abstract class ContainerPanelScreenMixin {
     @Inject(method = "mouseScrolled", at = @At("HEAD"), cancellable = true)
     private void symauto$onScroll(double mouseX, double mouseY, double scrollX, double scrollY,
                                   CallbackInfoReturnable<Boolean> cir) {
-        if (!FunctionConfig.BETTER_BUNDLE_FUNCTION.isEnable() || !ContainerPanel.isVisible()) {
+        if (!FunctionConfig.FASTER_CONTAINER_PANEL_FUNCTION.isEnable() || !ContainerPanel.isVisible()) {
             return;
         }
         if (ContainerPanel.isInsidePanel(mouseX, mouseY, leftPos, topPos, imageHeight)) {
@@ -90,11 +100,23 @@ public abstract class ContainerPanelScreenMixin {
 
     @Inject(method = "keyPressed", at = @At("HEAD"), cancellable = true)
     private void symauto$onKeyPressed(KeyEvent event, CallbackInfoReturnable<Boolean> cir) {
-        if (!FunctionConfig.BETTER_BUNDLE_FUNCTION.isEnable()
+        if (!FunctionConfig.FASTER_CONTAINER_PANEL_FUNCTION.isEnable()
                 || !ContainerPanel.isVisible() || !ContainerPanel.isSearchFocused()) {
             return;
         }
         ContainerPanel.handleSearchKey(event.key());
         cir.setReturnValue(true);
+    }
+
+    @Inject(method = "extractTooltip", at = @At("HEAD"), cancellable = true)
+    private void symauto$cancelPreviewTooltip(GuiGraphicsExtractor graphics, int mouseX, int mouseY,
+                                              CallbackInfo ci) {
+        if (!FunctionConfig.FASTER_CONTAINER_PANEL_FUNCTION.isEnable()) {
+            return;
+        }
+        if (FasterContainerPanelFunction.INSTANCE.isEnableContainerPreview()
+                && ContainerPreviewRenderer.isPreviewActive(hoveredSlot)) {
+            ci.cancel();
+        }
     }
 }

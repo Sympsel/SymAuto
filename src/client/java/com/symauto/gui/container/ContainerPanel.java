@@ -1,7 +1,9 @@
 package com.symauto.gui.container;
 
 import com.symauto.function.container.depend.BundleAccess;
+import com.symauto.function.container.depend.Containers;
 import com.symauto.function.utils.ClientGuard;
+import com.symauto.gui.utils.SlotHighlighter;
 import com.symauto.mixin.accessor.AbstractRecipeBookScreenAccessor;
 import com.symauto.function.base.SymContainer;
 import com.symauto.function.container.FasterContainerPanelFunction;
@@ -33,7 +35,9 @@ import org.jspecify.annotations.NonNull;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public final class ContainerPanel {
     public static final int SLOT_SIZE = 18;
@@ -43,9 +47,15 @@ public final class ContainerPanel {
     public static final int PADDING = 3;
     public static final int SCROLL_BAR_WIDTH = 4;
     public static final int CAT_BAR_WIDTH = 18;
+    // 选中页签相对普通页签的左凸出量
+    private static final int CAT_SELECT_EXPAND = 4;
+    // 搜索栏与分类列之间保留的间隙
+    private static final int CAT_SEARCH_GAP = 6;
     public static final int SEARCH_BAR_HEIGHT = 14;
     public static final int TOGGLE_SIZE = 20;
     public static final int TOGGLE_HEIGHT = 18;
+
+    public static final int FRAME_COLOR = 0xFB00FFFF;
 
     private static final WidgetSprites NONE_SPRITES = new WidgetSprites(
             Identifier.fromNamespaceAndPath("symauto", "empty_button"),
@@ -66,6 +76,13 @@ public final class ContainerPanel {
     @Getter
     private static boolean searchFocused = false;
     private static String query = "";
+    /**
+     * 悬浮面板条目时，该条目来源容器在背包(0-35)中的槽位集合，用于角标高亮
+     */
+    private static final Set<Integer> hoveredHostInv = new HashSet<>();
+    /** Shift+左键划过式入袋 */
+    private static int lastShiftDragSlotIndex = -1;
+
 
     /**
      * 分类栏纵向滚动偏移
@@ -90,14 +107,33 @@ public final class ContainerPanel {
         return out;
     }
 
+    public static boolean isShiftDragActive() {
+        if (!swiftToBundleEnabled()) {
+            return false;
+        }
+        Minecraft client = Minecraft.getInstance();
+        if (!ClientGuard.ready(client) || !visible) {
+            return false;
+        }
+        Player player = client.player;
+        if (player.containerMenu != player.inventoryMenu) {
+            return false;
+        }
+        long win = client.getWindow().handle();
+        boolean shiftDown = GLFW.glfwGetKey(win, GLFW.GLFW_KEY_LEFT_SHIFT) == GLFW.GLFW_PRESS
+                || GLFW.glfwGetKey(win, GLFW.GLFW_KEY_RIGHT_SHIFT) == GLFW.GLFW_PRESS;
+        boolean mouseDown = GLFW.glfwGetMouseButton(win, GLFW.GLFW_MOUSE_BUTTON_LEFT) == GLFW.GLFW_PRESS;
+        return shiftDown && mouseDown;
+    }
+
     private static CategoryBar categoryBar(int py, int ph) {
-        int total = Math.max(1, (ph - PADDING + 3) / CAT_BAR_WIDTH);
+        int total = Math.max(1, (ph - 4) / CAT_BAR_WIDTH);
         int size = visibleCategories().size();
         boolean scrollable = size > total;
         int slots = scrollable ? Math.max(1, total - 2) : total;
         int scrollMax = Math.max(0, size - slots);
         catScrollOffset = Math.clamp(catScrollOffset, 0, scrollMax);
-        return new CategoryBar(py + PADDING - 3, slots, scrollMax, scrollable);
+        return new CategoryBar(py + 2, slots, scrollMax, scrollable);
     }
 
     private static int categorySlotY(CategoryBar bar, int slot) {
@@ -112,8 +148,8 @@ public final class ContainerPanel {
         if (!bar.scrollable()) {
             return 0;
         }
-        int x0 = px + PADDING - 5;
-        if (mx < x0 - 5 || mx > x0 + CAT_BAR_WIDTH + 5) {
+        int x0 = px + PADDING + 2;
+        if (mx < x0 - CAT_SELECT_EXPAND || mx > x0 + CAT_BAR_WIDTH + CAT_SELECT_EXPAND) {
             return 0;
         }
         if (my >= bar.top() && my < bar.top() + CAT_BAR_WIDTH) {
@@ -497,9 +533,20 @@ public final class ContainerPanel {
     }
 
     /**
+     * "Shift + 左键优先进收纳袋"开关
+     */
+    private static boolean swiftToBundleEnabled() {
+        FasterContainerPanelFunction cfg = FasterContainerPanelFunction.INSTANCE;
+        return cfg.isBundlePanelEnabled() && cfg.isShiftAndLeftClickSwiftToBundle();
+    }
+
+    /**
      * 面板可见时：Shift + 左键 背包物品槽，存入最佳收纳袋
      */
     public static boolean tryShiftInsert(Slot hovered) {
+        if (!swiftToBundleEnabled()) {
+            return false;
+        }
         Minecraft client = Minecraft.getInstance();
         Player player = client.player;
         if (player == null || !visible) {
@@ -524,6 +571,33 @@ public final class ContainerPanel {
         return true;
     }
 
+    /**
+     * 按住 Shift + 左键不松，鼠标划过的每个背包槽自动存入最佳收纳袋（每槽只触发一次）
+     */
+    public static void handleShiftDragInsert(Slot hovered) {
+        Minecraft client = Minecraft.getInstance();
+        if (!ClientGuard.ready(client)) {
+            return;
+        }
+        long win = client.getWindow().handle();
+        boolean shiftDown = GLFW.glfwGetKey(win, GLFW.GLFW_KEY_LEFT_SHIFT) == GLFW.GLFW_PRESS
+                || GLFW.glfwGetKey(win, GLFW.GLFW_KEY_RIGHT_SHIFT) == GLFW.GLFW_PRESS;
+        boolean mouseDown = GLFW.glfwGetMouseButton(win, GLFW.GLFW_MOUSE_BUTTON_LEFT) == GLFW.GLFW_PRESS;
+        if (!shiftDown || !mouseDown) {
+            lastShiftDragSlotIndex = -1;
+            return;
+        }
+        if (!visible || hovered == null || !hovered.hasItem()) {
+            return;
+        }
+        if (hovered.index == lastShiftDragSlotIndex) {
+            return;
+        }
+        if (tryShiftInsert(hovered)) {
+            lastShiftDragSlotIndex = hovered.index;
+        }
+    }
+
     private static int menuSlotFor(Player player, int invIndex) {
         if (invIndex < 0) {
             return -1;
@@ -541,7 +615,7 @@ public final class ContainerPanel {
         int ph = panelHeight(imageHeight);
         CategoryBar bar = categoryBar(topPos, ph);
         List<ContainerCategory> cats = visibleCategories();
-        int x0 = px + PADDING - 5;
+        int x0 = px + PADDING + 2;
         for (int i = 0; i < bar.slots(); i++) {
             int idx = catScrollOffset + i;
             if (idx >= cats.size()) {
@@ -553,8 +627,8 @@ public final class ContainerPanel {
             }
             ContainerCategory c = cats.get(idx);
             boolean selected = c == model.category();
-            int bx = selected ? x0 - 5 : x0;
-            int bw = selected ? CAT_BAR_WIDTH + 5 : CAT_BAR_WIDTH;
+            int bx = selected ? x0 - CAT_SELECT_EXPAND : x0;
+            int bw = selected ? CAT_BAR_WIDTH + CAT_SELECT_EXPAND : CAT_BAR_WIDTH;
             if (mx >= bx && mx < bx + bw) {
                 return c;
             }
@@ -563,19 +637,18 @@ public final class ContainerPanel {
     }
 
     private static boolean isInsideSearchBar(double mx, double my, int px, int topPos) {
-        int sbx = px + PADDING + CAT_BAR_WIDTH + 2;
-        int sby = topPos + 2;
-        int sbw = panelWidth() - PADDING - CAT_BAR_WIDTH - 2 - PADDING - 10;
+        int sbx = px + PADDING + CAT_BAR_WIDTH + 2 + CAT_SEARCH_GAP;
+        int sby = topPos + 3;
+        int sbw = panelWidth() - PADDING - CAT_BAR_WIDTH - 2 - PADDING - 10 - CAT_SEARCH_GAP;
         return mx >= sbx && mx <= sbx + sbw && my >= sby && my <= sby + SEARCH_BAR_HEIGHT;
     }
-
-    // --- 渲染 ---
 
     public static void render(GuiGraphicsExtractor g, int leftPos, int topPos, int imageHeight,
                               int mouseX, int mouseY) {
         if (!visible) {
             return;
         }
+        hoveredHostInv.clear();
         if (isRecipeBookExtended()) {
             hide();
             return;
@@ -634,7 +707,6 @@ public final class ContainerPanel {
             scrollOffset = maxScroll;
         }
 
-        g.fill(sbX, sbY, sbX + SCROLL_BAR_WIDTH, sbY + sbH, 0x30FFFFFF);
         if (maxScroll > 0) {
             int thumbH = Math.max(12, sbH * VISIBLE_ROWS / totalRows);
             int thumbY = sbY + (sbH - thumbH) * scrollOffset / maxScroll;
@@ -670,6 +742,12 @@ public final class ContainerPanel {
             int hy = gridY + hRow * (SLOT_SIZE + SLOT_SPACING);
             g.fill(hx, hy, hx + SLOT_SIZE, hy + SLOT_SIZE, 0x60FFFFFF);
             ItemStack hoveredStack = items.get(hovered).stack();
+            for (ContainerPanelModel.SourceRef src : items.get(hovered).sources()) {
+                int inv = src.hostInvIndex();
+                if (inv >= 0) {
+                    hoveredHostInv.add(inv);
+                }
+            }
             g.setComponentTooltipForNextFrame(font, List.of(
                     hoveredStack.getDisplayName(),
                     Component.literal("数量: " + hoveredStack.getCount()).withStyle(ChatFormatting.GRAY)
@@ -684,6 +762,49 @@ public final class ContainerPanel {
         int countY = py + ph - 11;
         g.fill(countX - 2, countY, countX + textW + 2, countY + font.lineHeight, 0x30FFFFFF);
         g.text(font, countText, countX, countY, 0xFFAAAAAA, false);
+    }
+
+    /**
+     * 悬浮面板物品时，在背包中“装有该物品的容器本体”槽位右下角角标
+     */
+    public static void renderHostHighlights(GuiGraphicsExtractor g, int leftPos, int topPos) {
+        if (!visible) {
+            return;
+        }
+        SlotHighlighter.highlightInventorySlots(g, leftPos, topPos, hoveredHostInv, FRAME_COLOR);
+    }
+
+    /**
+     * 悬浮在界面内任意槽位物品上时，高亮背包中所有装有该物品的容器槽位
+     */
+    public static void renderHoveredItemHighlights(GuiGraphicsExtractor g, Slot hoveredSlot,
+                                                   int leftPos, int topPos) {
+        if (!FasterContainerPanelFunction.INSTANCE.isHighlightContainerContainsThisItem()) {
+            return;
+        }
+        Minecraft client = Minecraft.getInstance();
+        if (!ClientGuard.ready(client) || hoveredSlot == null || !hoveredSlot.hasItem()) {
+            return;
+        }
+        ItemStack target = hoveredSlot.getItem();
+        List<Slot> hits = new ArrayList<>();
+        for (Slot slot : client.player.containerMenu.slots) {
+            ItemStack stack = slot.getItem();
+            if (stack.isEmpty()) {
+                continue;
+            }
+            SymContainer container = Containers.of(stack).orElse(null);
+            if (container == null) {
+                continue;
+            }
+            for (ItemStack entry : container.entries()) {
+                if (ItemStack.isSameItemSameComponents(entry, target)) {
+                    hits.add(slot);
+                    break;
+                }
+            }
+        }
+        SlotHighlighter.highlightSlots(g, leftPos, topPos, hits, FRAME_COLOR);
     }
 
     private static @NonNull String getHint() {
@@ -734,11 +855,12 @@ public final class ContainerPanel {
                                          int mouseX, int mouseY) {
         CategoryBar bar = categoryBar(py, ph);
         List<ContainerCategory> cats = visibleCategories();
-        int x0 = px + PADDING - 5;
+        int x0 = px + PADDING + 2;
         if (bar.scrollable()) {
             renderArrow(g, x0, bar.top(), true, catScrollOffset > 0);
             renderArrow(g, x0, categorySlotY(bar, bar.slots()), false, catScrollOffset < bar.scrollMax());
         }
+        int off = (CAT_BAR_WIDTH - 16) / 2;
         for (int i = 0; i < bar.slots(); i++) {
             int idx = catScrollOffset + i;
             if (idx >= cats.size()) {
@@ -747,13 +869,12 @@ public final class ContainerPanel {
             ContainerCategory c = cats.get(idx);
             int by = categorySlotY(bar, i);
             boolean selected = c == model.category();
-            int bx = selected ? x0 - 5 : x0;
-            int bw = selected ? CAT_BAR_WIDTH + 5 : CAT_BAR_WIDTH;
+            int bx = selected ? x0 - CAT_SELECT_EXPAND : x0;
+            int bw = selected ? CAT_BAR_WIDTH + CAT_SELECT_EXPAND : CAT_BAR_WIDTH;
             boolean hovered = mouseX >= bx && mouseX < bx + bw && mouseY >= by && mouseY < by + CAT_BAR_WIDTH;
             int bg = selected ? 0x25101010 : (hovered ? 0x40FFFFFF : 0x30FFFFFF);
             g.fill(bx, by, bx + bw, by + CAT_BAR_WIDTH, bg);
-            int off = (CAT_BAR_WIDTH - 16) / 2;
-            g.item(c.icon(), bx + off, by + off);
+            g.item(c.icon(), x0 + off, by + off);
             if (hovered) {
                 g.setComponentTooltipForNextFrame(font, List.of(Component.literal(c.displayName())),
                         mouseX, mouseY);
@@ -774,9 +895,9 @@ public final class ContainerPanel {
 
     private static void renderSearch(GuiGraphicsExtractor g, Font font, int px, int py, int pw,
                                      int mouseX, int mouseY) {
-        int sbx = px + PADDING + CAT_BAR_WIDTH + 2;
-        int sby = py + 2;
-        int sbw = pw - PADDING - CAT_BAR_WIDTH - 2 - PADDING - 10;
+        int sbx = px + PADDING + CAT_BAR_WIDTH + 2 + CAT_SEARCH_GAP;
+        int sby = py + 3;
+        int sbw = pw - PADDING - CAT_BAR_WIDTH - 2 - PADDING - 10 - CAT_SEARCH_GAP;
         boolean active = searchFocused;
         g.fill(sbx, sby, sbx + sbw, sby + SEARCH_BAR_HEIGHT, active ? 0x60000000 : 0x40FFFFFF);
         int textY = sby + (SEARCH_BAR_HEIGHT - font.lineHeight) / 2;
