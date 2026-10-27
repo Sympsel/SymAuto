@@ -24,8 +24,7 @@ public class UpdateMessageManager {
 
     static void main() {
         sendUpdates(
-                "修复了误把甜菜根作为种子导致无法种植甜菜根的bug",
-                "对退出游戏时偶现的异常问题进行了兜底防护，提升程序健壮性"
+                "修复了" + func("自动合成") + bug("递归合成在部分情况失效") + "的bug"
         );
     }
 
@@ -114,7 +113,6 @@ public class UpdateMessageManager {
         try {
             String existingContent = Files.readString(file.toPath(), StandardCharsets.UTF_8);
 
-            // 【核心修改】头部和时间在一行，内容加 \n 放到下一行
             String newEntry = "[" + createTime + "][" + version + "]\n" + context + "\n";
 
             String finalContent = newEntry + (existingContent.startsWith("\n") ? "" : "\n") + existingContent;

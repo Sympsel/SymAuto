@@ -22,17 +22,27 @@ import java.util.function.Predicate;
 public final class ContainerCategory {
 
     private static final ContainerCategory ALL =
-            new ContainerCategory("全部", new ItemStack(Items.COMPASS), stack -> true);
+            new ContainerCategory("全部", Items.COMPASS, stack -> true);
 
     private static List<ContainerCategory> cache = List.of();
     private static List<CreativeModeTab> cacheSource = List.of();
 
     private final String displayName;
+    private final Item iconItem;
     private final ItemStack icon;
     private final Predicate<ItemStack> matcher;
 
+    private ContainerCategory(String displayName, Item iconItem, Predicate<ItemStack> matcher) {
+        this(displayName, iconItem, null, matcher);
+    }
+
     private ContainerCategory(String displayName, ItemStack icon, Predicate<ItemStack> matcher) {
+        this(displayName, null, icon, matcher);
+    }
+
+    private ContainerCategory(String displayName, Item iconItem, ItemStack icon, Predicate<ItemStack> matcher) {
         this.displayName = displayName;
+        this.iconItem = iconItem;
         this.icon = icon;
         this.matcher = matcher;
     }
@@ -50,14 +60,16 @@ public final class ContainerCategory {
     }
 
     public ItemStack icon() {
-        return icon.copy();
+        return icon != null ? icon.copy() : new ItemStack(iconItem);
     }
 
     public boolean matches(ItemStack stack) {
         return stack != null && !stack.isEmpty() && matcher.test(stack);
     }
 
-    /** "全部" 在最前，其后按注册顺序列出所有可见创造标签页 */
+    /**
+     * "全部" 在最前，其后按注册顺序列出所有可见创造标签页
+     */
     public static List<ContainerCategory> list() {
         List<CreativeModeTab> tabs = visibleTabs();
         if (!tabs.equals(cacheSource)) {

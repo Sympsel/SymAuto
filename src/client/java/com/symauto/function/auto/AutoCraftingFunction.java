@@ -721,12 +721,31 @@ public class AutoCraftingFunction extends SymAbstractFunction {
             Set<Item> subPath = new HashSet<>(path);
             subPath.add(representative);
             List<CraftingRecipe> subCandidates = sub.getRecipes();
-            CraftingRecipe subRecipe = subCandidates.stream()
-                    .filter(candidate -> !recipeUsesReserved(candidate, subPath))
-                    .filter(candidate -> CraftingPreset.hasIngredientsFor(candidate, player, 1))
-                    .max(Comparator.comparingInt(candidate ->
-                            candidate.assemble(CraftingInput.EMPTY).getCount()))
-                    .orElse(null);
+//            CraftingRecipe subRecipe = subCandidates.stream()
+//                    .filter(candidate -> !recipeUsesReserved(candidate, subPath))
+//                    .filter(candidate -> CraftingPreset.hasIngredientsFor(candidate, player, 1))
+//                    .max(Comparator.comparingInt(candidate ->
+//                            candidate.assemble(CraftingInput.EMPTY).getCount()))
+//                    .orElse(null);
+            CraftingRecipe subRecipe = null;
+            for (CraftingRecipe candidate : subCandidates.stream()
+                    .filter(c -> !recipeUsesReserved(c, subPath))
+                    .sorted(Comparator.comparingInt(
+                            (CraftingRecipe c) -> c.assemble(CraftingInput.EMPTY).getCount()).reversed())
+                    .toList()) {
+                if (CraftingPreset.hasIngredientsFor(candidate, player, 1)) {
+                    subRecipe = candidate;
+                    break;
+                }
+                MaterialCheck pre = ensureMaterials(sub, candidate, player, subPath, task);
+                if (pre == MaterialCheck.READY) {
+                    subRecipe = candidate;
+                    break;
+                }
+                if (pre == MaterialCheck.WAITING) {
+                    return MaterialCheck.WAITING;
+                }
+            }
             if (subRecipe == null) {
                 debug("没有可用的中间材料配方：{}", describeItem(representative));
                 return MaterialCheck.UNAVAILABLE;

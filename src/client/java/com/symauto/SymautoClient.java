@@ -70,9 +70,9 @@ public class SymautoClient implements ClientModInitializer {
             for (SymAbstractFunction f : FunctionConfig.AUTO_ALL) {
                 try {
                     f.setEnable(false);
-                } catch (Exception e) {
-                    // 关游戏时 player/level 已卸载，个别功能清理失败不应阻断其余清理与配置落盘
-                    Constants.LOG.warn("Failed to disable function '{}' on shutdown", f.getId(), e);
+                } catch (Throwable t) {
+                    // 关游戏时世界/注册表可能已拆除，个别功能清理失败不应阻断其余清理与配置落盘；
+                    Constants.LOG.error("Failed to disable function '{}' on shutdown", f.getId(), t);
                 }
             }
             for (PersistentStore store : StoreConfig.ALL) {
