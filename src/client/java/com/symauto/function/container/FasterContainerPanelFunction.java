@@ -49,7 +49,6 @@ public class FasterContainerPanelFunction extends SymAbstractFunction {
                 this::isEnableMiddleClickViewContainer, this::setEnableMiddleClickViewContainer, true));
         addOption(new BooleanOption("is_shift_and_left_click_swift_to_bundle", "背包界面Shift + 左键物品优先进入收纳袋",
                 this::isShiftAndLeftClickSwiftToBundle, this::setShiftAndLeftClickSwiftToBundle, true));
-
     }
 
     @Override

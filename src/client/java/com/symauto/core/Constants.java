@@ -6,7 +6,7 @@ import org.slf4j.LoggerFactory;
 public class Constants {
     public static final String MOD_ID = "symauto";
     public static final String MOD_NAME = "SymAuto";
-    public static final Logger LOG = LoggerFactory.getLogger("SymAuto");
+    public static final Logger LOG = LoggerFactory.getLogger(MOD_NAME);
 
     private Constants() {
     }
@@ -19,7 +19,7 @@ public class Constants {
     public static final int SYNC_TICKS = 2;
 
     // 背包界面常量
-    public static final int RESULT = 0; // 合成结果
+    public static final int RESULT_SLOT = 0; // 合成结果
     // 合成格起始
     public static final int MATERIAL_START = 1;
     public static final int MATERIAL_END = 5; // 左闭右开区间

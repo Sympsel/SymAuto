@@ -8,6 +8,7 @@ import com.symauto.config.ConfigManager;
 import com.symauto.core.Constants;
 import com.symauto.function.auto.AutoAttackFunction;
 import com.symauto.function.highlight.HighLightSpecificVillagersFunction;
+import com.symauto.gui.screen.PilotScreen;
 import com.symauto.gui.screen.FunctionMenuScreen;
 import com.symauto.model.common.SymList;
 import com.symauto.storage.DeathInfoStore;
@@ -138,6 +139,8 @@ public class SymAutoCommand {
                     .then(literal("gui").executes(SymAutoCommand::openDeathGui))
                     .then(literal("latest").executes(SymAutoCommand::showLatestDeath))
                     .then(literal("clear").executes(SymAutoCommand::clearDeaths)));
+            //  调出试点屏幕
+            dispatcher.register(literal(ns + ":pilot").executes(SymAutoCommand::openPilot));
             dispatcher.register(literal(ns + ":bwlist")
                     .then(argument("function", StringArgumentType.word())
                             .suggests(BW_FEATURES)
@@ -150,6 +153,12 @@ public class SymAutoCommand {
                                                     .suggests(BW_VALUE_IDS)
                                                     .executes(SymAutoCommand::handleBWListWithValue))))));
         });
+    }
+
+    private static int openPilot(CommandContext<FabricClientCommandSource> ctx) {
+        Minecraft client = Minecraft.getInstance();
+        client.execute(() -> client.gui.setScreen(new PilotScreen()));
+        return 1;
     }
 
     private static int showMenu(CommandContext<FabricClientCommandSource> ctx) {

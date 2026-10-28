@@ -3,10 +3,11 @@ package com.symauto.gui.screen;
 import com.symauto.config.ConfigManager;
 import com.symauto.config.option.ConfigOption;
 import com.symauto.function.base.SymAbstractFunction;
+import com.symauto.gui.widget.component.ArrowButton;
+import com.symauto.gui.widget.utils.ButtonFactory;
 import lombok.NonNull;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
@@ -15,6 +16,7 @@ public class ConfigMenuScreen extends Screen {
     private final Screen parent;
 
     private static final int TITLE_COLOR = 0xFFFFFFFF;
+
     private static final int TITLE_Y = 12;
     private static final int ROW_H = 22;
     private static final int GAP_Y = 6;
@@ -22,6 +24,8 @@ public class ConfigMenuScreen extends Screen {
     private static final int ARROW_W = 20;
     private static final int ARROW_H = 20;
     private static final int VALUE_W = 44;
+    // 字段与 label 边缘的内边距
+    private static final int FIELD_PAD_X = 4;
 
     private int panelLeft;
     private int contentTop;
@@ -46,26 +50,36 @@ public class ConfigMenuScreen extends Screen {
         int midX = panelLeft + ARROW_W + 2;
         for (ConfigOption opt : function.getConfigOptions()) {
             final ConfigOption ref = opt;
-            this.addRenderableWidget(Button.builder(Component.literal("◀"),
-                            b -> { ref.cycle(-1); ConfigManager.save(); })
-                    .bounds(panelLeft, y, ARROW_W, ARROW_H).build());
-            this.addRenderableWidget(Button.builder(Component.literal("▶"),
-                            b -> { ref.cycle(1); ConfigManager.save(); })
-                    .bounds(midX + LABEL_W + 2 + VALUE_W + 2, y, ARROW_W, ARROW_H).build());
+            this.addRenderableWidget(ButtonFactory.move(Component.literal("上一项"),
+                            panelLeft, y, ARROW_W, ARROW_H, ArrowButton.Direction.LEFT)
+                    .onLeftClick(() -> {
+                        ref.cycle(-1);
+                        ConfigManager.save();
+                    }));
+            this.addRenderableWidget(ButtonFactory.move(Component.literal("下一项"),
+                            midX + LABEL_W + 2 + VALUE_W + 2, y, ARROW_W, ARROW_H, ArrowButton.Direction.RIGHT)
+                    .onLeftClick(() -> {
+                        ref.cycle(1);
+                        ConfigManager.save();
+                    }));
             y += ROW_H + GAP_Y;
         }
 
         y += GAP_Y;
-        this.addRenderableWidget(Button.builder(Component.literal("重置本功能"), b -> {
-            for (ConfigOption o : function.getConfigOptions()) {
-                o.reset();
-            }
-            ConfigManager.save();
-        }).bounds(panelLeft, y, panelW, ARROW_H).build());
-        y += ROW_H + GAP_Y;
-        this.addRenderableWidget(Button.builder(Component.literal("返回"), b ->
-                        this.minecraft.gui.setScreen(parent))
-                .bounds(panelLeft, y, panelW, ARROW_H).build());
+        int gapX = 4;
+        int halfW = (panelW - gapX) / 2;
+        this.addRenderableWidget(ButtonFactory.navigation(
+                        Component.literal("重置"), panelLeft, y, halfW, ARROW_H)
+                .onLeftClick(() -> {
+                    for (ConfigOption o : function.getConfigOptions()) {
+                        o.reset();
+                    }
+                    ConfigManager.save();
+                })
+                .tooltip(Component.literal("恢复默认配置")));
+        this.addRenderableWidget(ButtonFactory.navigation(
+                        Component.literal("返回"), panelLeft + halfW + gapX, y, halfW, ARROW_H)
+                .onLeftClick(() -> this.minecraft.gui.setScreen(parent)));
     }
 
     @Override
@@ -81,9 +95,9 @@ public class ConfigMenuScreen extends Screen {
         int y = contentTop;
         int midX = panelLeft + ARROW_W + 2;
         for (ConfigOption opt : function.getConfigOptions()) {
-            graphics.text(this.font, opt.getLabel(), midX, y + 6, 0xFFFFFFFF, false);
+            graphics.text(this.font, opt.getLabel(), midX + FIELD_PAD_X, y + 6, 0xFFFFFFFF, false);
             String value = opt.displayValue();
-            int valueX = midX + LABEL_W + 2 + VALUE_W - this.font.width(value);
+            int valueX = midX + LABEL_W + 2 + VALUE_W - FIELD_PAD_X - this.font.width(value);
             graphics.text(this.font, value, valueX, y + 6, 0xFF7FFF7F, false);
             y += ROW_H + GAP_Y;
         }

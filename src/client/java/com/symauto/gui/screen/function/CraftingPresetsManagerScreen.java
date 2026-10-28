@@ -2,16 +2,16 @@ package com.symauto.gui.screen.function;
 
 import com.symauto.function.auto.AutoCraftingFunction;
 import com.symauto.gui.base.SymBaseScreen;
+import com.symauto.gui.widget.utils.ButtonFactory;
 import com.symauto.gui.widget.LineWidget;
 import com.symauto.gui.widget.ScrollableTextList;
-import com.symauto.gui.widget.SimpleScrollbar;
+import com.symauto.gui.widget.component.SymScrollbar;
 import com.symauto.storage.CraftingPresetStore;
 import com.symauto.gui.widget.item.CraftingPresetItem;
+import com.symauto.storage.KeepInvPresetStore;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
@@ -32,7 +32,7 @@ public class CraftingPresetsManagerScreen extends SymBaseScreen {
     private final boolean showLogs;
     private ScrollableTextList logList;
 
-    private final SimpleScrollbar scrollbar = new SimpleScrollbar(new SimpleScrollbar.ScrollTarget() {
+    private final SymScrollbar scrollbar = new SymScrollbar(new SymScrollbar.ScrollTarget() {
         @Override
         public int totalRows() {
             return entryCount();
@@ -101,18 +101,21 @@ public class CraftingPresetsManagerScreen extends SymBaseScreen {
 
         int btnY = this.height - 20;
         if (!showLogs) {
-            addRenderableWidget(Button.builder(Component.literal("+ 新增手持物品"), b -> {
-                CraftingPresetStore.addFromHeld(currentHeld());
-                scrollRow = Math.max(0, CraftingPresetStore.size() - visibleRows);
+            addRenderableWidget(ButtonFactory.navigation(Component.literal("新增手持物品")
+                    , 6, btnY, 92, 20).onLeftClick(() -> {
+                KeepInvPresetStore.addFromHeld(currentHeld());
+                scrollRow = Math.max(0, KeepInvPresetStore.size() - visibleRows);
                 reopen();
-            }).bounds(6, btnY, 92, 20).build());
-            addRenderableWidget(Button.builder(Component.literal("恢复默认"), b -> {
+            }));
+            addRenderableWidget(ButtonFactory.navigation(Component.literal("恢复默认")
+                    , 100, btnY, 60, 20).onLeftClick(() -> {
                 CraftingPresetStore.restoreDefaults();
                 reopen();
-            }).bounds(100, btnY, 60, 20).build());
+            }));
         }
 
-        addRenderableWidget(Button.builder(Component.literal(showLogs ? "清空日志" : "清空"), b -> {
+        addRenderableWidget(ButtonFactory.navigation(Component.literal(showLogs ? "清空日志" : "清空")
+                , showLogs ? 6 : 162, btnY, showLogs ? 60 : 40, 20).onLeftClick(() -> {
             if (showLogs) {
                 AutoCraftingFunction.clearExecutionLogs();
             } else {
@@ -120,18 +123,20 @@ public class CraftingPresetsManagerScreen extends SymBaseScreen {
             }
             scrollRow = 0;
             reopen();
-        }).bounds(showLogs ? 6 : 162, btnY, showLogs ? 60 : 40, 20).build());
+        }));
 
-        addRenderableWidget(Button.builder(Component.literal(showLogs ? "返回预设" : "执行日志"), b -> {
-                    scrollRow = showLogs ? 0 : Integer.MAX_VALUE;
-                    reopen(!showLogs);
-                }).bounds(showLogs ? 70 : 205, btnY, 60, 20)
-                .tooltip(Tooltip.create(Component.literal(showLogs
-                        ? "返回预设管理器"
-                        : "查看最近 200 条自动合成执行记录；连续重复记录会自动合并")))
-                .build());
-        addRenderableWidget(Button.builder(Component.literal("返回"), b ->
-                this.minecraft.gui.setScreen(parent)).bounds(this.width - 56, btnY, 50, 20).build());
+        addRenderableWidget(ButtonFactory.navigation(Component.literal(showLogs ? "返回预设" : "执行日志"),
+                showLogs ? 70 : 205, btnY, 60, 20).onLeftClick(() -> {
+            scrollRow = showLogs ? 0 : Integer.MAX_VALUE;
+            reopen(!showLogs);
+        }).tooltip(Component.literal(showLogs
+                ? "返回预设管理器"
+                : "查看最近 200 条自动合成执行记录"
+        )));
+        addRenderableWidget(ButtonFactory.navigation(Component.literal("返回")
+                , this.width - 56, btnY, 50, 20).onLeftClick(() -> {
+            this.minecraft.gui.setScreen(parent);
+        }));
     }
 
     private int entryCount() {

@@ -1,10 +1,10 @@
-package com.symauto.gui.widget;
+package com.symauto.gui.widget.component;
 
 import com.symauto.gui.UiStyle;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 /** 通用竖向滚动条：轨道 + 滑块 + 拖拽。行滚动单位由 ScrollTarget 换算。 */
-public class SimpleScrollbar {
+public class SymScrollbar {
     private UiStyle style;
 
     public interface ScrollTarget {
@@ -19,16 +19,16 @@ public class SimpleScrollbar {
     private boolean dragging;
     private int dragOffset;
 
-    public SimpleScrollbar(ScrollTarget target) {
+    public SymScrollbar(ScrollTarget target) {
         this(target, UiStyle.DEFAULT);
     }
 
-    public SimpleScrollbar(ScrollTarget target, UiStyle style) {
+    public SymScrollbar(ScrollTarget target, UiStyle style) {
         this.target = target;
         setStyle(style);
     }
 
-    public SimpleScrollbar setStyle(UiStyle style) {
+    public SymScrollbar setStyle(UiStyle style) {
         this.style = style;
         return this;
     }
@@ -55,8 +55,9 @@ public class SimpleScrollbar {
     }
 
     public void render(GuiGraphicsExtractor graphics) {
-        if (maxScroll() <= 0) return;
-        graphics.fill(trackLeft, trackTop, trackLeft + style.scrollbarWidth, trackBottom, style.scrollbarTrack);
+        if (maxScroll() <= 0) {
+            return;
+        }
         int thumbH = thumbHeight();
         int thumbY = thumbTop(thumbH);
         graphics.fill(trackLeft, thumbY, trackLeft + style.scrollbarWidth, thumbY + thumbH,

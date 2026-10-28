@@ -1,13 +1,13 @@
 package com.symauto.gui.screen.function;
 
 import com.symauto.gui.base.SymBaseScreen;
+import com.symauto.gui.widget.utils.ButtonFactory;
 import com.symauto.gui.widget.item.KeepInvPresetItem;
-import com.symauto.gui.widget.SimpleScrollbar;
+import com.symauto.gui.widget.component.SymScrollbar;
 import com.symauto.storage.KeepInvPresetStore;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
@@ -26,7 +26,7 @@ public class AutoDiscardMoreThingManagerScreen extends SymBaseScreen {
     private int scrollRow = 0;
     private int visibleRows = 1;
 
-    private final SimpleScrollbar scrollbar = new SimpleScrollbar(new SimpleScrollbar.ScrollTarget() {
+    private final SymScrollbar scrollbar = new SymScrollbar(new SymScrollbar.ScrollTarget() {
         @Override
         public int totalRows() {
             return KeepInvPresetStore.size();
@@ -76,20 +76,24 @@ public class AutoDiscardMoreThingManagerScreen extends SymBaseScreen {
         }
 
         int btnY = this.height - 20;
-        addRenderableWidget(Button.builder(Component.literal("+ 新增手持物品"), b -> {
+        addRenderableWidget(ButtonFactory.navigation(Component.literal("新增手持物品")
+        , 6, btnY, 92, 20).onLeftClick(() -> {
             KeepInvPresetStore.addFromHeld(currentHeld());
             scrollRow = Math.max(0, KeepInvPresetStore.size() - visibleRows);
             reopen();
-        }).bounds(6, btnY, 92, 20).build());
+        }));
 
-        addRenderableWidget(Button.builder(Component.literal("清空"), b -> {
+        addRenderableWidget(ButtonFactory.navigation(Component.literal("清空")
+        , 102, btnY, 40, 20).onLeftClick(() -> {
             KeepInvPresetStore.clearAll();
             scrollRow = 0;
             reopen();
-        }).bounds(102, btnY, 40, 20).build());
+        }));
 
-        addRenderableWidget(Button.builder(Component.literal("返回"), b ->
-                this.minecraft.gui.setScreen(parent)).bounds(this.width - 56, btnY, 50, 20).build());
+        addRenderableWidget(ButtonFactory.navigation(Component.literal("返回")
+        , this.width - 56, btnY, 50, 20).onLeftClick(() -> {
+            this.minecraft.gui.setScreen(parent);
+        }));
     }
 
     private void buildRow(int index, int y) {

@@ -83,7 +83,6 @@ public final class ContainerPanel {
     /** Shift+左键划过式入袋 */
     private static int lastShiftDragSlotIndex = -1;
 
-
     /**
      * 分类栏纵向滚动偏移
      */

@@ -24,7 +24,8 @@ public class UpdateMessageManager {
 
     static void main() {
         sendUpdates(
-                "修复了" + func("自动合成") + bug("递归合成在部分情况失效") + "的bug"
+                "修复了" + func("自动合成") + bug("递归合成在部分情况失效") + "的bug",
+                "重绘了本 mod 的组件样式"
         );
     }
 
@@ -126,7 +127,7 @@ public class UpdateMessageManager {
 
     private UpdateMessageManager() {
         updateMessages = new ArrayList<>();
-        // 将整个文件内容作为一个元素加入列表，交由 UI 去正则匹配
+        // 将整个文件内容作为一个元素加入列表
         try (var in = UpdateMessageManager.class.getResourceAsStream(UPDATE_LOG_RESOURCE)) {
             if (in == null) {
                 System.err.println("[SymAuto] 未找到更新日志资源: " + UPDATE_LOG_RESOURCE);

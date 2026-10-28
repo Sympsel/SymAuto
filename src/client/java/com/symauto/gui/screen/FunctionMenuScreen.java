@@ -6,11 +6,11 @@ import com.symauto.core.FunctionConfig;
 import com.symauto.function.base.SymAbstractFunction;
 import com.symauto.function.utils.KeyUtils;
 import com.symauto.gui.UiStyle;
-import com.symauto.gui.widget.SimpleScrollbar;
+import com.symauto.gui.widget.utils.ButtonFactory;
+import com.symauto.gui.widget.component.SymButton;
+import com.symauto.gui.widget.component.SymScrollbar;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
@@ -21,10 +21,14 @@ import java.util.List;
 
 public class FunctionMenuScreen extends Screen {
     private final Screen parent;
-    /** 当前选中的分类标签；SymFunctionTags.ALL(-1) 表示全部。 */
+    /**
+     * 当前选中的分类标签；SymFunctionTags.ALL(-1) 表示全部
+     */
     private final int activeTag;
 
-    /** 缓存：记住最后一次选中的分类 */
+    /**
+     * 缓存：记住最后一次选中的分类
+     */
     private static int cachedTag = SymFunctionTags.ALL;
 
     private static final int BTN_W = 120;
@@ -43,7 +47,7 @@ public class FunctionMenuScreen extends Screen {
     private static final int LIST_MAX_HEIGHT = 180;
     private static final int SCROLLBAR_GAP = 3;
 
-    private final List<Button> featureButtons = new ArrayList<>();
+    private final List<SymButton> functionButtons = new ArrayList<>();
     private List<SymAbstractFunction> currentFunctions = List.of();
 
     private UiStyle style;
@@ -58,11 +62,26 @@ public class FunctionMenuScreen extends Screen {
     private int totalRows = 0;
     private int scrollRow = 0;
 
-    private final SimpleScrollbar scrollbar = new SimpleScrollbar(new SimpleScrollbar.ScrollTarget() {
-        @Override public int totalRows() { return totalRows; }
-        @Override public int visibleRows() { return visibleRows; }
-        @Override public int scrollRow() { return scrollRow; }
-        @Override public void scrollRow(int v) { scrollRow = Math.clamp(v, 0, maxScrollRow()); }
+    private final SymScrollbar scrollbar = new SymScrollbar(new SymScrollbar.ScrollTarget() {
+        @Override
+        public int totalRows() {
+            return totalRows;
+        }
+
+        @Override
+        public int visibleRows() {
+            return visibleRows;
+        }
+
+        @Override
+        public int scrollRow() {
+            return scrollRow;
+        }
+
+        @Override
+        public void scrollRow(int v) {
+            scrollRow = Math.clamp(v, 0, maxScrollRow());
+        }
     });
 
     public FunctionMenuScreen(Screen parent) {
@@ -89,9 +108,9 @@ public class FunctionMenuScreen extends Screen {
 
     @Override
     protected void init() {
-        featureButtons.clear();
+        functionButtons.clear();
 
-        // 顶部标签栏（点击切换分类 → 重开界面并带上选中标签）
+        // 顶部标签栏
         buildTagBar();
 
         // 功能区顶部：位于标签栏下方
@@ -124,15 +143,15 @@ public class FunctionMenuScreen extends Screen {
             int col = i % columns;
             int x = listLeft + col * (BTN_W + GAP_X);
 
-            Button btn = Button.builder(buildLabel(func), b -> {
+            SymButton btn = ButtonFactory.function(buildLabel(func), x, rowToY(i / columns), BTN_W, BTN_H)
+                    .tooltip(Component.literal(func.getTooltip()))
+                    .onLeftClick(() -> {
                         func.toggle();
                         ConfigManager.save();
                         refreshAllButtons();
-                    }).tooltip(Tooltip.create(Component.literal(func.getTooltip())))
-                    .bounds(x, rowToY(i / columns), BTN_W, BTN_H)
-                    .build();
+                    });
 
-            featureButtons.add(btn);
+            functionButtons.add(btn);
             this.addRenderableWidget(btn);
         }
 
@@ -140,49 +159,45 @@ public class FunctionMenuScreen extends Screen {
 
         int fourW = (listWidth - 3 * GAP_X) / 4;
         int bx = listLeft;
-        this.addRenderableWidget(
-                Button.builder(Component.literal("更新日志"), b ->
-                                this.minecraft.gui.setScreen(new UpdateLogScreen(this)))
-                        .bounds(bx, nextY, fourW, BTN_H)
-                        .build()
-        );
+        this.addRenderableWidget(ButtonFactory.navigation(
+                Component.literal("更新日志"),
+                bx, nextY, fourW, BTN_H
+        ).onLeftClick(() -> this.minecraft.gui.setScreen(new UpdateLogScreen(this))));
         bx += fourW + GAP_X;
-        this.addRenderableWidget(
-                Button.builder(Component.literal("指令用法"), b ->
-                                this.minecraft.gui.setScreen(new CommandUsageScreen(this)))
-                        .bounds(bx, nextY, fourW, BTN_H)
-                        .build()
-        );
+        this.addRenderableWidget(ButtonFactory.navigation(
+                Component.literal("指令用法"),
+                bx, nextY, fourW, BTN_H
+        ).onLeftClick(() -> this.minecraft.gui.setScreen(new CommandUsageScreen(this))));
         bx += fourW + GAP_X;
-        this.addRenderableWidget(
-                Button.builder(Component.literal("打开配置文件夹"), b -> ConfigManager.openConfigFolder())
-                        .bounds(bx, nextY, fourW, BTN_H)
-                        .build()
-        );
+        this.addRenderableWidget(ButtonFactory.navigation(
+                Component.literal("打开配置文件夹"),
+                bx, nextY, fourW, BTN_H
+        ).onLeftClick(ConfigManager::openConfigFolder));
         bx += fourW + GAP_X;
-        this.addRenderableWidget(
-                Button.builder(Component.literal("返回"), b -> this.onClose())
-                        .bounds(bx, nextY, fourW, BTN_H)
-                        .build()
-        );
+        this.addRenderableWidget(ButtonFactory.navigation(
+                Component.literal("返回"),
+                bx, nextY, fourW, BTN_H
+        ).onLeftClick(this::onClose));
 
         scrollbar.setBounds(
                 Math.min(listLeft + listWidth + SCROLLBAR_GAP, this.width - style.scrollbarWidth - 1),
                 listTop, listTop + listHeight);
     }
 
-    /** 构建顶部标签栏：「全部」+ 各分类，居中排布。 */
+    /**
+     * 构建顶部标签栏
+     */
     private void buildTagBar() {
         int count = 1 + SymFunctionTags.COUNT;
         int[] tagIds = new int[count];
         tagIds[0] = SymFunctionTags.ALL;
-        for (int i = 0; i < SymFunctionTags.COUNT; i++) {
+        for (int i = 0; i < SymFunctionTags.COUNT; ++i) {
             tagIds[i + 1] = i;
         }
 
         int[] widths = new int[count];
         int total = 0;
-        for (int i = 0; i < count; i++) {
+        for (int i = 0; i < count; ++i) {
             widths[i] = this.font.width(SymFunctionTags.getTagName(tagIds[i])) + 12;
             total += widths[i];
         }
@@ -192,11 +207,10 @@ public class FunctionMenuScreen extends Screen {
         for (int i = 0; i < count; i++) {
             final int tag = tagIds[i];
             this.addRenderableWidget(
-                    Button.builder(Component.literal(tagText(tag)), b ->
-                                    this.minecraft.gui.setScreen(new FunctionMenuScreen(this.parent, tag, this.style)))
-                            .bounds(x, TAG_BAR_Y, widths[i], TAG_BTN_H)
-                            .build()
-            );
+                    ButtonFactory.category(Component.literal(tagText(tag)),
+                            x, TAG_BAR_Y, widths[i], TAG_BTN_H
+                    ).onLeftClick(() ->
+                            this.minecraft.gui.setScreen(new FunctionMenuScreen(this.parent, tag, this.style))));
             x += widths[i] + TAG_GAP;
         }
     }
@@ -220,7 +234,9 @@ public class FunctionMenuScreen extends Screen {
         return result;
     }
 
-    /** 把「内容行」映射为可见行 Y；不在可视区的行移到屏幕外隐藏。 */
+    /**
+     * 把「内容行」映射为可见行 Y
+     */
     private int rowToY(int row) {
         int displayRow = row - scrollRow;
         if (displayRow < 0 || displayRow >= visibleRows) {
@@ -229,13 +245,15 @@ public class FunctionMenuScreen extends Screen {
         return listTop + displayRow * (BTN_H + GAP_Y);
     }
 
-    /** 根据当前 scrollRow 重新摆放所有功能按钮。 */
+    /**
+     * 根据当前 scrollRow 重新摆放所有功能按钮
+     */
     private void relayoutFeatureButtons() {
-        for (int i = 0; i < featureButtons.size(); i++) {
+        for (int i = 0; i < functionButtons.size(); i++) {
             int col = i % columns;
             int row = i / columns;
             int x = listLeft + col * (BTN_W + GAP_X);
-            featureButtons.get(i).setPosition(x, rowToY(row));
+            functionButtons.get(i).setPosition(x, rowToY(row));
         }
     }
 
@@ -243,7 +261,7 @@ public class FunctionMenuScreen extends Screen {
         return Math.max(0, totalRows - visibleRows);
     }
 
-    // 根据可用宽度自适应列数（1 ~ MAX_COLUMNS）
+    // 根据可用宽度自适应列数
     private int computeColumns() {
         int columns = (this.width - 2 * SIDE_MARGIN + GAP_X) / (BTN_W + GAP_X);
         return Math.clamp(columns, 1, MAX_COLUMNS);
@@ -313,8 +331,8 @@ public class FunctionMenuScreen extends Screen {
     }
 
     private SymAbstractFunction findFunctionAt(double mx, double my) {
-        for (int i = 0; i < featureButtons.size() && i < currentFunctions.size(); ++i) {
-            Button b = featureButtons.get(i);
+        for (int i = 0; i < functionButtons.size() && i < currentFunctions.size(); ++i) {
+            SymButton b = functionButtons.get(i);
             if (mx >= b.getX() && mx <= b.getX() + b.getWidth()
                     && my >= b.getY() && my <= b.getY() + b.getHeight()) {
                 return currentFunctions.get(i);
@@ -324,8 +342,8 @@ public class FunctionMenuScreen extends Screen {
     }
 
     private void refreshAllButtons() {
-        for (int i = 0; i < featureButtons.size() && i < currentFunctions.size(); i++) {
-            featureButtons.get(i).setMessage(buildLabel(currentFunctions.get(i)));
+        for (int i = 0; i < functionButtons.size() && i < currentFunctions.size(); i++) {
+            functionButtons.get(i).setMessage(buildLabel(currentFunctions.get(i)));
         }
     }
 

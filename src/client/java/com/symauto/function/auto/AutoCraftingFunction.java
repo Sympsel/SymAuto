@@ -1,6 +1,7 @@
 package com.symauto.function.auto;
 
 import com.symauto.config.option.IntOption;
+import com.symauto.core.Constants;
 import com.symauto.function.utils.ContainerActions;
 import com.symauto.storage.CraftingPresetStore;
 import com.symauto.model.preset.CraftingPreset;
@@ -28,7 +29,6 @@ import java.util.*;
 public class AutoCraftingFunction extends SymAbstractFunction {
     public static final AutoCraftingFunction INSTANCE = new AutoCraftingFunction();
 
-    private static final int RESULT_SLOT = 0;
     private static final int GRID_FIRST_SLOT = 1;
     private static final int GRID_SIZE = 9;
     private static final int STACK_MAX = 64;
@@ -527,10 +527,10 @@ public class AutoCraftingFunction extends SymAbstractFunction {
         // 网格每格恰好 batch 个，结果槽一次取出即执行 batch 次
         if (assumption.isThrowResult()) {
             for (int i = 0; i < batch; i++) {
-                ContainerActions.dropSlotStack(RESULT_SLOT);
+                ContainerActions.dropSlotStack(Constants.RESULT_SLOT);
             }
         } else {
-            ContainerActions.quickMove(RESULT_SLOT);
+            ContainerActions.quickMove(Constants.RESULT_SLOT);
         }
 
         clearGrid(menu);
@@ -815,9 +815,9 @@ public class AutoCraftingFunction extends SymAbstractFunction {
             ContainerActions.leftClickSlot(src); // 剩余放回
         }
         if (assumption.isThrowResult()) {
-            ContainerActions.dropSlotStack(RESULT_SLOT); // 合成并丢出
+            ContainerActions.dropSlotStack(Constants.RESULT_SLOT);
         } else {
-            ContainerActions.quickMove(RESULT_SLOT); // 合成入背包
+            ContainerActions.quickMove(Constants.RESULT_SLOT);
         }
         return true;
     }

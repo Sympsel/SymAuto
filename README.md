@@ -39,7 +39,7 @@
 - 多预设自动合成
 
 ### 注意
-- 本项目目前不支持自定义组合快捷键绑定，推荐添加前置 mod [NewVisualKeybinding](https://www.mcmod.cn/class/27226.html) 或其它快捷键管理工具
+- 本项目目前不支持自定义组合快捷键绑定，推荐添加 mod [NewVisualKeybinding](https://www.mcmod.cn/class/27226.html) 或其它快捷键管理工具
 
 ## 命令
 

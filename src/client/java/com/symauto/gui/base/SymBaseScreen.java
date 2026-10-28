@@ -1,9 +1,9 @@
 package com.symauto.gui.base;
 
 import com.symauto.gui.UiStyle;
-import net.minecraft.ChatFormatting;
+import com.symauto.gui.widget.utils.ButtonFactory;
+import com.symauto.gui.widget.component.SymButton;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
@@ -31,14 +31,9 @@ public class SymBaseScreen extends Screen {
         graphics.text(this.font, this.title, x, TITLE_Y, style.title, true);
     }
 
-    protected Button backButton(Screen parent, String label, int width) {
-        return Button.builder(Component.literal(label),
-                        b -> this.minecraft.gui.setScreen(parent))
-                .bounds(this.width - width - 6, 6, width, 16)
-                .build();
-    }
-
-    protected Button backButton(Screen parent) {
-        return backButton(parent, "返回", 64);
+    protected SymButton backButton(Screen parent, String label, int width) {
+        return ButtonFactory.back(Component.literal(label),
+                this.width - width - 6, 6, width, 16)
+                .onLeftClick(() -> this.minecraft.gui.setScreen(parent));
     }
 }

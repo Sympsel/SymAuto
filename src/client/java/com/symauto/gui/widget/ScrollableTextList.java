@@ -1,6 +1,7 @@
 package com.symauto.gui.widget;
 
 import com.symauto.gui.UiStyle;
+import com.symauto.gui.widget.component.SymScrollbar;
 import lombok.Setter;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -28,11 +29,10 @@ public class ScrollableTextList {
     private int scrollOffset;
     private int maxScroll;
 
-    // 滚动条（可选）
     private boolean scrollbarEnabled;
     private int totalLines;
     private int visibleRowsNow;
-    private final SimpleScrollbar scrollbar = new SimpleScrollbar(new SimpleScrollbar.ScrollTarget() {
+    private final SymScrollbar scrollbar = new SymScrollbar(new SymScrollbar.ScrollTarget() {
         @Override public int totalRows() { return totalLines; }
         @Override public int visibleRows() { return visibleRowsNow; }
         @Override public int scrollRow() { return scrollOffset; }
