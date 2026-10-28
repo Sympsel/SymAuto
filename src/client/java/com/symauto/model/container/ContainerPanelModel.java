@@ -21,16 +21,21 @@ import java.util.Map;
  */
 public final class ContainerPanelModel {
 
-    /** 面板上展示的一个聚合条目：某物品 + 跨容器累计数量 + 其所有来源。 */
-    public record Entry(ItemStack stack, int totalCount, List<SourceRef> sources) {}
+    /**
+     * 面板上展示的一个聚合条目：某物品 + 跨容器累计数量 + 其所有来源。
+     */
+    public record Entry(ItemStack stack, int totalCount, List<SourceRef> sources) {
+    }
 
     /**
      * 聚合物品的一个来源
-     * @param container 来源容器
-     * @param hostInvIndex  该容器宿主物品在背包中的槽位，无法定位时为 -1
-     * @param count 该来源上的数量
+     *
+     * @param container    来源容器
+     * @param hostInvIndex 该容器宿主物品在背包中的槽位，无法定位时为 -1
+     * @param count        该来源上的数量
      */
-    public record SourceRef(SymContainer container, int hostInvIndex, int entryIndex, int count) {}
+    public record SourceRef(SymContainer container, int hostInvIndex, int entryIndex, int count) {
+    }
 
     private final List<Entry> all = new ArrayList<>();
     private final List<Entry> visible = new ArrayList<>();
@@ -46,7 +51,9 @@ public final class ContainerPanelModel {
         return type;
     }
 
-    /** 重新扫描背包并重建全部数据 */
+    /**
+     * 重新扫描背包并重建全部数据
+     */
     public void rebuild() {
         all.clear();
         hostIndexToInv.clear();
@@ -170,6 +177,7 @@ public final class ContainerPanelModel {
         }
         var key = BuiltInRegistries.ITEM.getKey(stack.getItem());
         return key.toString().toLowerCase(Locale.ROOT).contains(q)
-                || key.getPath().toLowerCase(Locale.ROOT).contains(q);
+                || key.getPath().toLowerCase(Locale.ROOT).contains(q)
+                || PinyinIndex.matches(stack.getItem(), q);
     }
 }

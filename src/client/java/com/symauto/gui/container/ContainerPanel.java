@@ -4,10 +4,12 @@ import com.symauto.function.container.depend.BundleAccess;
 import com.symauto.function.container.depend.Containers;
 import com.symauto.function.utils.ClientGuard;
 import com.symauto.gui.utils.SlotHighlighter;
+import com.symauto.gui.widget.component.SymEditBox;
 import com.symauto.mixin.accessor.AbstractRecipeBookScreenAccessor;
 import com.symauto.function.base.SymContainer;
 import com.symauto.function.container.FasterContainerPanelFunction;
 import com.symauto.mixin.accessor.ScreenRebuildWidgetsAccessor;
+import com.symauto.mixin.accessor.ScreenTextInputAccessor;
 import com.symauto.model.container.ContainerCategory;
 import com.symauto.model.container.ContainerPanelModel;
 import lombok.Getter;
@@ -75,12 +77,16 @@ public final class ContainerPanel {
     private static int scrollOffset = 0;
     @Getter
     private static boolean searchFocused = false;
+    private static int searchBoxX, searchBoxY, searchBoxW;
+    private static SymEditBox searchInput;
     private static String query = "";
     /**
      * 悬浮面板条目时，该条目来源容器在背包(0-35)中的槽位集合，用于角标高亮
      */
     private static final Set<Integer> hoveredHostInv = new HashSet<>();
-    /** Shift+左键划过式入袋 */
+    /**
+     * Shift+左键划过式入袋
+     */
     private static int lastShiftDragSlotIndex = -1;
 
     /**
@@ -161,31 +167,29 @@ public final class ContainerPanel {
         return 0;
     }
 
-    private static final GuiEventListener SEARCH_HANDLER = new GuiEventListener() {
-        @Override
-        public boolean charTyped(CharacterEvent event) {
-            if (!visible || !searchFocused) {
-                return false;
-            }
-            handleCharTyped(event.codepoint());
-            return true;
-        }
-
-        @Override
-        public void setFocused(boolean focused) {
-            searchFocused = focused;
-        }
-
-        @Override
-        public boolean isFocused() {
-            return searchFocused;
-        }
-
-    };
-
     private static void updateSearchFocus(boolean focused) {
         searchFocused = focused;
-        syncSearchFocus();
+        Screen host = Minecraft.getInstance().gui.screen();
+        if (host == null) {
+            return;
+        }
+        if (focused) {
+            if (searchInput == null) {
+                searchInput = new SymEditBox(searchBoxX, searchBoxY, searchBoxW, SEARCH_BAR_HEIGHT, Component.empty());
+                searchInput.setHint(Component.literal("搜索..."));
+                searchInput.setResponder(value -> {
+                    query = value;
+                    scrollOffset = 0;
+                    model.setQuery(value);
+                });
+                ((ScreenTextInputAccessor) host).symauto$addRenderableWidget(searchInput);
+                host.setFocused(searchInput);
+            }
+        } else if (searchInput != null) {
+            ((ScreenTextInputAccessor) host).symauto$removeWidget(searchInput);
+            host.setFocused(null);
+            searchInput = null;
+        }
     }
 
     private static void syncSearchFocus() {
@@ -193,11 +197,9 @@ public final class ContainerPanel {
         if (screen == null) {
             return;
         }
-        if (searchFocused) {
-            if (screen.getFocused() != SEARCH_HANDLER) {
-                screen.setFocused(SEARCH_HANDLER);
-            }
-        } else if (screen.getFocused() == SEARCH_HANDLER) {
+        if (searchFocused && searchInput != null && screen.getFocused() != searchInput) {
+            screen.setFocused(searchInput);
+        } else if (!searchFocused && screen.getFocused() == searchInput) {
             screen.setFocused(null);
         }
     }
@@ -269,12 +271,8 @@ public final class ContainerPanel {
         if (!searchFocused) {
             return;
         }
-        if (codepoint >= 32 && codepoint < 127 && codepoint != ' ') {
-            query += (char) codepoint;
-            scrollOffset = 0;
-            model.setQuery(query);
-        } else if (codepoint == ' ') {
-            query += ' ';
+        if (codepoint >= 32) {
+            query += new String(Character.toChars(codepoint));
             scrollOffset = 0;
             model.setQuery(query);
         }
@@ -283,27 +281,23 @@ public final class ContainerPanel {
     /**
      * 搜索框有焦点时处理功能键
      */
-    public static void handleSearchKey(int key) {
-        if (!searchFocused) {
-            return;
+    public static boolean handleSearchKey(int key) {
+        if (!searchFocused || searchInput == null) {
+            return false;
         }
-        if (key == GLFW.GLFW_KEY_BACKSPACE) {
+        if (key == GLFW.GLFW_KEY_ESCAPE) {
             if (!query.isEmpty()) {
-                query = query.substring(0, query.length() - 1);
-                scrollOffset = 0;
-                model.setQuery(query);
-            }
-        } else if (key == GLFW.GLFW_KEY_ESCAPE) {
-            if (!query.isEmpty()) {
-                query = "";
-                scrollOffset = 0;
-                model.setQuery(query);
+                searchInput.setValue("");
             } else {
                 updateSearchFocus(false);
             }
-        } else if (key == GLFW.GLFW_KEY_ENTER || key == GLFW.GLFW_KEY_TAB) {
-            updateSearchFocus(false);
+            return true;
         }
+        if (key == GLFW.GLFW_KEY_ENTER || key == GLFW.GLFW_KEY_TAB) {
+            updateSearchFocus(false);
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -897,6 +891,9 @@ public final class ContainerPanel {
         int sbx = px + PADDING + CAT_BAR_WIDTH + 2 + CAT_SEARCH_GAP;
         int sby = py + 3;
         int sbw = pw - PADDING - CAT_BAR_WIDTH - 2 - PADDING - 10 - CAT_SEARCH_GAP;
+        searchBoxX = sbx;
+        searchBoxY = sby;
+        searchBoxW = sbw;
         boolean active = searchFocused;
         g.fill(sbx, sby, sbx + sbw, sby + SEARCH_BAR_HEIGHT, active ? 0x60000000 : 0x40FFFFFF);
         int textY = sby + (SEARCH_BAR_HEIGHT - font.lineHeight) / 2;
@@ -906,7 +903,7 @@ public final class ContainerPanel {
         String shown = query + (active && blinkOn ? "_" : "");
         if (shown.isEmpty()) {
             if (!active) {
-                g.text(font, "Search...", sbx + 3, textY, 0xFF666666, false);
+                g.text(font, "搜索...", sbx + 3, textY, 0xFF666666, false);
             }
         } else {
             g.text(font, shown, sbx + 3, textY, 0xFFFFFFFF, false);
@@ -915,9 +912,7 @@ public final class ContainerPanel {
         boolean hovered = mouseX >= sbx && mouseX < sbx + sbw && mouseY >= sby && mouseY < sby + SEARCH_BAR_HEIGHT;
         if (hovered) {
             g.setComponentTooltipForNextFrame(font, List.of(
-                    Component.literal("目前仅支持物品 id 搜索"),
-                    Component.literal("如 minecraft:stone 或 stone"),
-                    Component.literal("不支持中文")), mouseX, mouseY);
+                    Component.literal("目前支持物品 id / 中文 / 拼音 搜索")), mouseX, mouseY);
         }
     }
 

@@ -57,6 +57,6 @@ public class ButtonFactory {
 
     public static SymButton move(Component tooltip, int x, int y, int w, int h, ArrowButton.Direction dir) {
         int bg = 0x00555555 | ColorConstants.SEMI_ALPHA;
-        return new ArrowButton(x, y, w, h, dir, bg).tooltip(tooltip);
+        return new ArrowButton(x, y, w, h, dir, bg).tooltip(tooltip).noBackground();
     }
 }

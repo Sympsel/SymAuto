@@ -4,11 +4,10 @@ import com.symauto.config.ConfigManager;
 import com.symauto.core.SymFunctionTags;
 import com.symauto.function.base.SymAbstractFunction;
 import com.symauto.gui.base.SymBaseScreen;
+import com.symauto.gui.widget.utils.ButtonFactory;
 import lombok.NonNull;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
@@ -36,17 +35,14 @@ public class FunctionTagEditScreen extends SymBaseScreen {
         for (int tag = 0; tag < SymFunctionTags.COUNT; tag++) {
             final int t = tag;
             boolean on = function.hasTag(t);
-            Component label = Component.literal((on ? "✔ " : "✖ ") + SymFunctionTags.getTagName(t))
-                    .withStyle(on ? ChatFormatting.GREEN : ChatFormatting.GRAY);
+            Component label = Component.literal((on ? "✔ " : "✖ ") + SymFunctionTags.getTagName(t));
             addRenderableWidget(
-                    Button.builder(label, b -> {
+                    ButtonFactory.toggle(label, x, y, BTN_W, ROW_H, on)
+                            .onLeftClick(() -> {
                                 function.toggleTag(t);
                                 ConfigManager.save();
                                 reopen();
-                            }).bounds(x, y, BTN_W, ROW_H)
-                            .tooltip(Tooltip.create(Component.literal("点击将该功能加入/移出此分类")))
-                            .build()
-            );
+                            }).tooltip(Component.literal("点击将该功能加入/移出此分类")));
             y += ROW_H + GAP;
         }
     }
@@ -56,11 +52,9 @@ public class FunctionTagEditScreen extends SymBaseScreen {
     }
 
     @Override
-    public void extractRenderState(@NonNull GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
-        super.extractRenderState(graphics, mouseX, mouseY, delta);
-        renderTitle(graphics);
-        String hint = "绿色 ✔ 表示该功能当前属于此分类";
-        graphics.text(this.font, hint, (this.width - this.font.width(hint)) / 2, LIST_TOP - 14, style.muted, false);
+    public void extractRenderState(@NonNull GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
+        super.extractRenderState(g, mouseX, mouseY, delta);
+        renderTitle(g);
     }
 
     @Override

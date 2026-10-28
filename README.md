@@ -1,9 +1,9 @@
 # SymAuto
 
-> Sympsel 编写的适用于 Fabric 端 Minecraft **客户端**自动化 / 便利模组。
+> Sympsel 编写的适用于 Fabric 端 Minecraft **客户端**自动化 / 便利模组
 > 按 `Shift + X` 打开功能菜单，全部功能均可在菜单中开关
 
-- **运行环境**：Minecraft `26.2` + Fabric Loader + Fabric API + 模组菜单
+- **运行环境**：Minecraft `26.2` + Fabric Loader + Fabric API (>=0.19.5) + 模组菜单
 - **模组 ID**：`symauto`
 - **开源协议**：[MIT](LICENSE)
 
@@ -20,7 +20,7 @@
 - 自动填充物品分类机
 
 ### 一键操作
-- 一键丢弃垃圾物品（`Alt + Q`，支持白 / 黑名单，可逐层清理收纳袋）
+- 一键丢弃垃圾物品（`Alt + Q`，支持白 / 黑名单）
 - 一键丢弃同类物品、一键平铺物品
 - 一键交易（快捷村民交易）
 
@@ -36,6 +36,7 @@
 
 ### 便利与生产
 - BetterBundle 收纳袋增强（该部分实现参考 [BetterBundleHUDMod](https://github.com/aningQwQ/BetterBundleHUDMod-26.2/releases/tag/v1.3.0)）
+- 便捷容器面板（支持收纳袋、潜影盒，潜影盒只能预览）
 - 多预设自动合成
 
 ### 注意
@@ -43,7 +44,7 @@
 
 ## 命令
 
-提供命名空间式客户端命令，根命令 `symauto` 与简写 `sa` 等价（例：`/sa:list`、`/symauto:list`），以减少与其他模组的命令冲突：
+提供命名空间式客户端命令，根命令 `symauto` 与简写 `sa` 等价（例：`/sa:list`、`/symauto:list`）：
 
 | 命令                                                                           | 说明                                |
 |--------------------------------------------------------------------------------|-------------------------------------|
@@ -66,7 +67,7 @@
 
 ## 构建
 
-要求 **JDK 25** 工具链。在项目根目录执行：
+要求 **JDK 25**，在项目根目录执行：
 
 ```bash
 # Windows
@@ -77,4 +78,4 @@ gradlew.bat build
 ```
 
 ## 许可
-本项目基于 MIT License 授权。
+本项目基于 MIT License 授权

@@ -10,6 +10,7 @@ import lombok.Setter;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -45,8 +46,8 @@ public class HighLightItemDropFunction extends HighLightFunction {
                 .line("高亮扫描矩形范围内的物品掉落物")
                 .keyValueLine(ChatFormatting.YELLOW, "扫描半径", ChatFormatting.GRAY, String.valueOf(getScanRadius()))
                 .keyValueLine(ChatFormatting.YELLOW, "仅高亮白名单物品", ChatFormatting.GRAY, onlyWhitelist ? "是" : "否")
-                .display(WHITE_LIST, item -> BuiltInRegistries.ITEM.getKey(item).toString())
-                .display(BLACK_LIST, item -> BuiltInRegistries.ITEM.getKey(item).toString())
+                .display(WHITE_LIST, item -> Component.translatable(BuiltInRegistries.ITEM.getKey(item).toString()).getString())
+                .display(BLACK_LIST, item -> Component.translatable(BuiltInRegistries.ITEM.getKey(item).toString()).getString())
                 .toString();
     }
 

@@ -5,12 +5,9 @@ import com.symauto.gui.widget.ScrollableTextList;
 import com.symauto.update.UpdateMessageManager;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
-import net.minecraft.util.FormattedCharSequence;
-import org.jspecify.annotations.NonNull;
 
 import java.time.Instant;
 import java.time.ZoneId;
@@ -108,10 +105,10 @@ public class UpdateLogScreen extends SymBaseScreen {
     }
 
     @Override
-    public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
-        list.render(graphics, this.font);
-        super.extractRenderState(graphics, mouseX, mouseY, delta);
-        renderTitle(graphics);
+    public void extractRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
+        list.render(g, this.font);
+        super.extractRenderState(g, mouseX, mouseY, delta);
+        renderTitle(g);
     }
 
     @Override

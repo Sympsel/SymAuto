@@ -53,7 +53,7 @@ dependencies {
     implementation "net.fabricmc:fabric-loader:${project.loader_version}"
     implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
     implementation "com.terraformersmc:modmenu:20.0.3"
-    implementation "com.belerweb:pinyin4j:2.5.1"
+    implementation include("com.belerweb:pinyin4j:2.5.1")
     localRuntime "maven.modrinth:jUO7wMKn:qNF9SWIb"
 }
 

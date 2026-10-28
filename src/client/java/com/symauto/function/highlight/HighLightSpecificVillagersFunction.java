@@ -15,7 +15,9 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
@@ -96,7 +98,7 @@ public class HighLightSpecificVillagersFunction extends HighLightFunction {
                 .keyValueLine(ChatFormatting.YELLOW, "仅高亮拥有更高等级相关附魔村民", ChatFormatting.GRAY, onlyNeedBetterEnchantment ? "是" : "否")
                 .keyValueLine(ChatFormatting.YELLOW, "非创造模式下排除带有冲突附魔的村民", ChatFormatting.GRAY, interceptingConflictingEnchantment ? "是" : "否")
                 .keyValueLine(ChatFormatting.YELLOW, "单人模式增强，是否对任何可交易物品生效", ChatFormatting.GRAY, applyToAnyItemsCouldTrade ? "是" : "否")
-                .display(BLACK_LIST, enhancement -> enhancement.identifier().toString())
+                .display(BLACK_LIST, enhancement -> Component.translatable(enhancement.identifier().toString()).getString())
                 .toString();
     }
 

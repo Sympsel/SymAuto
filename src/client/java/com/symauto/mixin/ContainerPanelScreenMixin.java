@@ -104,9 +104,11 @@ public abstract class ContainerPanelScreenMixin {
                 || !ContainerPanel.isVisible() || !ContainerPanel.isSearchFocused()) {
             return;
         }
-        ContainerPanel.handleSearchKey(event.key());
-        cir.setReturnValue(true);
+        if (ContainerPanel.handleSearchKey(event.key())) {
+            cir.setReturnValue(true);
+        }
     }
+// ...
 
     @Inject(method = "extractTooltip", at = @At("HEAD"), cancellable = true)
     private void symauto$cancelPreviewTooltip(GuiGraphicsExtractor graphics, int mouseX, int mouseY,

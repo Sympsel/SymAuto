@@ -17,6 +17,7 @@ import lombok.Setter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerInput;
@@ -64,7 +65,8 @@ public class OneClickDiscardItemsFunction extends SymAbstractFunction {
         return Tooltip.create()
                 .line("Alt + Q 一键丢弃白名单内（" + WHITE_LIST.size() + "）物品")
                 .keyValueLine("是否丢弃收纳袋里的垃圾物品", discardItemInBundles ? "是" : "否")
-                .display(BLACK_LIST, item -> BuiltInRegistries.ITEM.getKey(item).toString())
+                .display(BLACK_LIST, item -> Component.translatable(item.getDescriptionId()).getString())
+
                 .toString();
     }
 

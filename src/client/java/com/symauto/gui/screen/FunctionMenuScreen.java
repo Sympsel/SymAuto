@@ -6,6 +6,9 @@ import com.symauto.core.FunctionConfig;
 import com.symauto.function.base.SymAbstractFunction;
 import com.symauto.function.utils.KeyUtils;
 import com.symauto.gui.UiStyle;
+import com.symauto.gui.utils.ColorUtils;
+import com.symauto.gui.widget.component.SymMenuBar;
+import com.symauto.gui.widget.component.SymTooltip;
 import com.symauto.gui.widget.utils.ButtonFactory;
 import com.symauto.gui.widget.component.SymButton;
 import com.symauto.gui.widget.component.SymScrollbar;
@@ -26,6 +29,8 @@ public class FunctionMenuScreen extends Screen {
      */
     private final int activeTag;
 
+    private static final int TAG_TEXT = 0xFF8A8A8A;
+
     /**
      * 缓存：记住最后一次选中的分类
      */
@@ -37,30 +42,29 @@ public class FunctionMenuScreen extends Screen {
     private static final int GAP_Y = 5;
 
     private static final int SIDE_MARGIN = 12;
-    private static final int TITLE_Y = 10;
-    private static final int TAG_BAR_Y = 24;
-    private static final int TAG_BTN_H = 16;
-    private static final int TAG_GAP = 4;
     private static final int MAX_COLUMNS = 3;
 
-    // 固定可滚动区域
-    private static final int LIST_MAX_HEIGHT = 180;
     private static final int SCROLLBAR_GAP = 3;
+    private static final int BOTTOM_GAP = 14;
 
     private final List<SymButton> functionButtons = new ArrayList<>();
     private List<SymAbstractFunction> currentFunctions = List.of();
 
     private UiStyle style;
+    private SymMenuBar menuBar;
 
     // 列表布局与滚动状态
     private int columns = 1;
     private int listLeft = 0;
-    private int listTop = TAG_BAR_Y + TAG_BTN_H + GAP_Y;
+    private int listTop = SymMenuBar.BAR_H + GAP_Y;
     private int listWidth = 0;
-    private int listHeight = LIST_MAX_HEIGHT;
+    private int listHeight = 0;
     private int visibleRows = 1;
     private int totalRows = 0;
     private int scrollRow = 0;
+
+    private final int[] tagIds;
+    private final int count;
 
     private final SymScrollbar scrollbar = new SymScrollbar(new SymScrollbar.ScrollTarget() {
         @Override
@@ -99,6 +103,13 @@ public class FunctionMenuScreen extends Screen {
         this.parent = parent;
         this.activeTag = activeTag;
         cachedTag = activeTag;
+
+        count = 1 + SymFunctionTags.COUNT;
+        tagIds = new int[count];
+        tagIds[0] = SymFunctionTags.ALL;
+        for (int i = 0; i < SymFunctionTags.COUNT; ++i) {
+            tagIds[i + 1] = i;
+        }
     }
 
     public FunctionMenuScreen setStyle(UiStyle style) {
@@ -110,11 +121,8 @@ public class FunctionMenuScreen extends Screen {
     protected void init() {
         functionButtons.clear();
 
-        // 顶部标签栏
-        buildTagBar();
-
-        // 功能区顶部：位于标签栏下方
-        this.listTop = TAG_BAR_Y + TAG_BTN_H + GAP_Y;
+        // 功能区顶部
+        this.listTop = SymMenuBar.BAR_H + GAP_Y;
 
         List<SymAbstractFunction> functions = filter(activeTag);
         this.currentFunctions = functions;
@@ -125,12 +133,8 @@ public class FunctionMenuScreen extends Screen {
 
         int step = BTN_H + GAP_Y;
 
-        // 底部按钮行数
-        int footerCount = 1;
-        int footerReserve = footerCount * step + GAP_Y;
-
-        int available = this.height - listTop - footerReserve - 8;
-        listHeight = Math.clamp(available, step, LIST_MAX_HEIGHT);
+        int available = this.height - listTop - BOTTOM_GAP;
+        listHeight = Math.max(step, available);
 
         visibleRows = Math.max(1, (listHeight + GAP_Y) / step);
         totalRows = (functions.size() + columns - 1) / columns;
@@ -145,6 +149,7 @@ public class FunctionMenuScreen extends Screen {
 
             SymButton btn = ButtonFactory.function(buildLabel(func), x, rowToY(i / columns), BTN_W, BTN_H)
                     .tooltip(Component.literal(func.getTooltip()))
+                    .hoverBarrier(this::menuCovers)
                     .onLeftClick(() -> {
                         func.toggle();
                         ConfigManager.save();
@@ -154,71 +159,53 @@ public class FunctionMenuScreen extends Screen {
             functionButtons.add(btn);
             this.addRenderableWidget(btn);
         }
-
-        int nextY = listTop + listHeight + GAP_Y;
-
-        int fourW = (listWidth - 3 * GAP_X) / 4;
-        int bx = listLeft;
-        this.addRenderableWidget(ButtonFactory.navigation(
-                Component.literal("更新日志"),
-                bx, nextY, fourW, BTN_H
-        ).onLeftClick(() -> this.minecraft.gui.setScreen(new UpdateLogScreen(this))));
-        bx += fourW + GAP_X;
-        this.addRenderableWidget(ButtonFactory.navigation(
-                Component.literal("指令用法"),
-                bx, nextY, fourW, BTN_H
-        ).onLeftClick(() -> this.minecraft.gui.setScreen(new CommandUsageScreen(this))));
-        bx += fourW + GAP_X;
-        this.addRenderableWidget(ButtonFactory.navigation(
-                Component.literal("打开配置文件夹"),
-                bx, nextY, fourW, BTN_H
-        ).onLeftClick(ConfigManager::openConfigFolder));
-        bx += fourW + GAP_X;
-        this.addRenderableWidget(ButtonFactory.navigation(
-                Component.literal("返回"),
-                bx, nextY, fourW, BTN_H
-        ).onLeftClick(this::onClose));
-
+        initMenuBar();
         scrollbar.setBounds(
                 Math.min(listLeft + listWidth + SCROLLBAR_GAP, this.width - style.scrollbarWidth - 1),
                 listTop, listTop + listHeight);
     }
 
-    /**
-     * 构建顶部标签栏
-     */
-    private void buildTagBar() {
-        int count = 1 + SymFunctionTags.COUNT;
-        int[] tagIds = new int[count];
-        tagIds[0] = SymFunctionTags.ALL;
-        for (int i = 0; i < SymFunctionTags.COUNT; ++i) {
-            tagIds[i + 1] = i;
-        }
-
-        int[] widths = new int[count];
-        int total = 0;
-        for (int i = 0; i < count; ++i) {
-            widths[i] = this.font.width(SymFunctionTags.getTagName(tagIds[i])) + 12;
-            total += widths[i];
-        }
-        total += TAG_GAP * (count - 1);
-
-        int x = (this.width - total) / 2;
-        for (int i = 0; i < count; i++) {
-            final int tag = tagIds[i];
-            this.addRenderableWidget(
-                    ButtonFactory.category(Component.literal(tagText(tag)),
-                            x, TAG_BAR_Y, widths[i], TAG_BTN_H
-                    ).onLeftClick(() ->
-                            this.minecraft.gui.setScreen(new FunctionMenuScreen(this.parent, tag, this.style))));
-            x += widths[i] + TAG_GAP;
-        }
+    private boolean menuCovers(double x, double y) {
+        return this.menuBar != null && this.menuBar.blocksHoverAt(x, y);
     }
 
-    private String tagText(int tag) {
+    private void initMenuBar() {
+        List<SymMenuBar.Entry> functionEntries = new ArrayList<>();
+        for (int i = 0; i < count; ++i) {
+            final int tag = tagIds[i];
+            functionEntries.add(new SymMenuBar.Entry(tagText(tag),
+                    () -> this.minecraft.gui.setScreen(new FunctionMenuScreen(this.parent, tag, this.style))
+            ).withSelected(() -> tag == activeTag));
+        }
+
+        List<SymMenuBar.Entry> openEntries = new ArrayList<>();
+        openEntries.add(new SymMenuBar.Entry(Component.literal("打开主配置文件夹"),
+                ConfigManager::openConfigFolder));
+
+        List<SymMenuBar.Entry> helpEntries = new ArrayList<>();
+        helpEntries.add(new SymMenuBar.Entry(Component.literal("指令用法"),
+                () -> this.minecraft.gui.setScreen(new CommandUsageScreen(this))));
+
+        List<SymMenuBar.Entry> aboutEntries = new ArrayList<>();
+        aboutEntries.add(new SymMenuBar.Entry(Component.literal("更新日志"),
+                () -> this.minecraft.gui.setScreen(new UpdateLogScreen(this))));
+        aboutEntries.add(new SymMenuBar.Entry(Component.literal("声明"),
+                () -> this.minecraft.gui.setScreen(new ClaimScreen(this))));
+
+        this.menuBar = new SymMenuBar(this.title, List.of(
+                new SymMenuBar.Menu(Component.literal("功能"), functionEntries),
+                new SymMenuBar.Menu(Component.literal("打开"), openEntries),
+                new SymMenuBar.Menu(Component.literal("帮助"), helpEntries),
+                new SymMenuBar.Menu(Component.literal("关于"), aboutEntries)
+        ));
+        this.addRenderableWidget(menuBar);
+    }
+
+    private Component tagText(int tag) {
         boolean active = (tag == activeTag);
-        return active ? "§a[§r" + SymFunctionTags.getTagName(tag) + "§a]§r"
-                : "§7" + SymFunctionTags.getTagName(tag);
+        int color = active ? ColorUtils.onActive(TAG_TEXT) : TAG_TEXT;
+        return Component.literal(SymFunctionTags.getTagName(tag))
+                .withStyle(s -> s.withColor(color));
     }
 
     private static List<SymAbstractFunction> filter(int tag) {
@@ -280,6 +267,9 @@ public class FunctionMenuScreen extends Screen {
 
     @Override
     public boolean mouseClicked(@NonNull MouseButtonEvent event, boolean doubleClick) {
+        if (this.menuBar != null && this.menuBar.mouseClicked(event, doubleClick)) {
+            return true;
+        }
         if (scrollbar.mouseClicked(event.x(), event.y())) {
             return true;
         }
@@ -353,25 +343,24 @@ public class FunctionMenuScreen extends Screen {
     }
 
     @Override
-    public void extractRenderState(@NonNull GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
-        graphics.fill(listLeft - 3, listTop - 3, listLeft + listWidth + 3, listTop + listHeight + 3, 0x66000000);
+    public void extractRenderState(@NonNull GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
+        g.fill(listLeft - 3, listTop - 3, listLeft + listWidth + 3, listTop + listHeight + 3, 0x66000000);
 
-        super.extractRenderState(graphics, mouseX, mouseY, delta);
-
-        int titleX = (this.width - this.font.width(this.title)) / 2;
-        graphics.text(this.font, this.title, titleX, TITLE_Y, this.style.title, true);
+        super.extractRenderState(g, mouseX, mouseY, delta);
 
         // 空分类提示
         String tip = "Shift+左键 调整功能分类";
-        graphics.text(this.font, tip, this.width - this.font.width(tip) - 6, TITLE_Y + 1, this.style.muted, false);
+        g.text(this.font, tip, this.width - this.font.width(tip) - 6,
+                listTop + listHeight + 5, this.style.muted, false);
 
         if (currentFunctions.isEmpty()) {
             String empty = "该分类下暂无功能";
-            graphics.text(this.font, empty, (this.width - this.font.width(empty)) / 2, listTop, this.style.muted, false);
+            g.text(this.font, empty, (this.width - this.font.width(empty)) / 2, listTop, this.style.muted, false);
         }
 
-        graphics.outline(listLeft - 3, listTop - 3, listWidth + 6, listHeight + 6, this.style.panelOutline);
-        scrollbar.render(graphics);
+        g.outline(listLeft - 3, listTop - 3, listWidth + 6, listHeight + 6, this.style.panelOutline);
+        scrollbar.render(g);
+        SymTooltip.renderAndClear(g, this.font, this.width, this.height);
     }
 
     @Override

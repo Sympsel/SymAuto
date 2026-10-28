@@ -24,8 +24,11 @@ public class UpdateMessageManager {
 
     static void main() {
         sendUpdates(
-                "修复了" + func("自动合成") + bug("递归合成在部分情况失效") + "的bug",
-                "重绘了本 mod 的组件样式"
+                "重绘了本 mod 所有组件样式以及菜单",
+                "功能界面改为菜单栏路由",
+                "将黑白名单展示的物品id改为物品名称",
+                "添加了免责声明",
+                func("快捷容器面板") + "的搜索框现在支持物品 id / 中文 / 拼音 搜索"
         );
     }
 

@@ -10,6 +10,7 @@ import lombok.Setter;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.chat.Component;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.EntityType;
@@ -73,8 +74,8 @@ public class HighLightMasterFunction extends HighLightFunction {
                 .line("高亮矩形范围内分类为敌对的怪物")
                 .keyValueLine(ChatFormatting.YELLOW, "扫描半径", ChatFormatting.GRAY, String.valueOf(getScanRadius()))
                 .keyValueLine(ChatFormatting.YELLOW, "仅在主手持有武器时高亮", ChatFormatting.GRAY, onlyWhenHoldingWeapon ? "是" : "否")
-                .display(BLACK_LIST, type -> BuiltInRegistries.ENTITY_TYPE.getKey(type).toString())
-                .display(WHITE_LIST, type -> BuiltInRegistries.ENTITY_TYPE.getKey(type).toString())
+                .display(BLACK_LIST, type -> Component.translatable(type.getDescriptionId()).getString())
+                .display(WHITE_LIST, type -> Component.translatable(type.getDescriptionId()).getString())
                 .toString();
     }
 

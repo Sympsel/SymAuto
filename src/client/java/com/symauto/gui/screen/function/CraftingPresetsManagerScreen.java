@@ -163,20 +163,20 @@ public class CraftingPresetsManagerScreen extends SymBaseScreen {
     }
 
     @Override
-    public void extractRenderState(@NonNull GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
-        graphics.fill(4, LIST_TOP - 4, this.width - 4, this.height - BOTTOM_MARGIN + 2, 0x66000000);
-        super.extractRenderState(graphics, mouseX, mouseY, delta);
+    public void extractRenderState(@NonNull GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
+        g.fill(4, LIST_TOP - 4, this.width - 4, this.height - BOTTOM_MARGIN + 2, 0x66000000);
+        super.extractRenderState(g, mouseX, mouseY, delta);
 
         int titleX = (this.width - this.font.width(this.title)) / 2;
-        graphics.text(this.font, this.title, titleX, TITLE_Y, style.text, true);
+        g.text(this.font, this.title, titleX, TITLE_Y, style.text, true);
 
         if (showLogs) {
-            logList.render(graphics, this.font);
+            logList.render(g, this.font);
         } else if (CraftingPresetStore.size() == 0) {
             String empty = "暂无预设，点击底部将手持物品新增到预设管理器";
-            graphics.text(this.font, empty, (this.width - this.font.width(empty)) / 2, LIST_TOP + 4, style.muted, false);
+            g.text(this.font, empty, (this.width - this.font.width(empty)) / 2, LIST_TOP + 4, style.muted, false);
         }
-        scrollbar.render(graphics);
+        scrollbar.render(g);
     }
 
 

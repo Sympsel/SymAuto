@@ -35,6 +35,22 @@ public class SymButton extends AbstractButton {
         this.bgDisabled = ColorUtils.onDisabled(bg);
     }
 
+    @FunctionalInterface
+    public interface HoverBarrier {
+        boolean blocks(double mouseX, double mouseY);
+    }
+
+    private HoverBarrier hoverBarrier;
+
+    private boolean hovered(int mouseX, int mouseY) {
+        return isHovered() && (this.hoverBarrier == null || !this.hoverBarrier.blocks(mouseX, mouseY));
+    }
+
+    public SymButton hoverBarrier(HoverBarrier hoverBarrier) {
+        this.hoverBarrier = hoverBarrier;
+        return this;
+    }
+
     private Component tooltipText;
 
     public SymButton stateMode(int onColor, int offColor) {
@@ -108,15 +124,16 @@ public class SymButton extends AbstractButton {
 
     @Override
     protected void extractContents(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
+        boolean hot = hovered(mouseX, mouseY);
         int color = !this.active ? this.bgDisabled
-                : isHovered() ? this.bgHover
+                : hot ? this.bgHover
                 : this.bg;
         g.fill(this.getX(), this.getY(),
                 this.getX() + this.getWidth(), this.getY() + this.getHeight(), color);
         this.extractDefaultLabel(
                 g.textRendererForWidget(this, GuiGraphicsExtractor.HoveredTextEffects.TOOLTIP_ONLY));
-        if (this.active && isHovered() && this.tooltipText != null) {
-            g.setTooltipForNextFrame(this.font, this.font.split(this.tooltipText, 230), mouseX, mouseY);
+        if (this.active && hot && this.tooltipText != null) {
+            SymTooltip.offer(this.font.split(this.tooltipText, 230), mouseX, mouseY);
         }
     }
 

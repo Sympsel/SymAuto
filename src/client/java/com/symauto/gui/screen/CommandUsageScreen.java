@@ -29,10 +29,10 @@ public class CommandUsageScreen extends SymBaseScreen {
     }
 
     @Override
-    public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
-        list.render(graphics, this.font);
-        super.extractRenderState(graphics, mouseX, mouseY, delta);
-        renderTitle(graphics);
+    public void extractRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
+        list.render(g, this.font);
+        super.extractRenderState(g, mouseX, mouseY, delta);
+        renderTitle(g);
     }
 
     @Override

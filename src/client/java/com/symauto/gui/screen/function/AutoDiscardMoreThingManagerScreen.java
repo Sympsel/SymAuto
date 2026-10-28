@@ -112,16 +112,16 @@ public class AutoDiscardMoreThingManagerScreen extends SymBaseScreen {
     }
 
     @Override
-    public void extractRenderState(@NonNull GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
-        graphics.fill(4, LIST_TOP - 4, this.width - 4, this.height - BOTTOM_MARGIN + 2, 0x66000000);
-        super.extractRenderState(graphics, mouseX, mouseY, delta);
-        renderTitle(graphics);
+    public void extractRenderState(@NonNull GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
+        g.fill(4, LIST_TOP - 4, this.width - 4, this.height - BOTTOM_MARGIN + 2, 0x66000000);
+        super.extractRenderState(g, mouseX, mouseY, delta);
+        renderTitle(g);
 
         if (KeepInvPresetStore.size() == 0) {
             String empty = "暂无预设，手持目标物品后点击底部“+ 新增手持物品”";
-            graphics.text(this.font, empty, (this.width - this.font.width(empty)) / 2, LIST_TOP + 4, style.muted, false);
+            g.text(this.font, empty, (this.width - this.font.width(empty)) / 2, LIST_TOP + 4, style.muted, false);
         }
-        scrollbar.render(graphics);
+        scrollbar.render(g);
     }
 
     @Override

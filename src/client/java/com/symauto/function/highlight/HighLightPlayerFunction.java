@@ -50,7 +50,7 @@ public class HighLightPlayerFunction extends HighLightFunction {
                 .line(ChatFormatting.GRAY, "可以高亮隐身玩家，并为其单独渲染了HUD")
                 .keyValueLine(ChatFormatting.YELLOW, "扫描半径", ChatFormatting.GRAY, String.valueOf(getScanRadius()))
                 .keyValueLine(ChatFormatting.YELLOW, "高亮自己", ChatFormatting.GRAY, isHighlightSelf ? "是" : "否")
-                .line(ChatFormatting.RED, "本质透视，有反作弊服务器慎用，启用此功能即同意以下：禁止用于 PVP，后果自负，出事别找本 Mod 作者")
+                .line(ChatFormatting.RED, "本质透视，有反作弊服务器慎用")
                 .toString();
     }
 

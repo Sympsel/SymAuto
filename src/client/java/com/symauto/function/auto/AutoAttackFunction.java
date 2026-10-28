@@ -11,6 +11,7 @@ import lombok.Setter;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EntityTypes;
@@ -85,7 +86,7 @@ public class AutoAttackFunction extends SymAbstractFunction {
         } else {
             tooltip.keyValueLine(ChatFormatting.WHITE, "当前模式", ChatFormatting.RED, "危险");
         }
-        tooltip.display(BLACK_LIST, entityTypes -> BuiltInRegistries.ENTITY_TYPE.getKey(entityTypes).toString());
+        tooltip.display(BLACK_LIST, entityTypes -> Component.translatable(entityTypes.getDescriptionId()).getString());
         return tooltip.toString();
     }
 

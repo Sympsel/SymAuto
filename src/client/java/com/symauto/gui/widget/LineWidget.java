@@ -131,7 +131,7 @@ public class LineWidget {
                     refresh.run();
                 });
         if (tooltip != null) {
-            button.setTooltip(Tooltip.create(Component.literal(tooltip)));
+            button.tooltip(Component.literal(tooltip));
         }
         widgets.add(button);
         x += width + GAP;
@@ -141,10 +141,10 @@ public class LineWidget {
     public LineWidget appendEditBox(String hint, String tooltip, int maxLength,
                                     Consumer<String> applier, String applyTooltip) {
         int inputY = y + (ROW_H - EDIT_BOX_H) / 2;
-        EditBox input = new SymEditBox(x, inputY, EDIT_BOX_W, EDIT_BOX_H, Component.literal(hint));
+        SymEditBox input = new SymEditBox(x, inputY, EDIT_BOX_W, EDIT_BOX_H, Component.literal(hint));
         input.setHint(Component.literal(hint));
         if (tooltip != null) {
-            input.setTooltip(Tooltip.create(Component.literal(tooltip)));
+            input.tooltip(Component.literal(tooltip));
         }
         input.setMaxLength(maxLength);
         widgets.add(input);

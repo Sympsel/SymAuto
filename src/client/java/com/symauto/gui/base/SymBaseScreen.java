@@ -1,6 +1,7 @@
 package com.symauto.gui.base;
 
 import com.symauto.gui.UiStyle;
+import com.symauto.gui.widget.component.SymTooltip;
 import com.symauto.gui.widget.utils.ButtonFactory;
 import com.symauto.gui.widget.component.SymButton;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -35,5 +36,11 @@ public class SymBaseScreen extends Screen {
         return ButtonFactory.back(Component.literal(label),
                 this.width - width - 6, 6, width, 16)
                 .onLeftClick(() -> this.minecraft.gui.setScreen(parent));
+    }
+
+    @Override
+    public void extractRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
+        super.extractRenderState(g, mouseX, mouseY, delta);
+        SymTooltip.renderAndClear(g, this.font, this.width, this.height);
     }
 }

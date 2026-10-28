@@ -19,6 +19,13 @@ public class SymEditBox extends EditBox {
         this.setBordered(false);
     }
 
+    private Component tooltipText;
+
+    public SymEditBox tooltip(Component tooltipText) {
+        this.tooltipText = tooltipText;
+        return this;
+    }
+
     @Override
     public void extractWidgetRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
         if (this.isVisible()) {
@@ -40,5 +47,9 @@ public class SymEditBox extends EditBox {
         super.extractWidgetRenderState(g, mouseX, mouseY, delta);
         this.setX(ox);
         this.setY(oy);
+        if (this.tooltipText != null && this.isHovered() && this.isActive()) {
+            var font = Minecraft.getInstance().font;
+            SymTooltip.offer(font.split(this.tooltipText, 230), mouseX, mouseY);
+        }
     }
 }

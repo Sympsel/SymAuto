@@ -9,6 +9,7 @@ import lombok.Setter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.food.FoodData;
 import net.minecraft.world.item.Item;
@@ -40,7 +41,7 @@ public class AutoEatFunction extends SymAbstractFunction {
     public String tooltip() {
         return Tooltip.create()
                 .line("饥饿值低于阈值（" + HUNGER_THRESHOLD_DEFAULT + "）时自动进食")
-                .display(BLACK_LIST, item -> BuiltInRegistries.ITEM.getKey(item).toString())
+                .display(BLACK_LIST, item -> Component.translatable(item.getDescriptionId()).getString())
                 .toString();
     }
 
