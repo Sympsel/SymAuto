@@ -1,32 +1,35 @@
 package com.symauto.function.auto;
 
 import com.symauto.config.option.BooleanOption;
+import com.symauto.config.option.IntOption;
 import com.symauto.core.Constants;
 import com.symauto.function.base.SymAbstractFunction;
 import com.symauto.function.container.depend.BundleAccess;
 import com.symauto.function.utils.BundleContentsHelper;
 import com.symauto.function.utils.ContainerActions;
 import com.symauto.function.utils.Tooltip;
-import com.symauto.mixin.accessor.AbstractContainerScreenAccessor;
 import lombok.Getter;
 import lombok.Setter;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.BundleContents;
+import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.BonemealableBlock;
+import net.minecraft.world.level.block.CaveVinesPlantBlock;
 import net.minecraft.world.level.block.CropBlock;
+import net.minecraft.world.level.block.SweetBerryBushBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
@@ -34,6 +37,8 @@ import net.minecraft.world.level.block.state.properties.Property;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 public class AutoHarvestCropFunction extends SymAbstractFunction {
@@ -62,7 +67,19 @@ public class AutoHarvestCropFunction extends SymAbstractFunction {
     @Setter
     private boolean onlyRipeningCrop;
 
+    @Getter
+    @Setter
+    private int maxActionsPerTick = 32;
+
     private int boneMealSlot = -1;
+
+    // 两次背包整理动作之间的最小间隔
+    private static final int REFILL_INTERVAL_TICKS = 3;
+
+    // ContainerInput.SWAP 中代表“与副手交换”的按钮代码
+    private static final int OFFHAND_SWAP_BUTTON = 40;
+
+    private int refillCooldown;
 
     private static final Set<Item> PLANTABLE_ON_FARMLAND = Set.of(
             Items.WHEAT_SEEDS,
@@ -92,7 +109,10 @@ public class AutoHarvestCropFunction extends SymAbstractFunction {
                 this::isEnableDiscardResultIfNotSeed, this::setEnableDiscardResultIfNotSeed, false));
         addOption(new BooleanOption("only_ripening_crop", "仅使用骨粉催熟作物",
                 this::isOnlyRipeningCrop, this::setOnlyRipeningCrop, false));
-
+        addOption(new IntOption("max_actions_per_tick", "每 tick 最大交互数",
+                this::getMaxActionsPerTick, this::setMaxActionsPerTick, 1, 128, 1));
+        addOption(new IntOption("refill_min_count", "补充阈值（低于该数量时补充）",
+                this::getRefillMinCount, this::setRefillMinCount, 1, 64, 1));
     }
 
     @Override
@@ -101,6 +121,8 @@ public class AutoHarvestCropFunction extends SymAbstractFunction {
                 .keyValueLine("自动补充种子和骨粉", autoRefill ? "是" : "否")
                 .keyValueLine("自动丢出非种子产物", enableDiscardResultIfNotSeed ? "是" : "否")
                 .keyValueLine("仅使用骨粉催熟作物", onlyRipeningCrop ? "是" : "否")
+                .keyValueLine("每 tick 最大交互数", String.valueOf(maxActionsPerTick))
+                .keyValueLine("补充阈值", String.valueOf(refillMinCount))
                 .toString();
     }
 
@@ -111,6 +133,10 @@ public class AutoHarvestCropFunction extends SymAbstractFunction {
             return;
         }
 
+        // 先补货再干活：保证这一 tick 的批量交互手里有足够的种子/骨粉
+        if (autoRefill) {
+            ensureSupplies(client);
+        }
         if (enableDiscardResultIfNotSeed) {
             discardByproducts(client);
         }
@@ -121,21 +147,17 @@ public class AutoHarvestCropFunction extends SymAbstractFunction {
         BlockPos center = client.player.blockPosition();
 
         if (!onlyRipeningCrop) {
-            if (harvestOne(client, eye, reachSq, r, center)) {
-                return;
-            }
-            if (replantOne(client, eye, reachSq, r, center)) {
-                return;
-            }
+            // harvest 内部已经包含“破块 → 同 tick 补种 → 右键采摘”的批量流程
+            harvest(client, eye, reachSq, r, center);
+            // 兜底补种：把范围内“空着的耕地/灵魂沙”补上
+            replant(client, eye, reachSq, r, center);
         }
-        boneMealOne(client, eye, reachSq, r, center);
-        if (autoRefill) {
-            ensurePlantSupply(client);
-        }
+        // 催熟放在最后：这样刚补种的作物也能在同一 tick 吃到骨粉
+        boneMeal(client, eye, reachSq, r, center);
     }
 
     /**
-     * 自动丢出副产物
+     * 自动丢出非种子产物
      */
     private void discardByproducts(Minecraft client) {
         Inventory inv = client.player.getInventory();
@@ -149,106 +171,180 @@ public class AutoHarvestCropFunction extends SymAbstractFunction {
         }
     }
 
-    private boolean isHoveringItem(Minecraft client) {
-        Screen screen = client.gui.screen();
-        if (!(screen instanceof AbstractContainerScreen<?>)) {
-            return false;
-        }
-        Slot hovered = ((AbstractContainerScreenAccessor) screen).symauto$getHoveredSlot();
-        return hovered != null && hovered.hasItem();
-    }
-
-    private void ensurePlantSupply(Minecraft client) {
+    /**
+     * 补给维护入口
+     */
+    private void ensureSupplies(Minecraft client) {
         if (client.player.isCreative()) {
             return;
         }
         if (client.player.containerMenu != client.player.inventoryMenu) {
             return;
         }
-        ItemStack carried = client.player.inventoryMenu.getCarried();
-        if (!carried.isEmpty()) {
-            stashCarried(client, carried);
+        AbstractContainerMenu menu = client.player.inventoryMenu;
+        if (!menu.getCarried().isEmpty()) {
+            if (stashCarried(client, menu.getCarried())) {
+                refillCooldown = REFILL_INTERVAL_TICKS;
+            }
             return;
         }
-        if (refillOffhandPlant(client)) {
+        if (refillCooldown > 0) {
+            --refillCooldown;
             return;
         }
-        refillMainhandBoneMeal(client);
+        if (refillHandInUse(client)) {
+            refillCooldown = REFILL_INTERVAL_TICKS;
+        }
     }
 
     /**
-     * 仅当副手是可种植物品且数量不足时，补充种子到副手
+     * 只补当前真正在用的那只手
+     *
+     * @return 是否执行了一次背包动作
      */
-    private boolean refillOffhandPlant(Minecraft client) {
-        Item desired = desiredPlantItem(client);
-        if (desired == null) {
-            return false;
-        }
-        ItemStack probe = new ItemStack(desired);
+    private boolean refillHandInUse(Minecraft client) {
+        Inventory inv = client.player.getInventory();
+        ItemStack main = client.player.getMainHandItem();
         ItemStack off = client.player.getOffhandItem();
-        if (off.is(desired) && off.getCount() >= refillMinCount) {
+        int selected = inv.getSelectedSlot();
+
+        if (main.is(Items.BONE_MEAL)) {
+            boneMealSlot = selected;
+        }
+        boolean boneMealWanted = main.is(Items.BONE_MEAL)
+                || (main.isEmpty() && (boneMealSlot == selected || isPlantable(off)))
+                || onlyRipeningCrop;
+        boolean boneMealUseful = isPlantable(off) || onlyRipeningCrop;
+        int currentBoneMeal = main.is(Items.BONE_MEAL) ? main.getCount() : 0;
+        if (boneMealWanted && boneMealUseful
+                && (!main.is(Items.BONE_MEAL) || currentBoneMeal < refillMinCount)
+                && refillSelectedHotbar(client, Items.BONE_MEAL, currentBoneMeal)) {
+            boneMealSlot = inv.getSelectedSlot();
+            return true;
+        }
+
+        if (onlyRipeningCrop) {
             return false;
         }
 
-        int src = findInventorySlotFor(client, probe);
-        if (src >= 0) {
-            swapToOffhand(src);
-            return true;
+        InteractionHand hand = isPlantable(main) ? InteractionHand.MAIN_HAND
+                : isPlantable(off) ? InteractionHand.OFF_HAND : null;
+        if (hand == null) {
+            // 两只手都没有可种植物：从背包里找一种放进副手
+            Item plant = firstPlantableInInventory(client);
+            return plant != null && refillOffhand(client, plant, 0);
         }
 
-        int[] loc = findBundleSlotFor(client, probe);
-        if (loc != null) {
-            BundleAccess.extractToInventory(loc[0], loc[1], probe);
+        ItemStack stack = hand == InteractionHand.MAIN_HAND ? main : off;
+        if (stack.getCount() >= refillMinCount) {
+            return false;
+        }
+        return hand == InteractionHand.MAIN_HAND
+                ? refillSelectedHotbar(client, stack.getItem(), stack.getCount())
+                : refillOffhand(client, stack.getItem(), stack.getCount());
+    }
+
+    /**
+     * 把同种物品换到当前选中的快捷栏槽
+     */
+    private boolean refillSelectedHotbar(Minecraft client, Item item, int currentCount) {
+        Inventory inv = client.player.getInventory();
+        int best = findBestStack(client, item, inv.getSelectedSlot(), currentCount);
+        if (best < 0) {
+            return extractFromBundle(client, item);
+        }
+        if (best < Constants.HOTBAR_END) {
+            inv.setSelectedSlot(best);
             return true;
+        }
+        int menuSlot = invToMenuSlot(best);
+        if (menuSlot < 0) {
+            return false;
+        }
+        ContainerActions.swapToHotbar(menuSlot, inv.getSelectedSlot());
+        return true;
+    }
+
+    /**
+     * 补副手
+     */
+    private boolean refillOffhand(Minecraft client, Item item, int currentCount) {
+        int best = findBestStack(client, item, Constants.OFFHAND, currentCount);
+        if (best < 0) {
+            return extractFromBundle(client, item);
+        }
+        int menuSlot = invToMenuSlot(best);
+        if (menuSlot < 0) {
+            return false;
+        }
+        ContainerActions.click(menuSlot, OFFHAND_SWAP_BUTTON, ContainerInput.SWAP);
+        return true;
+    }
+
+    /**
+     * 在快捷栏和背包里找同种物品数量最多的槽位
+     */
+    private int findBestStack(Minecraft client, Item item, int excludeInvIndex, int currentCount) {
+        Inventory inv = client.player.getInventory();
+        int best = -1;
+        int bestCount = currentCount;
+        for (int i = Constants.HOTBAR_START; i < Constants.INV_END; i++) {
+            if (i == excludeInvIndex) {
+                continue;
+            }
+            ItemStack stack = inv.getItem(i);
+            if (stack.isEmpty() || !stack.is(item)) {
+                continue;
+            }
+            if (stack.getCount() > bestCount) {
+                best = i;
+                bestCount = stack.getCount();
+            }
+        }
+        return best;
+    }
+
+    /**
+     * 背包里没有现成堆时从收纳袋里取一组到背包
+     */
+    private boolean extractFromBundle(Minecraft client, Item item) {
+        Inventory inv = client.player.getInventory();
+        AbstractContainerMenu menu = client.player.inventoryMenu;
+        ItemStack probe = new ItemStack(item);
+        for (int slotId = 0; slotId < menu.slots.size(); slotId++) {
+            Slot slot = menu.getSlot(slotId);
+            if (slot.container != inv) {
+                continue;
+            }
+            ItemStack bundle = slot.getItem();
+            if (!BundleContentsHelper.isNonEmptyBundle(bundle)) {
+                continue;
+            }
+            BundleContents contents = BundleContentsHelper.getContents(bundle);
+            if (contents == null) {
+                continue;
+            }
+            int index = 0;
+            for (ItemStack s : contents.itemCopyStream().toList()) {
+                if (ItemStack.isSameItemSameComponents(s, probe)) {
+                    BundleAccess.extractToInventory(slotId, index, probe);
+                    return true;
+                }
+                index++;
+            }
         }
         return false;
     }
 
     /**
-     * 仅当主手骨粉、副手是可催熟作物且骨粉不足时，补充骨粉到主手
+     * 把光标残留物品放回背包：优先并入同类堆，其次任意空槽
+     *
+     * @return 是否发出了点击
      */
-    private void refillMainhandBoneMeal(Minecraft client) {
-        if (!isPlantable(client.player.getOffhandItem())) {
-            return;
-        }
-        ItemStack main = client.player.getMainHandItem();
-        Inventory inv = client.player.getInventory();
-        ItemStack probe = new ItemStack(Items.BONE_MEAL);
-        int selected = inv.getSelectedSlot();
-
-        boolean needsRefill;
-        if (main.is(Items.BONE_MEAL)) {
-            boneMealSlot = selected;
-            needsRefill = main.getCount() < refillMinCount;
-        } else if (main.isEmpty() && boneMealSlot == selected) {
-            // 骨粉用完 + 该槽此前是骨粉
-            needsRefill = true;
-        } else {
-            return;
-        }
-        if (!needsRefill) {
-            return;
-        }
-
-        int src = findInventorySlotFor(client, probe);
-        if (src >= 0) {
-            int targetMenu = Constants.HOTBAR_START_IN_INVENTORY + selected;
-            if (src >= Constants.INV_START && src < Constants.INV_END) {
-                ContainerActions.swapToHotbar(src, selected);
-            } else if (src != targetMenu) {
-                // 快捷栏来源：点击对调两个快捷栏槽
-                swapMenuSlots(src, targetMenu);
-            }
-        }
-    }
-
-    /**
-     * 把光标残留物品放回背包
-     */
-    private void stashCarried(Minecraft client, ItemStack carried) {
+    private boolean stashCarried(Minecraft client, ItemStack carried) {
         Inventory inv = client.player.getInventory();
         int empty = -1;
-        for (int i = Constants.INV_START; i < Constants.INV_END; i++) {
+        for (int i = Constants.HOTBAR_START; i < Constants.INV_END; i++) {
             ItemStack stack = inv.getItem(i);
             if (stack.isEmpty()) {
                 if (empty < 0) {
@@ -256,23 +352,16 @@ public class AutoHarvestCropFunction extends SymAbstractFunction {
                 }
             } else if (ItemStack.isSameItemSameComponents(stack, carried)
                     && stack.getCount() < stack.getMaxStackSize()) {
-                ContainerActions.leftClickSlot(i);
-                return;
+                ContainerActions.leftClickSlot(invToMenuSlot(i));
+                return true;
             }
         }
         if (empty >= 0) {
-            ContainerActions.leftClickSlot(empty);
+            ContainerActions.leftClickSlot(invToMenuSlot(empty));
         } else {
             ContainerActions.dropCarried();
         }
-    }
-
-    private Item desiredPlantItem(Minecraft client) {
-        ItemStack off = client.player.getOffhandItem();
-        if (!off.isEmpty() && isPlantable(off)) {
-            return off.getItem();
-        }
-        return firstPlantableInInventory(client);
+        return true;
     }
 
     /**
@@ -282,15 +371,12 @@ public class AutoHarvestCropFunction extends SymAbstractFunction {
         Inventory inv = client.player.getInventory();
         for (int i = Constants.HOTBAR_START; i < Constants.INV_END; i++) {
             Item item = inv.getItem(i).getItem();
-            if (PLANTABLE_ON_FARMLAND.contains(item)) {
+            if (isPlantableItem(item)) {
                 return item;
             }
         }
-        AbstractContainerMenu menu = client.player.inventoryMenu;
-        for (Slot slot : menu.slots) {
-            if (slot.container != inv
-                    || slot.index < Constants.INV_START
-                    || slot.index >= Constants.INV_END) {
+        for (Slot slot : client.player.inventoryMenu.slots) {
+            if (slot.container != inv) {
                 continue;
             }
             ItemStack bundle = slot.getItem();
@@ -302,7 +388,7 @@ public class AutoHarvestCropFunction extends SymAbstractFunction {
                 continue;
             }
             for (ItemStack s : contents.itemCopyStream().toList()) {
-                if (PLANTABLE_ON_FARMLAND.contains(s.getItem())) {
+                if (isPlantableItem(s.getItem())) {
                     return s.getItem();
                 }
             }
@@ -311,47 +397,8 @@ public class AutoHarvestCropFunction extends SymAbstractFunction {
     }
 
     /**
-     * 找到收纳袋中首个含 probe 的条目，返回 {收纳袋菜单槽号, 袋内条目索引}，无则 null
+     * 背包索引映射到玩家背包菜单槽号
      */
-    private int[] findBundleSlotFor(Minecraft client, ItemStack probe) {
-        AbstractContainerMenu menu = client.player.inventoryMenu;
-        Inventory inv = client.player.getInventory();
-        for (Slot slot : menu.slots) {
-            if (slot.container != inv
-                    || slot.index < Constants.INV_START
-                    || slot.index >= Constants.INV_END) {
-                continue;
-            }
-            ItemStack bundle = slot.getItem();
-            if (!BundleContentsHelper.isNonEmptyBundle(bundle)) {
-                continue;
-            }
-            BundleContents contents = BundleContentsHelper.getContents(bundle);
-            if (contents == null) {
-                continue;
-            }
-            int idx = 0;
-            for (ItemStack s : contents.itemCopyStream().toList()) {
-                if (ItemStack.isSameItemSameComponents(s, probe)) {
-                    return new int[]{slot.index, idx};
-                }
-                idx++;
-            }
-        }
-        return null;
-    }
-
-    private int findInventorySlotFor(Minecraft client, ItemStack probe) {
-        Inventory inv = client.player.getInventory();
-        for (int i = Constants.HOTBAR_START; i < Constants.INV_END; i++) {
-            ItemStack stack = inv.getItem(i);
-            if (!stack.isEmpty() && ItemStack.isSameItemSameComponents(stack, probe)) {
-                return invToMenuSlot(i);
-            }
-        }
-        return -1;
-    }
-
     private static int invToMenuSlot(int invIndex) {
         if (invIndex < Constants.HOTBAR_START || invIndex >= Constants.INV_END) {
             return -1;
@@ -361,13 +408,43 @@ public class AutoHarvestCropFunction extends SymAbstractFunction {
                 : invIndex;
     }
 
-    private void swapMenuSlots(int menuA, int menuB) {
-        ContainerActions.leftClickSlot(menuA);
-        ContainerActions.leftClickSlot(menuB);
-        ContainerActions.leftClickSlot(menuA);
+    private boolean harvest(Minecraft client, Vec3 eye, double reachSq, int r, BlockPos center) {
+        List<BlockPos> breakTargets = new ArrayList<>(); // 破坏目标
+        List<BlockPos> pickTargets = new ArrayList<>(); // 采摘目标
+        List<BlockPos> replantTiles = new ArrayList<>(); // 支撑方块
+
+        collectTargets(client, eye, reachSq, r, center, breakTargets, pickTargets, replantTiles);
+
+        int budget = maxActionsPerTick;
+
+        for (BlockPos pos : breakTargets) {
+            if (budget-- <= 0) {
+                break;
+            }
+            client.gameMode.startDestroyBlock(pos, Direction.UP);
+        }
+
+        for (BlockPos support : replantTiles) {
+            if (budget-- <= 0) {
+                break;
+            }
+            plantAt(client, support);
+        }
+
+        for (BlockPos pos : pickTargets) {
+            if (budget-- <= 0) {
+                break;
+            }
+            client.gameMode.useItemOn(client.player, InteractionHand.MAIN_HAND,
+                    new BlockHitResult(Vec3.atCenterOf(pos), Direction.UP, pos, false
+                    ));
+        }
+
+        return false;
     }
 
-    private boolean harvestOne(Minecraft client, Vec3 eye, double reachSq, int r, BlockPos center) {
+    private void collectTargets(Minecraft client, Vec3 eye, double reachSq, int r, BlockPos center,
+                                List<BlockPos> breakTargets, List<BlockPos> pickTargets, List<BlockPos> replantTiles) {
         for (BlockPos pos : BlockPos.betweenClosed(
                 center.offset(-r, -r, -r), center.offset(r, r, r))) {
             if (pos.distToCenterSqr(eye) > reachSq) {
@@ -376,84 +453,68 @@ public class AutoHarvestCropFunction extends SymAbstractFunction {
             BlockState state = client.level.getBlockState(pos);
             BlockPos target = pos.immutable();
 
-            // 发光浆果
             if (state.hasProperty(BlockStateProperties.BERRIES)
                     && state.getValue(BlockStateProperties.BERRIES)) {
-                if (pickBlock(client, target)) {
-                    return true;
-                }
+                pickTargets.add(target);
                 continue;
             }
-
-            // 浆果丛
             if (state.is(Blocks.SWEET_BERRY_BUSH)) {
-                if (!isFullyGrown(state)) {
-                    continue;
-                }
-                if (pickBlock(client, target)) {
-                    return true;
+                if (isFullyGrown(state)) {
+                    pickTargets.add(target);
                 }
                 continue;
             }
 
-            // 甘蔗：只收第二层及以上，保留最底层继续生长
+            // 甘蔗：只收第二层及以上
             if (state.is(Blocks.SUGAR_CANE)) {
                 if (client.level.getBlockState(target.below()).is(Blocks.SUGAR_CANE)) {
-                    breakInstant(client, target);
-                    return true;
+                    breakTargets.add(target);
                 }
                 continue;
             }
-
+//
             // 地狱疣
             if (state.is(Blocks.NETHER_WART)) {
-                if (!isFullyGrown(state)) {
-                    continue;
-                }
-                if (breakInstant(client, target)) {
-                    replantHarvestedTile(client, target.below());
-                    return true;
+                if (isFullyGrown(state)) {
+                    breakTargets.add(target);
+                    replantTiles.add(target.below());
                 }
                 continue;
             }
 
             // 通用作物
             if (state.getBlock() instanceof CropBlock crop && crop.isMaxAge(state)) {
-                if (breakInstant(client, target)) {
-                    replantHarvestedTile(client, target.below());
-                    return true;
-                }
+                breakTargets.add(target);
+                replantTiles.add(target.below());
             }
         }
-        return false;
     }
 
-    /**
-     * 定向补种，收获当 tick 立即补种
-     */
-    private void replantHarvestedTile(Minecraft client, BlockPos surfacePos) {
+    private boolean plantAt(Minecraft client, BlockPos support) {
+        BlockPos cropPos = support.above();
+        if (!client.level.getBlockState(cropPos).isAir()) {
+            return false;
+        }
         InteractionHand hand = resolvePlantHand(client);
         if (hand == null) {
-            return;
+            return false;
         }
-        ItemStack plantStack = hand == InteractionHand.MAIN_HAND
-                ? client.player.getMainHandItem()
-                : client.player.getOffhandItem();
-        Block surface = plantStack.is(Items.NETHER_WART) ? Blocks.SOUL_SAND : Blocks.FARMLAND;
-        if (!client.level.getBlockState(surfacePos).is(surface)) {
-            return;
+        ItemStack stack = hand == InteractionHand.MAIN_HAND
+                ? client.player.getMainHandItem() : client.player.getOffhandItem();
+        if (stack.getCount() <= 0) {
+            return false;
         }
-        BlockPos target = surfacePos.immutable();
-        Vec3 hitVec = new Vec3(target.getX() + 0.5, target.getY() + 1.0, target.getZ() + 0.5);
-        client.gameMode.useItemOn(
-                client.player,
-                hand,
-                new BlockHitResult(hitVec, Direction.UP, target, false)
-        );
+        Block surface = stack.is(Items.NETHER_WART) ? Blocks.SOUL_SAND : Blocks.FARMLAND;
+        if (!client.level.getBlockState(support).is(surface)) {
+            return false;
+        }
+        Vec3 hit = new Vec3(support.getX() + 0.5, support.getY() + 1.0, support.getZ() + 0.5);
+        return client.gameMode.useItemOn(client.player, hand,
+                new BlockHitResult(hit, Direction.UP, support, false)).consumesAction();
     }
 
     /**
-     * 主手优先取可种植物的手，无可种植物返回 null
+     * 优先取可种植物，无可种植物返回 null
      */
     private InteractionHand resolvePlantHand(Minecraft client) {
         if (isPlantable(client.player.getMainHandItem())) {
@@ -465,29 +526,49 @@ public class AutoHarvestCropFunction extends SymAbstractFunction {
         return null;
     }
 
-    private static boolean isFullyGrown(BlockState state) {
-        IntegerProperty age = null;
+    /**
+     * 作物的年龄属性，找不到返回 null
+     */
+    private static IntegerProperty ageProperty(BlockState state) {
         for (Property<?> p : state.getProperties()) {
-            String name = p.getName();
-            if ((name.equals("age") || name.equals("stage") || name.equals("growth"))
-                    && p instanceof IntegerProperty ip) {
-                age = ip;
-                break;
+            if (p instanceof IntegerProperty ip
+                    && (p.getName().equals("age")
+                    || p.getName().equals("stage")
+                    || p.getName().equals("growth"))) {
+                return ip;
             }
         }
-        if (age == null) {
-            return false;
-        }
+        return null;
+    }
+
+    private static int maxAge(IntegerProperty age) {
         int max = Integer.MIN_VALUE;
         for (Integer v : age.getPossibleValues()) {
             if (v > max) {
                 max = v;
             }
         }
-        return state.getValue(age) >= max;
+        return max;
     }
 
-    private boolean replantOne(Minecraft client, Vec3 eye, double reachSq, int r, BlockPos center) {
+    private static boolean isFullyGrown(BlockState state) {
+        IntegerProperty age = ageProperty(state);
+        return age != null && state.getValue(age) >= maxAge(age);
+    }
+
+    /**
+     * 成熟度，用于骨粉催熟的优先级
+     */
+    private static float growthFraction(BlockState state) {
+        IntegerProperty age = ageProperty(state);
+        if (age == null) {
+            return 0.0F;
+        }
+        int max = maxAge(age);
+        return max <= 0 ? 0.0F : (float) state.getValue(age) / max;
+    }
+
+    private boolean replant(Minecraft client, Vec3 eye, double reachSq, int r, BlockPos center) {
         InteractionHand hand = resolvePlantHand(client);
         if (hand == null) {
             return false;
@@ -540,79 +621,63 @@ public class AutoHarvestCropFunction extends SymAbstractFunction {
         return false;
     }
 
-    private boolean isPlantable(ItemStack stack) {
-        return !stack.isEmpty()
-                && (PLANTABLE_ON_FARMLAND.contains(stack.getItem())
-                || stack.is(Items.NETHER_WART)
-                || stack.is(Items.SUGAR_CANE));
+    private static boolean isPlantableItem(Item item) {
+        return PLANTABLE_ON_FARMLAND.contains(item)
+                || item == Items.NETHER_WART
+                || item == Items.SUGAR_CANE;
     }
 
-    /**
-     * 右键采摘
-     */
-    private boolean pickBlock(Minecraft client, BlockPos target) {
-        Vec3 hitVec = new Vec3(target.getX() + 0.5, target.getY() + 0.5, target.getZ() + 0.5);
-        InteractionResult result = client.gameMode.useItemOn(
-                client.player,
-                InteractionHand.MAIN_HAND,
-                new BlockHitResult(hitVec, Direction.UP, target, false)
-        );
-        return result.consumesAction();
+    private static boolean isPlantable(ItemStack stack) {
+        return !stack.isEmpty() && isPlantableItem(stack.getItem());
     }
 
-    private boolean breakInstant(Minecraft client, BlockPos target) {
-        if (client.gameMode.startDestroyBlock(target, Direction.UP)) {
-            client.gameMode.stopDestroyBlock();
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * 催熟
-     */
-    private void boneMealOne(Minecraft client, Vec3 eye, double reachSq, int r, BlockPos center) {
+    private void boneMeal(Minecraft client, Vec3 eye, double reachSq, int r, BlockPos center) {
         if (!client.player.getMainHandItem().is(Items.BONE_MEAL)) {
             return;
         }
+        List<BlockPos> targets = new ArrayList<>();
         for (BlockPos pos : BlockPos.betweenClosed(
                 center.offset(-r, -r, -r), center.offset(r, r, r))) {
             if (pos.distToCenterSqr(eye) > reachSq) {
                 continue;
             }
             BlockState state = client.level.getBlockState(pos);
-            if (!isGrowTarget(state)) {
-                continue;
+            if (isGrowTarget(client.level, pos, state)) {
+                targets.add(pos.immutable());
             }
-            BlockPos target = pos.immutable();
-            Vec3 hitVec = new Vec3(target.getX() + 0.5, target.getY() + 0.5, target.getZ() + 0.5);
-            InteractionResult result = client.gameMode.useItemOn(
-                    client.player,
-                    InteractionHand.MAIN_HAND,
-                    new BlockHitResult(hitVec, Direction.UP, target, false)
-            );
-            if (result.consumesAction()) {
-                return;
+        }
+        if (targets.isEmpty()) {
+            return;
+        }
+        targets.sort((a, b) -> Float.compare(
+                growthFraction(client.level.getBlockState(b)),
+                growthFraction(client.level.getBlockState(a))));
+
+        int budget = Math.min(maxActionsPerTick, client.player.getMainHandItem().getCount());
+        for (BlockPos pos : targets) {
+            if (budget-- <= 0) {
+                break;
             }
+            if (!client.player.getMainHandItem().is(Items.BONE_MEAL)) {
+                break;
+            }
+            client.gameMode.useItemOn(client.player, InteractionHand.MAIN_HAND,
+                    new BlockHitResult(Vec3.atCenterOf(pos), Direction.UP, pos, false));
         }
     }
 
-    private static boolean isGrowTarget(BlockState state) {
-        if (state.getBlock() instanceof CropBlock crop) {
-            return !crop.isMaxAge(state);
+    /**
+     * 是否值得用骨粉催熟
+     * 避免误催树苗/草/蘑菇
+     */
+    private static boolean isGrowTarget(LevelReader level, BlockPos pos, BlockState state) {
+        Block block = state.getBlock();
+        if (!(block instanceof CropBlock)
+                && !(block instanceof SweetBerryBushBlock)
+                && !(block instanceof CaveVinesPlantBlock)) {
+            return false;
         }
-        if (state.is(Blocks.SWEET_BERRY_BUSH) || state.is(Blocks.NETHER_WART)) {
-            return !isFullyGrown(state);
-        }
-        if (state.is(Blocks.CAVE_VINES_PLANT)) {
-            return !state.getValue(BlockStateProperties.BERRIES);
-        }
-        return false;
-    }
-
-    private void swapToOffhand(int srcSlot) {
-        ContainerActions.leftClickSlot(srcSlot);
-        ContainerActions.leftClickSlot(Constants.OFFHAND);
-        ContainerActions.leftClickSlot(srcSlot);
+        BonemealableBlock bonemealable = (BonemealableBlock) block;
+        return bonemealable.isValidBonemealTarget(level, pos, state);
     }
 }

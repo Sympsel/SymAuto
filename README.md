@@ -35,8 +35,7 @@
 - 特定村民高亮（依据本地交易缓存，附魔书黑 / 白名单）
 
 ### 便利与生产
-- BetterBundle 收纳袋增强（该部分实现参考 [BetterBundleHUDMod](https://github.com/aningQwQ/BetterBundleHUDMod-26.2/releases/tag/v1.3.0)）
-- 便捷容器面板（支持收纳袋、潜影盒，潜影盒只能预览）
+- 便捷容器面板（支持收纳袋、潜影盒，潜影盒只能预览）（该部分实现参考 [BetterBundleHUDMod](https://github.com/aningQwQ/BetterBundleHUDMod-26.2/releases/tag/v1.3.0)）
 - 多预设自动合成
 
 ### 注意

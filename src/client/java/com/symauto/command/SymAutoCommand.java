@@ -470,7 +470,7 @@ public class SymAutoCommand {
     // 供 CommandUsageScreen 渲染
     public static List<Component> usageLines() {
         List<Component> lines = new ArrayList<>();
-        lines.add(section("—— 客户端命令（命名空间 /symauto:xxx ——"));
+        lines.add(section("—— 客户端命令（/symauto:xxx） ——"));
         lines.add(plain("均为客户端命令，单人/联机均可使用", ChatFormatting.GRAY));
         lines.add(spacer());
 

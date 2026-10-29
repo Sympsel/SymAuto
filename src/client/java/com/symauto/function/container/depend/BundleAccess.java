@@ -10,6 +10,8 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
+import java.util.List;
+
 public class BundleAccess {
     private BundleAccess() {
     }
@@ -85,21 +87,27 @@ public class BundleAccess {
         }
     }
 
+    /**
+     * 找取出的物品应放到哪个槽位。
+     * 返回的是 <b>菜单槽号</b>（{@code Slot.index} 是容器内索引，快捷栏/副手会与菜单槽号不一致）。
+     */
     private static int findDestination(Player player, ItemStack probe) {
         Inventory inv = player.getInventory();
         int empty = -1;
-        for (Slot slot : player.containerMenu.slots) {
+        List<Slot> slots = player.containerMenu.slots;
+        for (int slotId = 0; slotId < slots.size(); slotId++) {
+            Slot slot = slots.get(slotId);
             if (slot.container != inv || !slot.mayPlace(probe)) {
                 continue;
             }
             ItemStack s = slot.getItem();
             if (s.isEmpty()) {
                 if (empty < 0) {
-                    empty = slot.index;
+                    empty = slotId;
                 }
             } else if (ItemStack.isSameItemSameComponents(s, probe)
                     && s.getCount() < s.getMaxStackSize()) {
-                return slot.index;
+                return slotId;
             }
         }
         return empty;
