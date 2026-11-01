@@ -1,0 +1,19 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.symhud.mixin",
+  "plugin": "com.symhud.mixin.SymHudMixinPlugin",
+  "compatibilityLevel": "JAVA_25",
+  "client": [
+    "EntityGlowMixin",
+    "ContainerPanelScreenMixin",
+    "ContainerPanelCreativeMixin",
+    "MouseTweaksCompatMixin",
+    "accessor.AbstractRecipeBookScreenAccessor",
+    "accessor.ScreenRebuildWidgetsAccessor",
+    "accessor.ScreenTextInputAccessor"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

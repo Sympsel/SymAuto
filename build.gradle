@@ -1,112 +1,38 @@
 plugins {
-    id 'net.fabricmc.fabric-loom' version '1.17.21'
-    id 'maven-publish'
-    id 'io.freefair.lombok' version '9.5.0'
+    id 'base'
+    id 'net.fabricmc.fabric-loom' apply false
+    id 'io.freefair.lombok' apply false
 }
 
-version = project.mod_version
-group = project.maven_group
+def moduleProjects = [project(':symbase'), project(':symhud'), project(':symauto')]
+def releaseDir = layout.buildDirectory.dir('release').get().asFile
 
-base {
-    archivesName = project.archives_base_name
+tasks.register('collectJars', Copy) {
+    group = 'build'
+    description = 'Collect the three mod jars into build/release'
+    dependsOn moduleProjects.collect { it.tasks.named('build') }
+    from moduleProjects.collect { it.layout.buildDirectory.dir('libs') }
+    include '*.jar'
+    exclude '*-sources.jar'
+    into layout.buildDirectory.dir('release')
 }
 
-loom {
-    splitEnvironmentSourceSets()
-
-    mods {
-        "symauto" {
-            sourceSet sourceSets.main
-            sourceSet sourceSets.client
-        }
+tasks.register('buildAll') {
+    group = 'build'
+    description = 'Build and collect symbase, symhud and symauto'
+    dependsOn collectJars
+    doLast {
+        println "MOD jars: ${releaseDir}"
     }
 }
 
-fabricApi {
-    configureDataGeneration {
-        client = true
-    }
+tasks.named('build') {
+    dependsOn buildAll
 }
 
-repositories {
-    maven { url "https://maven.terraformersmc.com/" }
-
-    maven {
-        name = "Modrinth"
-        url = "https://api.modrinth.com/maven"
-        content {
-            includeGroup "maven.modrinth"
-        }
-    }
+tasks.register('release') {
+    group = 'build'
+    description = 'Alias for buildAll: collect the three mod jars'
+    dependsOn collectJars
 }
 
-configurations.configureEach {
-    resolutionStrategy {
-        // 7 天内不重复解析 SNAPSHOT / 动态版本，避免每次 runClient 重新拉取与重配
-        cacheChangingModulesFor 7, 'days'
-        cacheDynamicVersionsFor 7, 'days'
-    }
-}
-
-dependencies {
-    minecraft "com.mojang:minecraft:${project.minecraft_version}"
-    implementation "net.fabricmc:fabric-loader:${project.loader_version}"
-    implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
-    implementation "com.terraformersmc:modmenu:20.0.3"
-    implementation include("com.belerweb:pinyin4j:2.5.1")
-    localRuntime "maven.modrinth:jUO7wMKn:qNF9SWIb"
-}
-
-def versionValue = project.version
-def minecraftVersionValue = project.minecraft_version
-def loaderVersionValue = project.loader_version
-def archivesBaseNameValue = project.archives_base_name
-
-processResources {
-    inputs.property "version", versionValue
-    inputs.property "minecraft_version", minecraftVersionValue
-    inputs.property "loader_version", loaderVersionValue
-    filteringCharset "UTF-8"
-
-    filesMatching("fabric.mod.json") {
-        expand "version": versionValue,
-                "minecraft_version": minecraftVersionValue,
-                "loader_version": loaderVersionValue
-    }
-}
-
-def targetJavaVersion = 25
-tasks.withType(JavaCompile).configureEach {
-    it.options.encoding = "UTF-8"
-    if (targetJavaVersion >= 10 || JavaVersion.current().isJava10Compatible()) {
-        it.options.release.set(targetJavaVersion)
-    }
-}
-
-java {
-    def javaVersion = JavaVersion.toVersion(targetJavaVersion)
-    if (JavaVersion.current() < javaVersion) {
-        toolchain.languageVersion = JavaLanguageVersion.of(targetJavaVersion)
-    }
-    withSourcesJar()
-}
-
-jar {
-    from("LICENSE") {
-        rename { "${it}_${archivesBaseNameValue}" }
-    }
-}
-
-publishing {
-    publications {
-        create("mavenJava", MavenPublication) {
-            artifactId = project.archives_base_name
-            from components.java
-        }
-    }
-
-    repositories {
-        maven { url 'https://maven.aliyun.com/repository/public' }
-        maven { url 'https://maven.aliyun.com/repository/gradle-plugin' }
-    }
-}

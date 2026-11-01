@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "id": "symhud",
+  "version": "${version}",
+  "name": "SymHud",
+  "description": "由 Sympsel 所写的信息显示 MOD，需要加装前置 SymBase，Shift + X 或 /sym 打开菜单",
+  "authors": ["Sympsel"],
+  "license": "MIT",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "com.symhud.SymHudClient"
+    ],
+    "modmenu": [
+      "com.symhud.gui.integration.ModMenuIntegration"
+    ]
+  },
+  "mixins": [
+    {
+      "config": "symhud.client.mixins.json",
+      "environment": "client"
+    }
+  ],
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "fabric-api": "*",
+    "minecraft": "${minecraft_version}",
+    "symbase": ">=${version}"
+  },
+  "suggests": {
+    "modmenu": "*"
+  }
+}
+

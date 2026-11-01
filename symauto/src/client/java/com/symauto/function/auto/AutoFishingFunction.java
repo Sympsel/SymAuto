@@ -1,0 +1,232 @@
+package com.symauto.function.auto;
+
+import com.symbase.config.option.ConfigOption;
+import com.symbase.config.option.IntOption;
+import com.symbase.function.base.SymAbstractFunction;
+import com.symbase.function.utils.Tooltip;
+import com.symauto.mixin.accessor.FishingHookAccessor;
+import lombok.Getter;
+import lombok.Setter;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.tags.FluidTags;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.projectile.FishingHook;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
+
+public class AutoFishingFunction extends SymAbstractFunction {
+    public static final AutoFishingFunction INSTANCE = new AutoFishingFunction();
+    private static final int RECAST_DELAY_TICKS = 15;
+
+    private enum State { IDLE, CAST, WAITING, REELING, RECASTING }
+
+    private State state = State.IDLE;
+    private int waitTicks = 0;
+    private int recastCountdown = 0;
+    // 抛竿后等待 2s 判定是否落水 + 是否开放水域
+    private static final int SETTLE_CHECK_TICKS = 40;
+    @Setter
+    @Getter
+    private int checkAfterCastSeconds = SETTLE_CHECK_TICKS / 20;
+    // 不再水中十秒后重抛
+    private static final int NOT_IN_WATER_RECAST_TICKS = 200;
+    @Getter
+    @Setter
+    private int notInWaterRecastSeconds = NOT_IN_WATER_RECAST_TICKS / 20;
+    private boolean notInWater = false;
+    private static final int CAST_TIMEOUT_TICKS = 900;
+    @Getter
+    @Setter
+    private int castTimeoutSeconds = CAST_TIMEOUT_TICKS / 20;
+
+    private AutoFishingFunction() {
+        Tooltip tooltip = Tooltip.create()
+                .line("手持钓鱼杆时自动甩杆收杆")
+                .line("等待期间：")
+                .line("2秒后检测是否在水中和开放水域")
+                .line("如果不在水中10秒后重新抛竿")
+                .line("兜底45秒没有鱼会超时重新抛竿");
+        super("auto_fishing", "自动钓鱼", tooltip.toString());
+        addOption(new IntOption("check_after_cast_seconds", "抛竿几秒后检查鱼钩状态",
+                this::getCheckAfterCastSeconds, this::setCheckAfterCastSeconds,
+                2, 10, 1));
+        addOption(new IntOption("not_in_water_recast_seconds", "不再水中几秒后重抛",
+                this::getNotInWaterRecastSeconds, this::setNotInWaterRecastSeconds,
+                3, 20, 1));
+        addOption(new IntOption("cast_timeout_seconds", "抛竿后最长等待几秒重抛",
+                this::getCastTimeoutSeconds, this::setCastTimeoutSeconds,
+                20, 90, 5));
+    }
+
+    @Override
+    protected void onTrigger(Minecraft client) {
+        boolean mainRod = client.player.getMainHandItem().is(Items.FISHING_ROD);
+        boolean offRod = client.player.getOffhandItem().is(Items.FISHING_ROD);
+        if (!mainRod && !offRod) {
+            if (state != State.IDLE) {
+                reset();
+            }
+            return;
+        }
+
+        switch (state) {
+            case IDLE -> {
+                castRod(client);
+                state = State.CAST;
+            }
+            case CAST -> {
+                if (client.player.fishing != null) {
+                    waitTicks = 0;
+                    notInWater = false;
+                    state = State.WAITING;
+                }
+            }
+            case WAITING -> {
+                FishingHook hook = client.player.fishing;
+                if (hook == null) {
+                    state = State.IDLE;
+                    return;
+                }
+
+                waitTicks++;
+                if (waitTicks == SETTLE_CHECK_TICKS) {
+                    notInWater = !isHookInWater(client.level, hook);
+                    if (notInWater) {
+                        client.player.sendOverlayMessage(
+                                Component.literal("⚠ 鱼漂未落入水中，" + notInWaterRecastSeconds + " 秒后自动重抛")
+                                        .withStyle(ChatFormatting.RED)
+                        );
+                    } else {
+                        judgeIsInOpenWater(client);
+                    }
+                }
+
+                if (notInWater && waitTicks >= notInWaterRecastSeconds) {
+                    reelIn(client);
+                    state = State.REELING;
+                    notInWater = false;
+                    return;
+                }
+
+                if (waitTicks > CAST_TIMEOUT_TICKS) {
+                    reelIn(client);
+                    state = State.REELING;
+                    return;
+                }
+
+                if (((FishingHookAccessor) hook).isBiting()) {
+                    reelIn(client);
+                    state = State.REELING;
+                }
+            }
+            case REELING -> {
+                if (client.player.fishing == null) {
+                    recastCountdown = RECAST_DELAY_TICKS;
+                    state = State.RECASTING;
+                }
+            }
+            case RECASTING -> {
+                recastCountdown--;
+                if (recastCountdown <= 0) {
+                    state = State.IDLE;
+                }
+            }
+        }
+    }
+
+    /**
+     * 手动判定开阔水域
+     * 规则：以浮漂为中心 5×5 区域内
+     *  - 水面层只能是水或空气/睡莲；
+     *  - 水面下方一格必须是水（保证水深，排除一格水坑）；
+     *  - 水面上方两格必须是空气/睡莲（保证天空暴露，排除室内/加盖）；
+     *  - 至少存在一层水
+     */
+    private boolean isManuallyInOpenWater(Level level, FishingHook hook) {
+        BlockPos center = hook.blockPosition();
+
+        int waterY;
+        if (isWater(level, center)) {
+            waterY = center.getY();
+        } else if (isWater(level, center.below())) {
+            waterY = center.getY() - 1;
+        } else {
+            return false;
+        }
+
+        int cx = center.getX();
+        int cz = center.getZ();
+        boolean anyWater = false;
+
+        for (int dx = -2; dx <= 2; dx++) {
+            for (int dz = -2; dz <= 2; dz++) {
+                int x = cx + dx;
+                int z = cz + dz;
+
+                BlockPos surface = new BlockPos(x, waterY, z);
+                if (isWater(level, surface)) {
+                    anyWater = true;
+                } else if (!isAirOrLily(level, surface)) {
+                    return false;
+                }
+
+                if (!isWater(level, new BlockPos(x, waterY - 1, z))) {
+                    return false;
+                }
+                if (!isAirOrLily(level, new BlockPos(x, waterY + 1, z))
+                        || !isAirOrLily(level, new BlockPos(x, waterY + 2, z))) {
+                    return false;
+                }
+            }
+        }
+        return anyWater;
+    }
+
+    private boolean isHookInWater(Level level, FishingHook hook) {
+        BlockPos pos = hook.blockPosition();
+        return isWater(level, pos) || isWater(level, pos.below());
+    }
+
+    private boolean isWater(Level level, BlockPos pos) {
+        return level.getFluidState(pos).is(FluidTags.WATER);
+    }
+
+    private boolean isAirOrLily(Level level, BlockPos pos) {
+        return level.isEmptyBlock(pos) || level.getBlockState(pos).is(Blocks.LILY_PAD);
+    }
+
+    private void judgeIsInOpenWater(Minecraft client) {
+        FishingHook hook = client.player.fishing;
+        if (hook == null) {
+            return;
+        }
+        if (!isManuallyInOpenWater(client.level, hook)) {
+            client.player.sendOverlayMessage(
+                    Component.literal("⚠ 非开放水域，无法钓到宝藏").withStyle(ChatFormatting.GOLD)
+            );
+        }
+    }
+
+    private void castRod(Minecraft client) {
+        InteractionHand hand = client.player.getMainHandItem().is(Items.FISHING_ROD)
+                ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND;
+        client.gameMode.useItem(client.player, hand);
+    }
+
+    private void reelIn(Minecraft client) {
+        InteractionHand hand = client.player.getMainHandItem().is(Items.FISHING_ROD)
+                ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND;
+        client.gameMode.useItem(client.player, hand);
+    }
+
+    private void reset() {
+        state = State.IDLE;
+        recastCountdown = 0;
+        waitTicks = 0;
+        notInWater = false;
+    }
+}

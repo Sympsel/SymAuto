@@ -1,4 +1,8 @@
 pluginManagement {
+    plugins {
+        id 'net.fabricmc.fabric-loom' version '1.17.21'
+        id 'io.freefair.lombok' version '9.5.0'
+    }
     repositories {
         maven {
             name = 'Fabric'
@@ -7,3 +11,8 @@ pluginManagement {
         gradlePluginPortal()
     }
 }
+
+include ':symbase'
+include ':symhud'
+include ':symauto'
+include ':dev'

@@ -1,0 +1,119 @@
+package com.symbase.gui.screen;
+
+import com.symbase.config.ConfigServices;
+import com.symbase.config.option.ConfigOption;
+import com.symbase.function.base.SymAbstractFunction;
+import com.symbase.gui.widget.component.ArrowButton;
+import com.symbase.gui.widget.utils.ButtonFactory;
+import lombok.NonNull;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.Component;
+
+public class ConfigMenuScreen extends Screen {
+    private final SymAbstractFunction function;
+    private final Screen parent;
+
+    private static final int TITLE_COLOR = 0xFFFFFFFF;
+
+    private static final int TITLE_Y = 12;
+    private static final int ROW_H = 22;
+    private static final int GAP_Y = 6;
+    private static final int LABEL_W = 150;
+    private static final int ARROW_W = 20;
+    private static final int ARROW_H = 20;
+    private static final int VALUE_W = 44;
+    // 字段与 label 边缘的内边距
+    private static final int FIELD_PAD_X = 4;
+
+    private int panelLeft;
+    private int contentTop;
+    private int panelW;
+
+    public ConfigMenuScreen(SymAbstractFunction function, Screen parent) {
+        super(Component.literal(function.getName() + " · 配置")
+                .withStyle(ChatFormatting.BOLD, ChatFormatting.GOLD));
+        this.function = function;
+        this.parent = parent;
+    }
+
+    @Override
+    protected void init() {
+        super.init();
+        // 布局：◀  [label .... value]  ▶
+        panelW = ARROW_W + 2 + LABEL_W + 2 + VALUE_W + 2 + ARROW_W;
+        panelLeft = (this.width - panelW) / 2;
+        contentTop = TITLE_Y + 22;
+
+        int y = contentTop;
+        int midX = panelLeft + ARROW_W + 2;
+        for (ConfigOption opt : function.getConfigOptions()) {
+            final ConfigOption ref = opt;
+            this.addRenderableWidget(ButtonFactory.move(Component.literal("上一项"),
+                            panelLeft, y, ARROW_W, ARROW_H, ArrowButton.Direction.LEFT)
+                    .onLeftClick(() -> {
+                        ref.cycle(-1);
+                        ConfigServices.saveAll();
+                    }));
+            this.addRenderableWidget(ButtonFactory.move(Component.literal("下一项"),
+                            midX + LABEL_W + 2 + VALUE_W + 2, y, ARROW_W, ARROW_H, ArrowButton.Direction.RIGHT)
+                    .onLeftClick(() -> {
+                        ref.cycle(1);
+                        ConfigServices.saveAll();
+                    }));
+            y += ROW_H + GAP_Y;
+        }
+
+        y += GAP_Y;
+        int gapX = 4;
+        int halfW = (panelW - gapX) / 2;
+        this.addRenderableWidget(ButtonFactory.navigation(
+                        Component.literal("重置"), panelLeft, y, halfW, ARROW_H)
+                .onLeftClick(() -> {
+                    for (ConfigOption o : function.getConfigOptions()) {
+                        o.reset();
+                    }
+                    ConfigServices.saveAll();
+                })
+                .tooltip(Component.literal("恢复默认配置")));
+        this.addRenderableWidget(ButtonFactory.navigation(
+                        Component.literal("返回"), panelLeft + halfW + gapX, y, halfW, ARROW_H)
+                .onLeftClick(() -> this.minecraft.gui.setScreen(parent)));
+    }
+
+    @Override
+    public void extractRenderState(@NonNull GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
+        graphics.fill(panelLeft - 6, contentTop - 8,
+                panelLeft + panelW + 6, contentTop + function.getConfigOptions().size() * (ROW_H + GAP_Y) + 4,
+                0x66000000);
+        super.extractRenderState(graphics, mouseX, mouseY, delta);
+
+        int titleX = (this.width - this.font.width(this.title)) / 2;
+        graphics.text(this.font, this.title, titleX, TITLE_Y, TITLE_COLOR, true);
+
+        int y = contentTop;
+        int midX = panelLeft + ARROW_W + 2;
+        for (ConfigOption opt : function.getConfigOptions()) {
+            graphics.text(this.font, opt.getLabel(), midX + FIELD_PAD_X, y + 6, 0xFFFFFFFF, false);
+            String value = opt.displayValue();
+            int valueX = midX + LABEL_W + 2 + VALUE_W - FIELD_PAD_X - this.font.width(value);
+            graphics.text(this.font, value, valueX, y + 6, 0xFF7FFF7F, false);
+            y += ROW_H + GAP_Y;
+        }
+    }
+
+    @Override
+    public void onClose() {
+        this.minecraft.gui.setScreen(parent);
+    }
+
+    @Override
+    public boolean isPauseScreen() {
+        return false;
+    }
+}
+
+
+
+

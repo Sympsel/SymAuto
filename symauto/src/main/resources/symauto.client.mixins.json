@@ -1,0 +1,23 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.symauto.mixin",
+  "plugin": "com.symauto.mixin.SymAutoMixinPlugin",
+  "compatibilityLevel": "JAVA_25",
+  "client": [
+    "FixYPlaceMixin",
+    "accessor.FishingHookAccessor",
+    "accessor.MinecraftAccessor",
+    "InterceptDropKeyMixin",
+    "accessor.AbstractContainerScreenAccessor",
+    "accessor.MerchantScreenAccessor",
+    "accessor.VaultServerDataAccessor"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "overwrites": {
+    "requireAnnotations": true
+  }
+}
+

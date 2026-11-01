@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "id": "symdev",
+  "version": "${version}",
+  "name": "SymDev",
+  "description": "SymAuto development launcher",
+  "environment": "client",
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "fabric-api": "*",
+    "minecraft": "${minecraft_version}"
+  }
+}

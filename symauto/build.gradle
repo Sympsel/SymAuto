@@ -1,0 +1,133 @@
+plugins {
+    id 'net.fabricmc.fabric-loom'
+    id 'maven-publish'
+    id 'io.freefair.lombok'
+}
+
+version = project.mod_version
+group = project.maven_group
+
+base {
+    archivesName = 'SymAuto'
+}
+
+loom {
+    splitEnvironmentSourceSets()
+
+    mods {
+        "symauto" {
+            sourceSet sourceSets.main
+            sourceSet sourceSets.client
+        }
+    }
+}
+
+fabricApi {
+    configureDataGeneration {
+        client = true
+    }
+}
+
+repositories {
+    maven { url "https://maven.terraformersmc.com/" }
+
+    maven {
+        name = "Modrinth"
+        url = "https://api.modrinth.com/maven"
+        content {
+            includeGroup "maven.modrinth"
+        }
+    }
+}
+
+configurations.configureEach {
+    resolutionStrategy {
+        // 7 天内不重复解析 SNAPSHOT / 动态版本，避免每次 runClient 重新拉取与重配
+        cacheChangingModulesFor 7, 'days'
+        cacheDynamicVersionsFor 7, 'days'
+    }
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${project.minecraft_version}"
+    implementation "net.fabricmc:fabric-loader:${project.loader_version}"
+    implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+    implementation "com.terraformersmc:modmenu:20.0.3"
+    localRuntime "maven.modrinth:jUO7wMKn:qNF9SWIb"
+
+    implementation project(path: ':symbase', configuration: 'modJar')
+}
+
+def versionValue = project.version
+def minecraftVersionValue = project.minecraft_version
+def loaderVersionValue = project.loader_version
+
+processResources {
+    inputs.property "version", versionValue
+    inputs.property "minecraft_version", minecraftVersionValue
+    inputs.property "loader_version", loaderVersionValue
+    filteringCharset "UTF-8"
+
+    from(project.file("CHANGELOG.md")) {
+        rename { "assets/symauto/update_log.md" }
+    }
+
+    filesMatching("fabric.mod.json") {
+        expand "version": versionValue,
+                "minecraft_version": minecraftVersionValue,
+                "loader_version": loaderVersionValue
+    }
+}
+
+def targetJavaVersion = 25
+tasks.withType(JavaCompile).configureEach {
+    it.options.encoding = "UTF-8"
+    if (targetJavaVersion >= 10 || JavaVersion.current().isJava10Compatible()) {
+        it.options.release.set(targetJavaVersion)
+    }
+}
+
+java {
+    def javaVersion = JavaVersion.toVersion(targetJavaVersion)
+    if (JavaVersion.current() < javaVersion) {
+        toolchain.languageVersion = JavaLanguageVersion.of(targetJavaVersion)
+    }
+    withSourcesJar()
+}
+
+jar {
+    from("../LICENSE") {
+        rename { "${it}_SymAuto" }
+    }
+}
+
+publishing {
+    publications {
+        create("mavenJava", MavenPublication) {
+            artifactId = 'SymAuto'
+            from components.java
+        }
+    }
+
+    repositories {
+        maven { url 'https://maven.aliyun.com/repository/public' }
+        maven { url 'https://maven.aliyun.com/repository/gradle-plugin' }
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

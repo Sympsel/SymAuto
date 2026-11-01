@@ -1,0 +1,105 @@
+plugins {
+    id 'net.fabricmc.fabric-loom'
+    id 'maven-publish'
+    id 'io.freefair.lombok'
+}
+
+version = project.mod_version
+group = project.maven_group
+
+base {
+    archivesName = 'SymHud'
+}
+
+loom {
+    splitEnvironmentSourceSets()
+
+    mods {
+        "symhud" {
+            sourceSet sourceSets.main
+            sourceSet sourceSets.client
+        }
+    }
+}
+
+repositories {
+    maven {
+        name = 'Fabric'
+        url = 'https://maven.fabricmc.net/'
+    }
+    maven {
+        name = 'TerraformersMC'
+        url = 'https://maven.terraformersmc.com/'
+    }
+    mavenCentral()
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${project.minecraft_version}"
+    implementation "net.fabricmc:fabric-loader:${project.loader_version}"
+    implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+    implementation project(path: ':symbase', configuration: 'modJar')
+    implementation "com.terraformersmc:modmenu:20.0.3"
+    implementation include("com.belerweb:pinyin4j:2.5.1")
+}
+
+def versionValue = project.version
+def minecraftVersionValue = project.minecraft_version
+def loaderVersionValue = project.loader_version
+
+processResources {
+    inputs.property "version", versionValue
+    inputs.property "minecraft_version", minecraftVersionValue
+    inputs.property "loader_version", loaderVersionValue
+    filteringCharset "UTF-8"
+
+    from(project.file("CHANGELOG.md")) {
+        rename { "assets/symhud/update_log.md" }
+    }
+
+    filesMatching("fabric.mod.json") {
+        expand "version": versionValue,
+                "minecraft_version": minecraftVersionValue,
+                "loader_version": loaderVersionValue
+    }
+}
+
+def targetJavaVersion = 25
+tasks.withType(JavaCompile).configureEach {
+    it.options.encoding = "UTF-8"
+    if (targetJavaVersion >= 10 || JavaVersion.current().isJava10Compatible()) {
+        it.options.release.set(targetJavaVersion)
+    }
+}
+
+java {
+    def javaVersion = JavaVersion.toVersion(targetJavaVersion)
+    if (JavaVersion.current() < javaVersion) {
+        toolchain.languageVersion = JavaLanguageVersion.of(targetJavaVersion)
+    }
+    withSourcesJar()
+}
+
+jar {
+    from("../LICENSE") {
+        rename { "${it}_SymHud" }
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

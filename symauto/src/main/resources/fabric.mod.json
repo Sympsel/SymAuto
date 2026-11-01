@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "id": "symauto",
+  "version": "${version}",
+  "name": "SymAuto",
+  "description": "由 Sympsel 所写的自动化 MOD，Shift + X 或 /sym 打开菜单",
+  "authors": ["Sympsel"],
+  "contact": {
+    "homepage": "https://github.com/Sympsel/SymAuto",
+    "sources": "https://github.com/Sympsel/SymAuto",
+    "issues": "https://github.com/Sympsel/SymAuto/issues"
+  },
+  "license": "MIT",
+  "icon": "assets/symauto/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "fabric-datagen": [
+    ],
+    "client": [
+      "com.symauto.SymautoClient"
+    ],
+    "main": [
+      "com.symauto.Symauto"
+    ],
+    "modmenu": [
+      "com.symauto.gui.integration.ModMenuIntegration"
+    ]
+  },
+  "mixins": [
+    "symauto.mixins.json",
+    {
+      "config": "symauto.client.mixins.json",
+      "environment": "client"
+    }
+  ],
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "fabric-api": "*",
+    "minecraft": "${minecraft_version}",
+    "symbase": ">=${version}"
+  },
+  "suggests": {
+    "modmenu": "*"
+  }
+}

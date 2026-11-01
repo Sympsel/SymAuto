@@ -1,10 +1,13 @@
 # SymAuto
 
 > Sympsel 编写的适用于 Fabric 端 Minecraft **客户端**自动化 / 便利模组
-> 按 `Shift + X` 打开功能菜单，全部功能均可在菜单中开关
+> 按 `Shift + X` 打开公共功能菜单，全部功能均可在菜单中开关
 
 - **运行环境**：Minecraft `26.2` + Fabric Loader + Fabric API (>=0.19.5) + 模组菜单
-- **模组 ID**：`symauto`
+- **模块**：
+  - `symbase`：公共前置，提供菜单、组件、功能注册、配置框架和 HUD 框架
+  - `symauto`：自动化功能模块
+  - `symhud`：HUD 元素、快捷容器面板、容器预览与高亮模块
 - **开源协议**：[MIT](LICENSE)
 
 ## 特性
@@ -37,13 +40,13 @@
 ### HUD 编辑
 - 通用 HUD 编辑界面，所有已注册的 HUD 元素均可直接拖拽摆放
 - 支持锚点自适应（左 / 中 / 右、上 / 中 / 下）、边缘与元素间吸附、8px 网格、方向键微调、缩放和显隐
-- 布局保存到 `config/symauto/hud/layout.json`，窗口尺寸变化时贴边元素会保持相对位置
-- 可通过功能菜单「打开 → HUD 编辑界面」或指令 `/symauto hud`（简写 `/sa hud`）打开
+- 布局保存到 `config/symbase/hud/layout.json`，窗口尺寸变化时贴边元素会保持相对位置
+- 可通过功能菜单「打开 → HUD 编辑界面」或指令 `/sym:hud` 打开
 
 #### 添加新的 HUD 元素
 
 1. 继承 `AbstractHudElement`（纯文本可直接继承 `AbstractTextHudElement`），实现 `width`、`height`、`render`；
-2. 在 `HudManager.init()` 中调用 `register(new YourHudElement())`。
+2. 在功能 MOD 的 `ClientModInitializer` 中调用 `HudManager.register(new YourHudElement())`。
 
 注册后会自动获得布局持久化、HUD 渲染、编辑器中拖拽/吸附/缩放/显隐等能力，无需改编辑器代码。
 
@@ -51,34 +54,83 @@
 - 便捷容器面板（支持收纳袋、潜影盒，潜影盒只能预览）（该部分实现参考 [BetterBundleHUDMod](https://github.com/aningQwQ/BetterBundleHUDMod-26.2/releases/tag/v1.3.0)）
 - 多预设自动合成
 
+### Mod Menu
+
+- `SymAuto` 的 Mod Menu 配置入口打开公共功能菜单
+- `SymHud` 的 Mod Menu 配置入口直接打开 HUD 编辑界面
+- `SymBase` 标记为前置库，默认不出现在 Mod Menu 列表中；开启“显示库”后才会显示为 Library
 ### 注意
 - 本项目目前不支持自定义组合快捷键绑定，推荐添加 mod [NewVisualKeybinding](https://www.mcmod.cn/class/27226.html) 或其它快捷键管理工具
 
 ## 命令
 
-提供命名空间式客户端命令，根命令 `symauto` 与简写 `sa` 等价（例：`/sa:list`、`/symauto:list`）：
+指令由各功能 MOD 通过 `symbase` 的 `CommandRegistry` 自行注册，统一使用 `sym:` 命名空间。
 
-| 命令                                                                           | 说明                                |
-|--------------------------------------------------------------------------------|-------------------------------------|
-| `/sa` 或 `/sa:menu`                                                            | 打开功能菜单                        |
-| `/sa:help`                                                                     | 显示用法                            |
-| `/sa:list`                                                                     | 列出全部功能及开关状态              |
-| `/sa:info <function>`                                                          | 查看功能详情                        |
-| `/sa:enable <function> [true\|false]`                                          | 查询或设置功能开关                  |
-| `/sa:toggle <function>`                                                        | 切换功能开关                        |
-| `/sa:trades count\|clear`                                                      | 查看 / 清空村民交易缓存             |
-| `/sa:deaths [gui\|latest\|clear]`                                              | 死亡记录：列表 / 界面 / 最近 / 清空 |
-| `/sa:bwlist <function> <blacklist\|whitelist> <list\|clear\|add\|remove> [id]` | 管理各功能的黑白名单                |
-| `/sa:hud`                                                                      | 打开通用 HUD 编辑界面               |
-| `/sa hud`                                                                      | 同上（子命令形式；完整写法 `/symauto hud`） |
+### 公共命令
+
+| 命令 | 说明 |
+|------|------|
+| `/sym` 或 `/sym:menu` | 打开公共功能菜单 |
+| `/sym:help` | 显示公共用法 |
+| `/sym:list` | 列出全部功能（自动 + HUD） |
+| `/sym:info <function>` | 查看任意功能详情 |
+| `/sym:enable <function> [true\|false]` | 查询或设置任意功能开关 |
+| `/sym:toggle <function>` | 切换任意功能开关 |
+
+### SymAuto 专属命令
+
+| 命令 | 说明 |
+|------|------|
+| `/sym:auto` 或 `/sym:auto:menu` | 打开功能菜单 |
+| `/sym:auto:deaths [gui\|latest\|clear]` | 死亡记录：列表 / 界面 / 最近 / 清空 |
+| `/sym:auto:bwlist <function> <blacklist\|whitelist> <list\|clear\|add\|remove> [id]` | 管理自动功能的黑白名单 |
+| `/sym:auto:hud` | 打开 HUD 编辑界面 |
+
+### SymHud 专属命令
+
+| 命令 | 说明 |
+|------|------|
+| `/sym:hud` | 打开 HUD 编辑界面 |
+| `/sym:hud:list` | 列出全部 HUD 功能 |
+| `/sym:hud:info <function>` | 查看 HUD 功能详情 |
+| `/sym:hud:enable <function> [true\|false]` | 查询或设置 HUD 功能开关 |
+| `/sym:hud:toggle <function>` | 切换 HUD 功能开关 |
+| `/sym:hud:trades count\|clear` | 查看 / 清空村民交易缓存 |
+| `/sym:hud:bwlist <function> <blacklist\|whitelist> <list\|clear\|add\|remove> [id]` | 管理高亮功能的黑白名单 |
+
+兼容别名：`/sym:a:*` 等价于 `/sym:auto:*`，`/sym:h:*` 等价于 `/sym:hud:*`。
 
 ## 配置
 
-- 配置文件目录：`<游戏目录>/config/symauto/`
-  - `symauto.json`：功能开关与各功能选项
-  - `hud/layout.json`：HUD 元素的位置、缩放与显隐状态
-  - `bwlists/`：各功能的黑 / 白名单（每个功能的每种名单为独立 JSON 文件）
-- 功能菜单底部提供「打开配置文件夹」按钮，可直接在系统文件管理器中打开。
+- 公共框架目录：`<游戏目录>/config/symbase/`
+  - `functions.json`：**所有功能 MOD** 共用的功能开关、标签和功能选项
+  - `hud/layout.json`：所有 HUD 元素的位置、缩放与显隐状态
+- 自动化功能目录：`<游戏目录>/config/symauto/`
+  - `bwlists/`：自动功能自己的黑 / 白名单
+- HUD 功能目录：`<游戏目录>/config/symhud/`
+  - `bwlists/`：高亮功能自己的黑 / 白名单
+- 功能菜单底部提供「打开主配置文件夹」按钮，可直接在系统文件管理器中打开。
+
+## 更新日志
+
+更新日志按模块分开维护：
+
+- `symauto/CHANGELOG.md` → `assets/symauto/update_log.md` → SymAuto 菜单「关于 → SymAuto 更新日志」
+- `symhud/CHANGELOG.md` → `assets/symhud/update_log.md` → SymHud 菜单「关于 → SymHud 更新日志」
+
+直接按 Markdown 修改：
+
+```markdown
+## 26.2-3.4.4 — 2026-11-01
+
+### 新功能
+- 新功能说明
+
+### 修复
+- Bug 修复说明
+```
+
+构建时各模块的 `CHANGELOG.md` 会自动复制到自己的资源目录，游戏内更新日志界面只读取对应模块的内容。不需要再写 `§` 颜色代码，也不需要修改 Java 源码。
 
 ## 构建
 
@@ -86,11 +138,43 @@
 
 ```bash
 # Windows
-gradlew.bat build
+gradlew.bat buildAll
+gradlew.bat release
 
 # Linux / macOS
-./gradlew build
+./gradlew buildAll
+./gradlew release
 ```
+
+产物：
+
+- `symbase/build/libs/SymBase-*.jar`
+- `symhud/build/libs/SymHud-*.jar`
+- `symauto/build/libs/SymAuto-*.jar`
+- `build/release/` 下是收集好的三个 MOD
+
+`symauto` 和 `symhud` 都依赖 `symbase`；发布时需要同时安装 `symbase`。
+
+开发环境统一使用 `:dev:runClient`，它使用根目录 `run/`，并通过 `-Pload` 选择加载哪些 MOD：
+
+```bash
+# 三个都加载
+gradlew.bat :dev:runClient
+
+# 只加载公共前置
+gradlew.bat :dev:runClient -Pload=symbase
+
+# 加载公共前置 + HUD 功能
+gradlew.bat :dev:runClient -Pload=symhud
+
+# 加载公共前置 + 自动化功能
+gradlew.bat :dev:runClient -Pload=symauto
+```
+
+`:dev` 只用于开发启动，不参与 `buildAll` 和发布产物。
 
 ## 许可
 本项目基于 MIT License 授权
+
+
+

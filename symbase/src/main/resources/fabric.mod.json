@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "id": "symbase",
+  "version": "${version}",
+  "name": "SymBase",
+  "description": "SymAuto 与 SymHud 的公共前置",
+  "authors": ["Sympsel"],
+  "license": "MIT",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "com.symbase.SymBaseClient"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "fabric-api": "*",
+    "minecraft": "${minecraft_version}"
+  },
+  "custom": {
+    "modmenu": {
+      "badges": ["library"]
+    }
+  }
+}
