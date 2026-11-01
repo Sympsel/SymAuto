@@ -10,6 +10,7 @@ import com.symauto.function.auto.AutoAttackFunction;
 import com.symauto.function.highlight.HighLightSpecificVillagersFunction;
 import com.symauto.gui.screen.PilotScreen;
 import com.symauto.gui.screen.FunctionMenuScreen;
+import com.symauto.gui.screen.HudEditScreen;
 import com.symauto.model.common.SymList;
 import com.symauto.storage.DeathInfoStore;
 import com.symauto.storage.VillagerTradeStore;
@@ -113,7 +114,9 @@ public class SymAutoCommand {
     public static void register(String ns) {
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
             // 构建命令森林
-            dispatcher.register(literal(ns).executes(SymAutoCommand::showMenu));
+            dispatcher.register(literal(ns)
+                    .executes(SymAutoCommand::showMenu)
+                    .then(literal("hud").executes(SymAutoCommand::openHudEditor)));
             dispatcher.register(literal(ns + ":menu").executes(SymAutoCommand::showMenu));
             dispatcher.register(literal(ns + ":help").executes(SymAutoCommand::showUsage));
             dispatcher.register(literal(ns + ":list").executes(SymAutoCommand::listFunctions));
@@ -141,6 +144,7 @@ public class SymAutoCommand {
                     .then(literal("clear").executes(SymAutoCommand::clearDeaths)));
             //  调出试点屏幕
             dispatcher.register(literal(ns + ":pilot").executes(SymAutoCommand::openPilot));
+            dispatcher.register(literal(ns + ":hud").executes(SymAutoCommand::openHudEditor));
             dispatcher.register(literal(ns + ":bwlist")
                     .then(argument("function", StringArgumentType.word())
                             .suggests(BW_FEATURES)
@@ -161,6 +165,12 @@ public class SymAutoCommand {
         return 1;
     }
 
+    private static int openHudEditor(CommandContext<FabricClientCommandSource> ctx) {
+        Minecraft client = Minecraft.getInstance();
+        client.execute(() -> client.gui.setScreen(new HudEditScreen(null)));
+        return 1;
+    }
+
     private static int showMenu(CommandContext<FabricClientCommandSource> ctx) {
         Minecraft client = Minecraft.getInstance();
         client.execute(() -> client.gui.setScreen(new FunctionMenuScreen(null)));
@@ -170,6 +180,7 @@ public class SymAutoCommand {
     private static int showUsage(CommandContext<FabricClientCommandSource> ctx) {
         ctx.getSource().sendFeedback(Component.literal(
                 "用法：/<" + NS + "|" + NS_SIMPLIFIED + ">:<help|list|info|enable|toggle|trades|deaths|bwlist>"
+                        + "；HUD 编辑：/<" + NS + "|" + NS_SIMPLIFIED + "> hud"
         ));
         return 1;
     }
@@ -479,6 +490,8 @@ public class SymAutoCommand {
         lines.add(cmd("/symauto:info <function>", "查看指定功能的详细信息与说明"));
         lines.add(cmd("/symauto:enable <function> [true|false]", "查询或设置某功能的开关；不带参数则查询"));
         lines.add(cmd("/symauto:toggle <function>", "切换某功能的开关状态"));
+        lines.add(cmd("/symauto:hud", "打开通用 HUD 编辑界面，可拖拽调整 HUD 元素位置"));
+        lines.add(cmd("/symauto hud", "同上；简写 /sa hud"));
         lines.add(spacer());
 
         lines.add(section("黑白名单"));

@@ -2,6 +2,9 @@ package com.symauto.gui.widget.component;
 
 import com.mojang.blaze3d.platform.cursor.CursorTypes;
 import com.symauto.gui.utils.ColorUtils;
+import com.symauto.gui.widget.model.SymActionContext;
+import com.symauto.gui.widget.model.SymInteractions;
+import com.symauto.gui.widget.model.SymTrigger;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -20,9 +23,7 @@ public class SymButton extends AbstractButton {
     private int bgHover;
     private int bgDisabled;
 
-    private Runnable onLeftClick;
-    private Runnable onRightClick;
-    private Runnable onMiddleClick;
+    private final SymInteractions interactions = new SymInteractions();
 
     private boolean stateMode = false;
     private int stateOnColor;
@@ -79,18 +80,18 @@ public class SymButton extends AbstractButton {
         return this;
     }
 
-    public SymButton onLeftClick(Runnable onLeftClick) {
-        this.onLeftClick = onLeftClick;
+    public SymButton onLeftClick(Runnable action) {
+        interactions.bind(SymTrigger.LEFT_CLICK, action);
         return this;
     }
 
-    public SymButton onRightClick(Runnable onRightClick) {
-        this.onRightClick = onRightClick;
+    public SymButton onRightClick(Runnable action) {
+        interactions.bind(SymTrigger.RIGHT_CLICK, action);
         return this;
     }
 
-    public SymButton onMiddleClick(Runnable onMiddleClick) {
-        this.onMiddleClick = onMiddleClick;
+    public SymButton onMiddleClick(Runnable action) {
+        interactions.bind(SymTrigger.MIDDLE_CLICK, action);
         return this;
     }
 
@@ -99,27 +100,19 @@ public class SymButton extends AbstractButton {
         if (!this.active || !isMouseOver(event.x(), event.y())) {
             return false;
         }
-        Runnable action = switch (event.button()) {
-            case 1 -> onRightClick;
-            case 2 -> onMiddleClick;
-            default -> null;
-        };
-        if (event.button() == 0) {
-            onPress(event);
-        } else if (action != null) {
-            action.run();
-        } else {
-            return false;
+        SymTrigger trigger = SymTrigger.of(event, doubleClick);
+        boolean handled = interactions.dispatch(
+                trigger,
+                new SymActionContext(this, event, doubleClick)
+        );
+        if (handled) {
+            playButtonClickSound(Minecraft.getInstance().getSoundManager());
         }
-        playButtonClickSound(Minecraft.getInstance().getSoundManager());
-        return true;
+        return handled;
     }
 
     @Override
     public void onPress(InputWithModifiers input) {
-        if (onLeftClick != null) {
-            onLeftClick.run();
-        }
     }
 
     @Override

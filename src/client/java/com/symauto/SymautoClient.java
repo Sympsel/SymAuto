@@ -16,6 +16,7 @@ import com.symauto.function.utils.TradeCapture;
 import com.symauto.gui.container.ContainerPanel;
 import com.symauto.gui.container.ContainerPreviewRenderer;
 import com.symauto.gui.screen.FunctionMenuScreen;
+import com.symauto.hud.HudManager;
 import com.symauto.render.PlayerNameRenderer;
 import com.symauto.storage.base.PersistentStore;
 import net.fabricmc.api.ClientModInitializer;
@@ -46,6 +47,8 @@ public class SymautoClient implements ClientModInitializer {
         // 注册事件
         this.eventRegisters();
         ConfigManager.load();
+        // 先注册 HUD 元素，再统一加载布局存储
+        HudManager.init();
         // 读取用户配置或者预设
         for (PersistentStore store : StoreConfig.ALL) {
             store.load();

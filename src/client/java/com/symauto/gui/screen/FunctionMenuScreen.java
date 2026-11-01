@@ -179,6 +179,8 @@ public class FunctionMenuScreen extends Screen {
         }
 
         List<SymMenuBar.Entry> openEntries = new ArrayList<>();
+        openEntries.add(new SymMenuBar.Entry(Component.literal("HUD 编辑界面"),
+                () -> this.minecraft.gui.setScreen(new HudEditScreen(this))));
         openEntries.add(new SymMenuBar.Entry(Component.literal("打开主配置文件夹"),
                 ConfigManager::openConfigFolder));
 
