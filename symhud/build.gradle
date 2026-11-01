@@ -40,7 +40,8 @@ dependencies {
     implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
     implementation project(path: ':symbase', configuration: 'modJar')
     implementation "com.terraformersmc:modmenu:20.0.3"
-    implementation include("com.belerweb:pinyin4j:2.5.1")
+    implementation "com.belerweb:pinyin4j:2.5.1"
+    include "com.belerweb:pinyin4j:2.5.1"
 }
 
 def versionValue = project.version
