@@ -49,6 +49,3 @@ public interface HudElement {
         return new HudPlacement(HudAnchor.TOP_LEFT, 4, 4, 1.0F, true);
     }
 }
-
-
-
