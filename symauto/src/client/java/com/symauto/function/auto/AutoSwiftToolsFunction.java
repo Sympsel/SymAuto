@@ -64,7 +64,7 @@ public class AutoSwiftToolsFunction extends SymAbstractFunction {
             switchBack(client);
             return;
         }
-        // 扫描破坏由自己调用 ensureBestTool，避免这里因为没按攻击键而把工具切回去。
+        // 扫描破坏由自己调用 ensureBestTool，避免这里因为没按攻击键而把工具切回去
         if (ScanDestroyFunction.INSTANCE.isEnable()) {
             return;
         }
@@ -115,7 +115,7 @@ public class AutoSwiftToolsFunction extends SymAbstractFunction {
         if (blockState.isAir()) {
             return false;
         }
-        // 外部功能直接指定目标，不复用旧目标缓存，确保每次都能重新选择最佳工具。
+        // 外部功能直接指定目标，不复用旧目标缓存，确保每次都能重新选择最佳工具
         currBlockPos = null;
         return selectBestTool(client, blockPos, blockState);
     }
