@@ -6,6 +6,7 @@
   "description": "由 Sympsel 所写的信息显示 MOD，需要加装前置 SymBase，Shift + X 或 /sym 打开菜单",
   "authors": ["Sympsel"],
   "license": "MIT",
+  "icon": "assets/symhud/icon.png",
   "environment": "client",
   "entrypoints": {
     "client": [
