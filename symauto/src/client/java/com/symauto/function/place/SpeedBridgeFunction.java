@@ -1,23 +1,37 @@
 package com.symauto.function.place;
 
 import com.symauto.core.AutoFunctions;
+import com.symbase.config.option.BooleanOption;
 import com.symbase.function.base.SymAbstractFunction;
 import com.symauto.function.auto.AutoEatFunction;
 import com.symbase.function.utils.Tooltip;
-import net.minecraft.ChatFormatting;
+import lombok.Getter;
+import lombok.Setter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.network.protocol.game.ServerboundPlayerInputPacket;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.player.Input;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.level.block.SlabBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.SlabType;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.VoxelShape;
 
 public class SpeedBridgeFunction extends SymAbstractFunction {
     public static final SpeedBridgeFunction INSTANCE = new SpeedBridgeFunction();
+
+    @Getter
+    @Setter
+    private boolean enableFakeSneakPlace;
+
+    @Getter
+    @Setter
+    private boolean enableFakeSneak;
+
     private static final Direction[] ALL_SIDES = {
             Direction.NORTH, Direction.SOUTH, Direction.EAST, Direction.WEST,
             Direction.DOWN, Direction.UP
@@ -26,21 +40,35 @@ public class SpeedBridgeFunction extends SymAbstractFunction {
     private static final Direction[] HORIZONTAL_SIDES = {
             Direction.NORTH, Direction.SOUTH, Direction.EAST, Direction.WEST
     };
-    private static final SlabType DESIRED_SLAB = SlabType.TOP;
     private int tickCounter = 0;
     private final int placeInterval = 1;
 
     private SpeedBridgeFunction() {
-        super("speed_bridge", "水平跑搭",
-                Tooltip.create()
-                        .line("移动时在脚下补方块，目前只支持完整方块和上半砖")
-                        .toString()
-        );
+        super("speed_bridge", "水平跑搭");
+        addOption(new BooleanOption("fake_sneak_place", "伪潜行放置",
+                this::isEnableFakeSneakPlace, this::setEnableFakeSneakPlace, true));
+        addOption(new BooleanOption("fake_sneak", "伪潜行",
+                this::isEnableFakeSneak, this::setEnableFakeSneak, false));
     }
 
+    @Override
+    protected String tooltip() {
+        return Tooltip.create()
+                .line("移动时在脚下补方块，支持完整方块、上半砖和下半砖")
+                .keyValueLine("伪潜行放置", enableFakeSneakPlace ? "是" : "否")
+                .keyValueLine("伪潜行", enableFakeSneak ? "是" : "否")
+                .toString();
+    }
 
     @Override
     protected void onTrigger(Minecraft client) {
+        if (client.player == null) {
+            return;
+        }
+        if (client.gui.screen() != null) {
+            return;
+        }
+
         if (client.player.isCreative()) {
             return;
         }
@@ -67,6 +95,18 @@ public class SpeedBridgeFunction extends SymAbstractFunction {
                 || (client.player != null && client.player.isUsingItem());
     }
 
+    private static Input withShift(Input input, boolean shift) {
+        return new Input(
+                input.forward(),
+                input.backward(),
+                input.left(),
+                input.right(),
+                input.jump(),
+                shift,
+                input.sprint()
+        );
+    }
+
 
     private static BlockHitResult buildFullBlockHit(Minecraft client, BlockPos target, double reach) {
         if (client.level == null) {
@@ -75,16 +115,22 @@ public class SpeedBridgeFunction extends SymAbstractFunction {
         for (Direction dir : ALL_SIDES) {
             BlockPos neighbor = target.relative(dir);
             BlockState ns = client.level.getBlockState(neighbor);
-            // 整块需要结实支点面
-            if (!ns.isFaceSturdy(client.level, neighbor, dir.getOpposite())) {
+            if (ns.isAir() || ns.canBeReplaced()) {
                 continue;
             }
-            Vec3 center = Vec3.atCenterOf(neighbor);
-            // 命中面中心
-            Vec3 hitPos = center.add(
-                    -dir.getStepX() * 0.5,
-                    -dir.getStepY() * 0.5,
-                    -dir.getStepZ() * 0.5
+            VoxelShape shape = ns.getShape(client.level, neighbor);
+            if (shape.isEmpty()) {
+                continue;
+            }
+            double hitY = switch (dir) {
+                case UP -> neighbor.getY() + shape.min(Direction.Axis.Y);
+                case DOWN -> neighbor.getY() + shape.max(Direction.Axis.Y);
+                default -> neighbor.getY() + (shape.min(Direction.Axis.Y) + shape.max(Direction.Axis.Y)) * 0.5;
+            };
+            Vec3 hitPos = new Vec3(
+                    neighbor.getX() + 0.5 - dir.getStepX() * 0.5,
+                    hitY,
+                    neighbor.getZ() + 0.5 - dir.getStepZ() * 0.5
             );
             if (!withinReach(client, hitPos, reach)) {
                 continue;
@@ -98,11 +144,7 @@ public class SpeedBridgeFunction extends SymAbstractFunction {
         if (client.player == null || client.level == null) {
             return;
         }
-        BlockPos target = BlockPos.containing(
-                client.player.getX(),
-                client.player.getY(),
-                client.player.getZ()
-        ).below();
+        BlockPos target = bridgeTarget(client);
         if (isOccupied(target, client)) {
             return;
         }
@@ -110,26 +152,32 @@ public class SpeedBridgeFunction extends SymAbstractFunction {
         if (!withinReach(client, Vec3.atCenterOf(target), reach)) {
             return;
         }
-        BlockHitResult hit = buildSlabHit(client, target, reach);
+        BlockHitResult hit = buildSlabHit(client, target, reach, desiredSlab(client));
         if (hit == null) {
             return;
         }
         doPlace(client, hit);
     }
 
-    private static BlockHitResult buildSlabHit(Minecraft client, BlockPos target, double reach) {
+    private static BlockHitResult buildSlabHit(Minecraft client, BlockPos target, double reach,
+                                               SlabType desiredSlab) {
         if (client.level == null) {
             return null;
         }
         for (Direction dir : HORIZONTAL_SIDES) {
             BlockPos neighbor = target.relative(dir);
             BlockState ns = client.level.getBlockState(neighbor);
-            // 半砖侧面不 sturdy，但半砖无需支撑，只要有实体、不可替换的方块即可附着
             if (ns.isAir() || ns.canBeReplaced()) {
                 continue;
             }
+            VoxelShape shape = ns.getShape(client.level, neighbor);
+            if (shape.isEmpty()) {
+                continue;
+            }
             Vec3 center = Vec3.atCenterOf(neighbor);
-            double rel = (DESIRED_SLAB == SlabType.TOP) ? 0.9 : 0.1;
+            double rel = desiredSlab == SlabType.TOP
+                    ? Math.max(shape.min(Direction.Axis.Y), shape.max(Direction.Axis.Y) - 0.05)
+                    : Math.min(shape.max(Direction.Axis.Y), shape.min(Direction.Axis.Y) + 0.05);
             double hy = neighbor.getY() + rel;
             Vec3 hitPos = new Vec3(
                     center.x - dir.getStepX() * 0.5,
@@ -148,11 +196,7 @@ public class SpeedBridgeFunction extends SymAbstractFunction {
         if (client.player == null) {
             return;
         }
-        BlockPos target = BlockPos.containing(
-                client.player.getX(),
-                client.player.getY(),
-                client.player.getZ()
-        ).below();
+        BlockPos target = bridgeTarget(client);
         if (isOccupied(target, client)) {
             return;
         }
@@ -165,6 +209,26 @@ public class SpeedBridgeFunction extends SymAbstractFunction {
             return;
         }
         doPlace(client, hit);
+    }
+
+    /**
+     * 玩家脚下要放置的方块位置
+     */
+    private static BlockPos bridgeTarget(Minecraft client) {
+        return BlockPos.containing(
+                client.player.getX(),
+                client.player.getY() - 1.0E-4,
+                client.player.getZ()
+        );
+    }
+
+    /**
+     * 根据当前站立高度推断应放上半砖还是下半砖
+     */
+    private static SlabType desiredSlab(Minecraft client) {
+        double feetY = client.player.getY();
+        double fraction = feetY - Math.floor(feetY);
+        return fraction < 0.25 || fraction >= 0.75 ? SlabType.TOP : SlabType.BOTTOM;
     }
 
     private boolean isOccupied(BlockPos pos, Minecraft client) {
@@ -187,9 +251,38 @@ public class SpeedBridgeFunction extends SymAbstractFunction {
             return;
         }
         InteractionHand hand = InteractionHand.MAIN_HAND;
-        client.gameMode.useItemOn(client.player, hand, hit);
+
+        // 伪潜行
+        Input originalInput = client.player.input.keyPresses;
+        boolean fakeSneak = (enableFakeSneakPlace || enableFakeSneak)
+                && !client.player.isShiftKeyDown();
+        if (fakeSneak) {
+            Input sneakInput = withShift(originalInput, true);
+            client.player.input.keyPresses = sneakInput;
+            client.player.setShiftKeyDown(true);
+            sendInput(client, sneakInput);
+        }
+
+        try {
+            client.gameMode.useItemOn(client.player, hand, hit);
+        } finally {
+            if (fakeSneak) {
+                client.player.input.keyPresses = originalInput;
+                client.player.setShiftKeyDown(false);
+                sendInput(client, originalInput);
+            }
+        }
         client.player.swing(hand);
     }
+
+    private static void sendInput(Minecraft client, Input input) {
+        if (client.getConnection() != null) {
+            client.getConnection().send(new ServerboundPlayerInputPacket(input));
+        }
+    }
 }
+
+
+
 
 

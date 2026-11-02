@@ -3,6 +3,7 @@ package com.symauto.function.auto;
 import com.symbase.function.base.SymAbstractFunction;
 import com.symauto.core.Constants;
 import com.symbase.function.utils.Tooltip;
+import com.symauto.function.place.ScanDestroyFunction;
 import lombok.Getter;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
@@ -63,6 +64,10 @@ public class AutoSwiftToolsFunction extends SymAbstractFunction {
             switchBack(client);
             return;
         }
+        // 扫描破坏由自己调用 ensureBestTool，避免这里因为没按攻击键而把工具切回去。
+        if (ScanDestroyFunction.INSTANCE.isEnable()) {
+            return;
+        }
         if (client.gui.screen() != null) {
             return;
         }
@@ -95,11 +100,32 @@ public class AutoSwiftToolsFunction extends SymAbstractFunction {
             return;
         }
 
+        selectBestTool(client, blockPos, blockState);
+    }
+
+    /**
+     * 按目标方块切换最佳工具
+     */
+    public boolean ensureBestTool(Minecraft client, BlockPos blockPos) {
+        if (!isEnable() || client.player == null || client.level == null
+                || client.player.isCreative()) {
+            return false;
+        }
+        BlockState blockState = client.level.getBlockState(blockPos);
+        if (blockState.isAir()) {
+            return false;
+        }
+        // 外部功能直接指定目标，不复用旧目标缓存，确保每次都能重新选择最佳工具。
+        currBlockPos = null;
+        return selectBestTool(client, blockPos, blockState);
+    }
+
+    private boolean selectBestTool(Minecraft client, BlockPos blockPos, BlockState blockState) {
         Inventory inv = client.player.getInventory();
         int currSlot = inv.getSelectedSlot();
 
         if (blockPos.equals(currBlockPos) && isBest(inv, blockState, currSlot)) {
-            return;
+            return true;
         }
         currBlockPos = blockPos;
 
@@ -112,13 +138,13 @@ public class AutoSwiftToolsFunction extends SymAbstractFunction {
                 }
                 selectSlot(client, hotBarSlot);
             }
-            return;
+            return true;
         }
 
         // 背包
         int invSlot = findBestInRange(inv, blockState, Constants.INV_START, Constants.INV_END);
         if (invSlot < 0) {
-            return;
+            return false;
         }
 
         if (prevSlot == -1) {
@@ -126,6 +152,7 @@ public class AutoSwiftToolsFunction extends SymAbstractFunction {
         }
 
         swapInventoryIntoSelectedHotbar(client, invSlot);
+        return true;
     }
 
     public void earlySwitchBack(Minecraft client) {

@@ -6,6 +6,7 @@
   "compatibilityLevel": "JAVA_25",
   "client": [
     "FixYPlaceMixin",
+    "FakeSneakMixin",
     "accessor.FishingHookAccessor",
     "accessor.MinecraftAccessor",
     "InterceptDropKeyMixin",
@@ -20,4 +21,5 @@
     "requireAnnotations": true
   }
 }
+
 

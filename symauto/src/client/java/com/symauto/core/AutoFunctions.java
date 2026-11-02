@@ -1,6 +1,7 @@
 package com.symauto.core;
 
 import com.symauto.function.auto.*;
+import com.symauto.function.place.ScanDestroyFunction;
 import com.symbase.core.SymFunctionTags;
 import com.symbase.function.base.SymAbstractFunction;
 import com.symauto.function.place.FixYPlaceOrDestroyFunction;
@@ -57,6 +58,8 @@ public class AutoFunctions {
             .addTag(SymFunctionTags.IDLE);
     public static final SymAbstractFunction AUTO_HARVEST_CROP_FUNCTION = AutoHarvestCropFunction.INSTANCE
             .addTag(SymFunctionTags.IDLE);
+    public static final SymAbstractFunction SCAN_DESTROY_FUNCTION = ScanDestroyFunction.INSTANCE
+            .addTag(SymFunctionTags.BUILDING_AND_DESTROYING);
 
     public static final List<SymAbstractFunction> AUTO_ALL = List.of(
             AUTO_ATTACK_FUNCTION,
@@ -78,7 +81,8 @@ public class AutoFunctions {
             AUTO_RECORD_DEATH_INFO_FUNCTION,
             AUTO_CRAFTING_FUNCTION,
             AUTO_DISCARD_MORE_THING_FUNCTION,
-            AUTO_HARVEST_CROP_FUNCTION
+            AUTO_HARVEST_CROP_FUNCTION,
+            SCAN_DESTROY_FUNCTION
     );
 }
 

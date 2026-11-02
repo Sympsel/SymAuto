@@ -5,6 +5,7 @@ import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.minecraft.client.KeyMapping;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -32,7 +33,10 @@ public final class FunctionRegistry {
     }
 
     public static List<SymAbstractFunction> all() {
-        return List.copyOf(FUNCTIONS);
+        // 按 ID 排序
+        return FUNCTIONS.stream()
+                .sorted(Comparator.comparing(SymAbstractFunction::getId))
+                .toList();
     }
 
     public static void notifyChanged() {

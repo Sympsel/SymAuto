@@ -133,7 +133,7 @@ public class AutoHarvestCropFunction extends SymAbstractFunction {
             return;
         }
 
-        // 先补货再干活：保证这一 tick 的批量交互手里有足够的种子/骨粉
+        // 先补货，保证这一 tick 的批量交互手里有足够的种子/骨粉
         if (autoRefill) {
             ensureSupplies(client);
         }
@@ -147,12 +147,11 @@ public class AutoHarvestCropFunction extends SymAbstractFunction {
         BlockPos center = client.player.blockPosition();
 
         if (!onlyRipeningCrop) {
-            // harvest 内部已经包含“破块 → 同 tick 补种 → 右键采摘”的批量流程
             harvest(client, eye, reachSq, r, center);
             // 兜底补种：把范围内“空着的耕地/灵魂沙”补上
             replant(client, eye, reachSq, r, center);
         }
-        // 催熟放在最后：这样刚补种的作物也能在同一 tick 吃到骨粉
+        // 催熟放在最后，刚补种的作物也能在同一 tick 吃到骨粉
         boneMeal(client, eye, reachSq, r, center);
     }
 
@@ -569,22 +568,35 @@ public class AutoHarvestCropFunction extends SymAbstractFunction {
     }
 
     private boolean replant(Minecraft client, Vec3 eye, double reachSq, int r, BlockPos center) {
-        InteractionHand hand = resolvePlantHand(client);
-        if (hand == null) {
+        int budget = maxActionsPerTick;
+        if (budget <= 0) {
             return false;
         }
-        ItemStack plantStack = hand == InteractionHand.MAIN_HAND
-                ? client.player.getMainHandItem()
-                : client.player.getOffhandItem();
-        boolean cane = plantStack.is(Items.SUGAR_CANE);
-        Block surface = cane ? null
-                : (plantStack.is(Items.NETHER_WART) ? Blocks.SOUL_SAND : Blocks.FARMLAND);
 
+        boolean planted = false;
         for (BlockPos pos : BlockPos.betweenClosed(
                 center.offset(-r, -r, -r), center.offset(r, r, r))) {
+            if (budget <= 0) {
+                break;
+            }
             if (pos.distToCenterSqr(eye) > reachSq) {
                 continue;
             }
+
+            InteractionHand hand = resolvePlantHand(client);
+            if (hand == null) {
+                break;
+            }
+            ItemStack plantStack = hand == InteractionHand.MAIN_HAND
+                    ? client.player.getMainHandItem()
+                    : client.player.getOffhandItem();
+            if (plantStack.isEmpty() || plantStack.getCount() <= 0) {
+                break;
+            }
+
+            boolean cane = plantStack.is(Items.SUGAR_CANE);
+            Block surface = cane ? null
+                    : (plantStack.is(Items.NETHER_WART) ? Blocks.SOUL_SAND : Blocks.FARMLAND);
             BlockState state = client.level.getBlockState(pos);
             BlockPos target;
             if (cane) {
@@ -616,9 +628,12 @@ public class AutoHarvestCropFunction extends SymAbstractFunction {
                     hand,
                     new BlockHitResult(hitVec, Direction.UP, support.immutable(), false)
             );
-            return true;
+            if (result.consumesAction()) {
+                planted = true;
+                budget--;
+            }
         }
-        return false;
+        return planted;
     }
 
     private static boolean isPlantableItem(Item item) {
