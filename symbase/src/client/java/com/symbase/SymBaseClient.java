@@ -3,6 +3,7 @@ package com.symbase;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.symbase.command.CommandRegistry;
 import com.symbase.command.SymCommand;
+import com.symbase.config.ConfigFolders;
 import com.symbase.config.ConfigServices;
 import com.symbase.config.FunctionConfig;
 import com.symbase.config.SymBaseKeys;
@@ -14,6 +15,7 @@ import com.symbase.function.utils.KeyUtils;
 import com.symbase.function.utils.ScreenUtils;
 import com.symbase.gui.screen.FunctionMenuScreen;
 import com.symbase.registry.FunctionRegistry;
+import com.symbase.registry.MenuRegistry;
 import com.symbase.hud.HudManager;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
@@ -21,6 +23,7 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
 import org.lwjgl.glfw.GLFW;
 
 public class SymBaseClient implements ClientModInitializer {
@@ -40,6 +43,10 @@ public class SymBaseClient implements ClientModInitializer {
         ConfigServices.register(FunctionConfig::save);
         CommandRegistry.register(SymCommand::register);
         CommandRegistry.init();
+
+        MenuRegistry.register(MenuRegistry.Section.OPEN,
+                Component.literal("打开 SymBase 配置"),
+                parent -> () -> ConfigFolders.open("symbase"));
 
         // 等所有功能 MOD 注册完读取配置
         ClientLifecycleEvents.CLIENT_STARTED.register(client -> {

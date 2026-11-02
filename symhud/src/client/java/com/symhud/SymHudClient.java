@@ -41,6 +41,10 @@ public class SymHudClient implements ClientModInitializer {
                 parent -> () -> Minecraft.getInstance().gui.setScreen(
                         new UpdateLogScreen(parent, Constants.MOD_ID, Component.literal("SymHud 更新日志"))));
 
+        MenuRegistry.register(MenuRegistry.Section.OPEN,
+                Component.literal("打开 SymHud 配置"),
+                parent -> ConfigManager::openConfigFolder);
+
         for (SymAbstractFunction function : HudFunctions.ALL) {
             FunctionRegistry.register(function);
         }

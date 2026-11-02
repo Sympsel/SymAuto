@@ -12,6 +12,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.util.Util;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.enchantment.Enchantment;
@@ -101,6 +102,15 @@ public final class ConfigManager {
                     list.add(value);
                 }
             }
+        }
+    }
+
+    public static void openConfigFolder() {
+        try {
+            Files.createDirectories(BASE_DIR);
+            Util.getPlatform().openFile(BASE_DIR.toFile());
+        } catch (Exception e) {
+            System.err.println("[SymHud] 打开配置文件夹失败: " + e.getMessage());
         }
     }
 

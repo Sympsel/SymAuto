@@ -16,19 +16,26 @@ public final class HudPlacement {
     private int offsetY;
     private float scale;
     private boolean visible;
+    private boolean showLabel = true;
     private Integer textColor;
 
     public HudPlacement(HudAnchor anchor, int offsetX, int offsetY, float scale, boolean visible) {
-        this(anchor, offsetX, offsetY, scale, visible, null);
+        this(anchor, offsetX, offsetY, scale, visible, null, true);
     }
 
     public HudPlacement(HudAnchor anchor, int offsetX, int offsetY, float scale, boolean visible, Integer textColor) {
+        this(anchor, offsetX, offsetY, scale, visible, textColor, true);
+    }
+
+    public HudPlacement(HudAnchor anchor, int offsetX, int offsetY, float scale, boolean visible,
+                        Integer textColor, boolean showLabel) {
         this.anchor = anchor == null ? HudAnchor.TOP_LEFT : anchor;
         this.offsetX = offsetX;
         this.offsetY = offsetY;
         this.scale = clampScale(scale);
         this.visible = visible;
         this.textColor = textColor;
+        this.showLabel = showLabel;
     }
 
     public static float clampScale(float value) {
@@ -62,6 +69,14 @@ public final class HudPlacement {
         this.visible = visible;
     }
 
+    public boolean showLabel() {
+        return showLabel;
+    }
+
+    public void setShowLabel(boolean showLabel) {
+        this.showLabel = showLabel;
+    }
+
     public void setScale(float scale) {
         this.scale = clampScale(scale);
     }
@@ -86,11 +101,11 @@ public final class HudPlacement {
     }
 
     public int scaledWidth(Font font, HudElement element) {
-        return Math.max(1, Math.round(element.width(font) * scale));
+        return Math.max(1, Math.round(element.width(font, showLabel) * scale));
     }
 
     public int scaledHeight(Font font, HudElement element) {
-        return Math.max(1, Math.round(element.height(font) * scale));
+        return Math.max(1, Math.round(element.height(font, showLabel) * scale));
     }
 
     /**
@@ -104,7 +119,7 @@ public final class HudPlacement {
     }
 
     public HudPlacement copy() {
-        return new HudPlacement(anchor, offsetX, offsetY, scale, visible, textColor);
+        return new HudPlacement(anchor, offsetX, offsetY, scale, visible, textColor, showLabel);
     }
 
     public boolean sameState(HudPlacement other) {
@@ -114,6 +129,7 @@ public final class HudPlacement {
                 && offsetY == other.offsetY
                 && Float.compare(scale, other.scale) == 0
                 && visible == other.visible
+                && showLabel == other.showLabel
                 && Objects.equals(textColor, other.textColor);
     }
 
@@ -124,7 +140,7 @@ public final class HudPlacement {
 
     @Override
     public int hashCode() {
-        return Objects.hash(anchor, offsetX, offsetY, scale, visible, textColor);
+        return Objects.hash(anchor, offsetX, offsetY, scale, visible, showLabel, textColor);
     }
 }
 

@@ -132,8 +132,8 @@ public final class HudManager {
     public static void renderElement(GuiGraphicsExtractor graphics, Font font, HudElement element,
                                      HudPlacement placement, int screenWidth, int screenHeight,
                                      boolean preview) {
-        int baseWidth = Math.max(1, element.width(font));
-        int baseHeight = Math.max(1, element.height(font));
+        int baseWidth = Math.max(1, element.width(font, placement.showLabel()));
+        int baseHeight = Math.max(1, element.height(font, placement.showLabel()));
         HudBounds bounds = placement.resolve(font, element, screenWidth, screenHeight);
 
         var pose = graphics.pose();
@@ -143,7 +143,8 @@ public final class HudManager {
             if (placement.scale() != 1.0F) {
                 pose.scale(placement.scale(), placement.scale());
             }
-            element.render(new HudRenderContext(graphics, font, baseWidth, baseHeight, preview, placement.textColor()));
+            element.render(new HudRenderContext(graphics, font, baseWidth, baseHeight, preview,
+                    placement.textColor(), placement.showLabel()));
         } finally {
             pose.popMatrix();
         }

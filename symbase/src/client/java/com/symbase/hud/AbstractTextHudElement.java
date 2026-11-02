@@ -32,7 +32,16 @@ public abstract class AbstractTextHudElement extends AbstractHudElement {
 
     @Override
     public int width(Font font) {
-        return font.width(text(Minecraft.getInstance(), false)) + PADDING_X * 2;
+        return width(font, true);
+    }
+
+    @Override
+    public int width(Font font, boolean showLabel) {
+        String value = text(Minecraft.getInstance(), false);
+        if (!showLabel) {
+            value = stripLabel(value);
+        }
+        return font.width(value) + PADDING_X * 2;
     }
 
     @Override
@@ -43,12 +52,35 @@ public abstract class AbstractTextHudElement extends AbstractHudElement {
     @Override
     public void render(HudRenderContext context) {
         String text = text(Minecraft.getInstance(), context.preview());
+        if (!context.showLabel()) {
+            text = stripLabel(text);
+        }
         int width = Math.max(context.width(), context.font().width(text) + PADDING_X * 2);
         if ((bgColor >>> 24) != 0) {
             context.g().fill(0, 0, width, context.height(), bgColor);
         }
         int color = context.textColor() != null ? context.textColor() : textColor;
         context.g().text(context.font(), text, PADDING_X, PADDING_Y, color, true);
+    }
+
+    /**
+     * 只保留值
+     */
+    private static String stripLabel(String text) {
+        int ascii = text.indexOf(':');
+        int fullWidth = text.indexOf('：');
+        int index;
+        if (ascii < 0) {
+            index = fullWidth;
+        } else if (fullWidth < 0) {
+            index = ascii;
+        } else {
+            index = Math.min(ascii, fullWidth);
+        }
+        if (index < 0) {
+            return text;
+        }
+        return text.substring(index + 1).stripLeading();
     }
 }
 

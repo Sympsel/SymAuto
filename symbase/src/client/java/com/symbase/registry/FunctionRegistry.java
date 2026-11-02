@@ -25,8 +25,6 @@ public final class FunctionRegistry {
         }
         FUNCTIONS.add(function);
 
-        // 必须在 Minecraft.options 初始化前注册；功能注册阶段正好满足这个时机。
-        // 各模块只注册功能，按键注册在这里统一完成。
         KeyMapping keyMapping = function.getKeyMapping();
         if (keyMapping != null) {
             KeyMappingHelper.registerKeyMapping(keyMapping);

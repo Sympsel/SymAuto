@@ -55,7 +55,7 @@ public class SymautoClient implements ClientModInitializer {
 
     private void registerMenuEntries() {
         MenuRegistry.register(MenuRegistry.Section.OPEN,
-                Component.literal("打开主配置文件夹"),
+                Component.literal("打开 SymAuto 配置"),
                 parent -> ConfigManager::openConfigFolder);
         MenuRegistry.register(MenuRegistry.Section.HELP,
                 Component.literal("指令用法"),

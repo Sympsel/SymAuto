@@ -2,7 +2,6 @@ package com.symbase.gui.screen;
 
 import com.symbase.config.ConfigServices;
 import com.symbase.core.SymFunctionTags;
-import com.symbase.function.base.HudVisibilityFunction;
 import com.symbase.function.base.SymAbstractFunction;
 import com.symbase.function.utils.KeyUtils;
 import com.symbase.gui.UiStyle;
@@ -185,8 +184,6 @@ public class FunctionMenuScreen extends Screen {
         }
 
         List<SymMenuBar.Entry> openEntries = new ArrayList<>();
-        openEntries.add(new SymMenuBar.Entry(Component.literal("HUD 编辑界面"),
-                () -> this.minecraft.gui.setScreen(new HudEditScreen(this))));
         for (MenuRegistry.Entry entry : MenuRegistry.entries(MenuRegistry.Section.OPEN)) {
             openEntries.add(new SymMenuBar.Entry(entry.label(), entry.actionFactory().apply(this)));
         }
@@ -205,7 +202,7 @@ public class FunctionMenuScreen extends Screen {
         menus.add(SymModMenuRegistry.INSTANCE.getSymModMenu());
         menus.add(new SymMenuBar.Menu(Component.literal("功能"), functionEntries));
         if (!openEntries.isEmpty()) {
-            menus.add(new SymMenuBar.Menu(Component.literal("打开"), openEntries));
+            menus.add(new SymMenuBar.Menu(Component.literal("打开文件夹"), openEntries));
         }
         if (!helpEntries.isEmpty()) {
             menus.add(new SymMenuBar.Menu(Component.literal("帮助"), helpEntries));
@@ -225,17 +222,9 @@ public class FunctionMenuScreen extends Screen {
     }
 
     private static List<SymAbstractFunction> filter(int tag) {
-        List<SymAbstractFunction> all = FunctionRegistry.all();
         List<SymAbstractFunction> result = new ArrayList<>();
-        // 全局启停始终排在最前，不受当前分类过滤影响
-        for (SymAbstractFunction f : all) {
-            if (f instanceof HudVisibilityFunction) {
-                result.add(f);
-            }
-        }
-        for (SymAbstractFunction f : all) {
-            if (!(f instanceof HudVisibilityFunction)
-                    && (tag == SymFunctionTags.ALL || f.hasTag(tag))) {
+        for (SymAbstractFunction f : FunctionRegistry.all()) {
+            if (tag == SymFunctionTags.ALL || f.hasTag(tag)) {
                 result.add(f);
             }
         }
@@ -389,6 +378,7 @@ public class FunctionMenuScreen extends Screen {
         this.minecraft.gui.setScreen(parent);
     }
 }
+
 
 
 

@@ -12,7 +12,8 @@ public record HudRenderContext(
         int width,
         int height,
         boolean preview,
-        Integer textColor
+        Integer textColor,
+        boolean showLabel
 ) {
 }
 

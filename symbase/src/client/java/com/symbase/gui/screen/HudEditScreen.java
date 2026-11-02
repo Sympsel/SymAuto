@@ -72,6 +72,8 @@ public final class HudEditScreen extends Screen {
 
     private int boxX;
     private int boxY;
+    private int labelBoxX;
+    private int labelBoxY;
 
     private boolean showGrid = true;
     private boolean snapEnabled = true;
@@ -429,7 +431,7 @@ public final class HudEditScreen extends Screen {
                 g.text(this.font, fit("尺寸: " + String.format(Locale.ROOT, "%.2f", selectedPlacement.scale()) + "x", SIDEBAR_W - 16), left + 8, lineBegin + lineH * 4, MUTED, false);
             }
 
-            boxX = left + 30;
+            boxX = left + 8;
             boxY = lineBegin + lineH * 5 - 1;
             boolean visible = selectedPlacement == null || selectedPlacement.visible();
             int eyeColor = visible ? 0xFF3FA36B : 0xFF333A42;
@@ -439,7 +441,22 @@ public final class HudEditScreen extends Screen {
                 int border = BOX_SIZE / 4 + 1;
                 g.fill(boxX + border, boxY + border, boxX + BOX_SIZE - border, boxY + BOX_SIZE - border, 0xFF102018);
             }
-            g.text(this.font, "显示", left + 8, lineBegin + lineH * 5, visible ? TEXT : MUTED, false);
+            g.text(this.font, "显示", boxX + BOX_SIZE + 4,
+                    lineBegin + lineH * 5, visible ? TEXT : MUTED, false);
+
+            labelBoxX = left + 56;
+            labelBoxY = boxY;
+            boolean showLabel = selectedPlacement == null || selectedPlacement.showLabel();
+            int labelColor = showLabel ? 0xFF3F6FA3 : 0xFF333A42;
+            g.fill(labelBoxX, labelBoxY, labelBoxX + BOX_SIZE, labelBoxY + BOX_SIZE, labelColor);
+            g.outline(labelBoxX, labelBoxY, BOX_SIZE, BOX_SIZE, showLabel ? 0xFFB8D8F5 : 0xFF6A737D);
+            if (showLabel) {
+                int border = BOX_SIZE / 4 + 1;
+                g.fill(labelBoxX + border, labelBoxY + border,
+                        labelBoxX + BOX_SIZE - border, labelBoxY + BOX_SIZE - border, 0xFF101820);
+            }
+            g.text(this.font, "显示键", labelBoxX + BOX_SIZE + 4,
+                    lineBegin + lineH * 5, showLabel ? TEXT : MUTED, false);
 
             var descLines = wrapText("描述: " + selected.description(), SIDEBAR_W - 16);
             int descY = lineBegin + lineH * 6;
@@ -485,6 +502,14 @@ public final class HudEditScreen extends Screen {
             HudPlacement placement = draft.get(selectedId);
             if (placement != null) {
                 placement.setVisible(!placement.visible());
+            }
+            return true;
+        }
+
+        if (inSideLabel(mouseX, mouseY)) {
+            HudPlacement placement = draft.get(selectedId);
+            if (placement != null) {
+                placement.setShowLabel(!placement.showLabel());
             }
             return true;
         }
@@ -707,6 +732,11 @@ public final class HudEditScreen extends Screen {
     private boolean inSideEye(double mouseX, double mouseY) {
         return mouseX >= boxX && mouseX < boxX + 10
                 && mouseY >= boxY && mouseY < boxY + 10;
+    }
+
+    private boolean inSideLabel(double mouseX, double mouseY) {
+        return mouseX >= labelBoxX && mouseX < labelBoxX + 10
+                && mouseY >= labelBoxY && mouseY < labelBoxY + 10;
     }
 
     private @Nullable String hitTest(double mouseX, double mouseY) {

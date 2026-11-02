@@ -23,6 +23,14 @@ public interface HudElement {
      */
     int height(Font font);
 
+    default int width(Font font, boolean showLabel) {
+        return width(font);
+    }
+
+    default int height(Font font, boolean showLabel) {
+        return height(font);
+    }
+
     /**
      * 在局部坐标系中绘制元素
      *
