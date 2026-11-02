@@ -7,13 +7,19 @@ plugins {
 def moduleProjects = [project(':symbase'), project(':symhud'), project(':symauto')]
 def releaseDir = layout.buildDirectory.dir('release').get().asFile
 
+tasks.register('cleanRelease', Delete) {
+    group = 'build'
+    description = 'Clean the collected release directory'
+    delete releaseDir
+}
+
 tasks.register('collectJars', Copy) {
     group = 'build'
-    description = 'Collect the three mod jars into build/release'
+    description = 'Collect only the current three mod jars into build/release'
+    dependsOn cleanRelease
     dependsOn moduleProjects.collect { it.tasks.named('build') }
-    from moduleProjects.collect { it.layout.buildDirectory.dir('libs') }
-    include '*.jar'
-    exclude '*-sources.jar'
+    // 只收集各模块当前 jar 任务的产物，避免把 build/libs 里的旧版本一起复制。
+    from moduleProjects.collect { it.tasks.named('jar').flatMap { task -> task.archiveFile } }
     into layout.buildDirectory.dir('release')
 }
 
