@@ -1,5 +1,7 @@
 package com.symbase.hud;
 
+import lombok.Getter;
+import lombok.Setter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 
@@ -11,13 +13,17 @@ public abstract class AbstractTextHudElement extends AbstractHudElement {
     private static final int PADDING_X = 3;
     private static final int PADDING_Y = 1;
 
-    private final int textColor;
-    private final int bgColor;
+    @Getter
+    @Setter
+    private int textColor;
+    @Getter
+    @Setter
+    private int bgColor;
 
     protected AbstractTextHudElement(String id, String displayName, String description,
                                      HudAnchor defaultAnchor, int defaultOffsetX, int defaultOffsetY,
                                      int textColor, int bgColor) {
-        super(id, displayName, description, defaultAnchor, defaultOffsetX, defaultOffsetY, false);
+        super(id, displayName, description, defaultAnchor, defaultOffsetX, defaultOffsetY);
         this.textColor = textColor;
         this.bgColor = bgColor;
     }
@@ -41,8 +47,11 @@ public abstract class AbstractTextHudElement extends AbstractHudElement {
         if ((bgColor >>> 24) != 0) {
             context.g().fill(0, 0, width, context.height(), bgColor);
         }
-        context.g().text(context.font(), text, PADDING_X, PADDING_Y, textColor, true);
+        int color = context.textColor() != null ? context.textColor() : textColor;
+        context.g().text(context.font(), text, PADDING_X, PADDING_Y, color, true);
     }
 }
+
+
 
 

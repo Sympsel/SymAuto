@@ -2,7 +2,7 @@ plugins {
     id 'net.fabricmc.fabric-loom'
 }
 
-version = project.mod_version
+version = project.symbase_version
 group = project.maven_group
 
 base {
@@ -97,4 +97,5 @@ java {
         toolchain.languageVersion = JavaLanguageVersion.of(targetJavaVersion)
     }
 }
+
 

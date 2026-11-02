@@ -2,6 +2,7 @@ package com.symbase.gui.screen;
 
 import com.symbase.config.ConfigServices;
 import com.symbase.core.SymFunctionTags;
+import com.symbase.function.base.HudVisibilityFunction;
 import com.symbase.function.base.SymAbstractFunction;
 import com.symbase.function.utils.KeyUtils;
 import com.symbase.gui.UiStyle;
@@ -225,12 +226,16 @@ public class FunctionMenuScreen extends Screen {
 
     private static List<SymAbstractFunction> filter(int tag) {
         List<SymAbstractFunction> all = FunctionRegistry.all();
-        if (tag == SymFunctionTags.ALL) {
-            return all;
-        }
         List<SymAbstractFunction> result = new ArrayList<>();
+        // 全局启停始终排在最前，不受当前分类过滤影响
         for (SymAbstractFunction f : all) {
-            if (f.hasTag(tag)) {
+            if (f instanceof HudVisibilityFunction) {
+                result.add(f);
+            }
+        }
+        for (SymAbstractFunction f : all) {
+            if (!(f instanceof HudVisibilityFunction)
+                    && (tag == SymFunctionTags.ALL || f.hasTag(tag))) {
                 result.add(f);
             }
         }
@@ -384,4 +389,6 @@ public class FunctionMenuScreen extends Screen {
         this.minecraft.gui.setScreen(parent);
     }
 }
+
+
 

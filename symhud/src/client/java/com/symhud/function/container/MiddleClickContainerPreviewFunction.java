@@ -5,7 +5,7 @@ import com.symbase.function.utils.Tooltip;
 import net.minecraft.client.Minecraft;
 
 /**
- * 无界面时：按住鼠标中键预览主手容器。
+ * 按住鼠标中键预览主手容器
  */
 public class MiddleClickContainerPreviewFunction extends SymAbstractFunction {
     public static final MiddleClickContainerPreviewFunction INSTANCE = new MiddleClickContainerPreviewFunction();

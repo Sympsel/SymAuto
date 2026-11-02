@@ -4,7 +4,7 @@ plugins {
     id 'io.freefair.lombok'
 }
 
-version = project.mod_version
+version = project.symauto_version
 group = project.maven_group
 
 base {
@@ -59,11 +59,13 @@ dependencies {
 }
 
 def versionValue = project.version
+def baseVersionValue = project.symbase_version
 def minecraftVersionValue = project.minecraft_version
 def loaderVersionValue = project.loader_version
 
 processResources {
     inputs.property "version", versionValue
+    inputs.property "symbase_version", baseVersionValue
     inputs.property "minecraft_version", minecraftVersionValue
     inputs.property "loader_version", loaderVersionValue
     filteringCharset "UTF-8"
@@ -74,6 +76,7 @@ processResources {
 
     filesMatching("fabric.mod.json") {
         expand "version": versionValue,
+                "symbase_version": baseVersionValue,
                 "minecraft_version": minecraftVersionValue,
                 "loader_version": loaderVersionValue
     }
@@ -114,6 +117,8 @@ publishing {
         maven { url 'https://maven.aliyun.com/repository/gradle-plugin' }
     }
 }
+
+
 
 
 

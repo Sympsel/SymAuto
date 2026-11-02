@@ -10,12 +10,12 @@ import net.minecraft.client.Minecraft;
 public final class FpsHudElement extends AbstractTextHudElement {
     public FpsHudElement() {
         super("fps", "帧率", "显示当前游戏帧率",
-                HudAnchor.TOP_LEFT, 4, 42, 0xFF7CFC8A, 0x66000000);
+                HudAnchor.TOP_LEFT, 0, 7, 0xFFA3FFB1, 0x00000000);
     }
 
     @Override
     protected String text(Minecraft client, boolean preview) {
-        return "FPS " + client.getFps();
+        return "FPS: " + client.getFps();
     }
 }
 

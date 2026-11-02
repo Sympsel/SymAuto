@@ -11,8 +11,10 @@ public record HudRenderContext(
         Font font,
         int width,
         int height,
-        boolean preview
+        boolean preview,
+        Integer textColor
 ) {
 }
+
 
 

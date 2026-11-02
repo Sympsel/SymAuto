@@ -1,6 +1,7 @@
 package com.symhud.render;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.symbase.hud.HudManager;
 import com.symhud.core.Constants;
 import com.symhud.function.highlight.HighLightPlayerFunction;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
@@ -123,7 +124,7 @@ public final class PlayerNameRenderer {
     }
 
     private static void draw(GuiGraphicsExtractor graphics, DeltaTracker delta) {
-        if (QUEUE.isEmpty()) {
+        if (!HudManager.isVisible() || QUEUE.isEmpty()) {
             return;
         }
         Minecraft client = Minecraft.getInstance();
@@ -134,5 +135,6 @@ public final class PlayerNameRenderer {
         }
     }
 }
+
 
 

@@ -19,11 +19,13 @@ public class TagList {
     }
 
     public boolean has(int tag) {
-        return tag >= 0 && tags.get(tag);
+        return tag >= 0 && tags != null && tags.get(tag);
     }
 
     public void removeTag(int tag) {
-        tags.clear(tag);
+        if (tags != null) {
+            tags.clear(tag);
+        }
     }
 
     public void set(int tag, boolean value) {
@@ -78,8 +80,11 @@ public class TagList {
     }
 
     public void clear() {
-        tags.clear();
+        if (tags != null) {
+            tags.clear();
+        }
     }
 }
+
 
 

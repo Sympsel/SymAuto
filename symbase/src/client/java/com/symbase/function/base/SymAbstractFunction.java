@@ -104,9 +104,8 @@ public abstract class SymAbstractFunction {
         return true;
     }
 
-
     public void tick() {
-        if (!enable) return;
+        if (!isEnable()) return;
         onTrigger(Minecraft.getInstance());
     }
 
@@ -223,5 +222,3 @@ public abstract class SymAbstractFunction {
         return null;
     }
 }
-
-

@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * SymHud 可选兼容 Mixin 的开关。
+ * SymHud 可选兼容 Mixin 的开关
  */
 public class SymHudMixinPlugin implements IMixinConfigPlugin {
     private static final String MOUSE_TWEAKS_MIXIN = "com.symhud.mixin.MouseTweaksCompatMixin";

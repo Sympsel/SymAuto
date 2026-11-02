@@ -98,6 +98,7 @@ public final class HudLayoutStore extends AbstractJsonStore {
         private int y;
         private float scale;
         private Boolean visible;
+        private Integer textColor;
 
         private static LayoutEntry from(HudPlacement placement) {
             LayoutEntry entry = new LayoutEntry();
@@ -106,13 +107,14 @@ public final class HudLayoutStore extends AbstractJsonStore {
             entry.y = placement.offsetY();
             entry.scale = placement.scale();
             entry.visible = placement.visible();
+            entry.textColor = placement.textColor();
             return entry;
         }
 
         private HudPlacement toPlacement() {
             float resolvedScale = scale > 0.0F ? scale : 1.0F;
             boolean resolvedVisible = visible == null || visible;
-            return new HudPlacement(HudAnchor.byName(anchor), x, y, resolvedScale, resolvedVisible);
+            return new HudPlacement(HudAnchor.byName(anchor), x, y, resolvedScale, resolvedVisible, textColor);
         }
     }
 }

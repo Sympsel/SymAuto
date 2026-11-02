@@ -36,6 +36,10 @@ public final class HudManager {
     @Getter
     private static boolean editing;
 
+    @Setter
+    @Getter
+    private static boolean visible = true;
+
     private HudManager() {
     }
 
@@ -139,14 +143,14 @@ public final class HudManager {
             if (placement.scale() != 1.0F) {
                 pose.scale(placement.scale(), placement.scale());
             }
-            element.render(new HudRenderContext(graphics, font, baseWidth, baseHeight, preview));
+            element.render(new HudRenderContext(graphics, font, baseWidth, baseHeight, preview, placement.textColor()));
         } finally {
             pose.popMatrix();
         }
     }
 
     private static void extract(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker) {
-        if (editing) {
+        if (editing || !visible) {
             return;
         }
         Minecraft client = Minecraft.getInstance();
@@ -165,5 +169,7 @@ public final class HudManager {
         }
     }
 }
+
+
 
 

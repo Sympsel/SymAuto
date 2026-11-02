@@ -4,7 +4,7 @@ plugins {
     id 'io.freefair.lombok'
 }
 
-version = project.mod_version
+version = project.symbase_version
 group = project.maven_group
 
 base {
@@ -85,6 +85,7 @@ jar {
         rename { "${it}_SymBase" }
     }
 }
+
 
 
 

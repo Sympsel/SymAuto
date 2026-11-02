@@ -14,7 +14,6 @@ public abstract class AbstractHudElement implements HudElement {
     private final HudAnchor defaultAnchor;
     private final int defaultOffsetX;
     private final int defaultOffsetY;
-    private boolean transparentBackground;
 
     @Override
     public String id() {
@@ -32,14 +31,10 @@ public abstract class AbstractHudElement implements HudElement {
     }
 
     @Override
-    public boolean transparentBackground() {
-        return transparentBackground;
-    }
-
-    @Override
     public HudPlacement defaultPlacement() {
         return new HudPlacement(defaultAnchor, defaultOffsetX, defaultOffsetY, 1.0F, true);
     }
 }
+
 
 

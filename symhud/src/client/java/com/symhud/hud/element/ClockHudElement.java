@@ -15,12 +15,12 @@ public final class ClockHudElement extends AbstractTextHudElement {
 
     public ClockHudElement() {
         super("clock", "时钟", "显示系统本地时间",
-                HudAnchor.BOTTOM_LEFT, 4, -45, 0xFFFFD166, 0x66000000);
+                HudAnchor.TOP_LEFT, 1, 40, 0xFFFFFFF7, 0x00000000);
     }
 
     @Override
     protected String text(Minecraft client, boolean preview) {
-        return LocalTime.now().format(FORMAT);
+        return "系统时间: " + LocalTime.now().format(FORMAT);
     }
 }
 

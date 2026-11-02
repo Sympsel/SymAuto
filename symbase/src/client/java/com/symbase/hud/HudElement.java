@@ -40,13 +40,7 @@ public interface HudElement {
     default HudPlacement defaultPlacement() {
         return new HudPlacement(HudAnchor.TOP_LEFT, 4, 4, 1.0F, true);
     }
-
-    /**
-     * 是否透明背景
-     */
-    default boolean transparentBackground() {
-        return false;
-    }
 }
+
 
 

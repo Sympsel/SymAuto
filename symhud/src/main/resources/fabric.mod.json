@@ -25,10 +25,11 @@
     "fabricloader": ">=${loader_version}",
     "fabric-api": "*",
     "minecraft": "${minecraft_version}",
-    "symbase": ">=${version}"
+    "symbase": ">=${symbase_version}"
   },
   "suggests": {
     "modmenu": "*"
   }
 }
+
 

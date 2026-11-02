@@ -34,8 +34,6 @@ public class SymautoClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
-        // 注册按键
-        this.keyMappingRegisters();
         // 注册事件
         this.eventRegisters();
 
@@ -70,22 +68,13 @@ public class SymautoClient implements ClientModInitializer {
                 parent -> () -> Minecraft.getInstance().gui.setScreen(new ClaimScreen(parent)));
     }
 
-    private void keyMappingRegisters() {
-        for (SymAbstractFunction f : AutoFunctions.AUTO_ALL) {
-            KeyMapping km = f.getKeyMapping();
-            if (km != null) {
-                KeyMappingHelper.registerKeyMapping(km);
-            }
-        }
-    }
-
     private void eventRegisters() {
         ClientLifecycleEvents.CLIENT_STOPPING.register(client -> {
             for (SymAbstractFunction f : AutoFunctions.AUTO_ALL) {
                 try {
                     f.setEnable(false);
                 } catch (Throwable t) {
-                    // 关游戏时世界/注册表可能已拆除，个别功能清理失败不应阻断其余清理与配置落盘；
+                    // 关游戏时世界/注册表可能已拆除，个别功能清理失败不应阻断其余清理与配置落盘
                     Constants.LOG.error("Failed to disable function '{}' on shutdown", f.getId(), t);
                 }
             }
@@ -137,26 +126,11 @@ public class SymautoClient implements ClientModInitializer {
                     continue;
                 }
                 f.tick();
-                dispatchKey(client, f);
             }
         });
     }
-
-    /**
-     * 快捷键分发：边沿触发 修饰键 界面上下文过滤
-     */
-    private static void dispatchKey(Minecraft client, SymAbstractFunction f) {
-        KeyMapping km = f.getKeyMapping();
-        if (km == null) return;
-        if (!KeyUtils.risingEdge(client, f.getId(), km)) return;
-        if (f.requireCtrl() && !KeyUtils.isCtrlDown(client)) return;
-        if (f.requireShift() && !KeyUtils.isShiftDown(client)) return;
-        if (!ScreenUtils.screenContextMatches(client, f.requireScreenContext())) return;
-        while (km.consumeClick()) {
-        }
-        f.onKeyAction(client);
-    }
 }
+
 
 
 

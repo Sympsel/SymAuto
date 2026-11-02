@@ -6,7 +6,9 @@ import com.symbase.gui.widget.component.SymButton;
 import com.symbase.gui.widget.component.SymDialog;
 import com.symbase.gui.widget.component.SymMenuBar;
 import com.symbase.gui.widget.component.SymTooltip;
+import com.symbase.gui.widget.component.SymSlider;
 import com.symbase.gui.widget.utils.ButtonFactory;
+import com.symbase.hud.AbstractTextHudElement;
 import com.symbase.hud.HudBounds;
 import com.symbase.hud.HudElement;
 import com.symbase.hud.HudManager;
@@ -59,6 +61,7 @@ public final class HudEditScreen extends Screen {
     private final Map<String, HudPlacement> draft = new LinkedHashMap<>();
     private final Map<String, HudPlacement> original = new LinkedHashMap<>();
     private final List<SymButton> buttons = new ArrayList<>();
+    private final List<SymSlider> colorSliders = new ArrayList<>();
     private final List<Integer> guidesX = new ArrayList<>();
     private final List<Integer> guidesY = new ArrayList<>();
 
@@ -157,6 +160,7 @@ public final class HudEditScreen extends Screen {
                 .onLeftClick(() -> helpDialog.close())).setModal(true);
         helpDialog.close();
         initMenuBar();
+        refreshColorSliders();
     }
 
     private boolean isModalDialogOpen() {
@@ -224,6 +228,9 @@ public final class HudEditScreen extends Screen {
         chromeVisible = visible;
         for (SymButton button : buttons) {
             button.visible = visible;
+        }
+        for (SymSlider slider : colorSliders) {
+            slider.visible = visible;
         }
     }
 
@@ -304,14 +311,25 @@ public final class HudEditScreen extends Screen {
     }
 
     private void drawGrid(GuiGraphicsExtractor g) {
-        for (int x = 0; x < this.width; x += 16) {
+        int centerX = this.width / 2;
+        int centerY = this.height / 2;
+
+        // 以屏幕中心十字为基准向两侧展开，而不是从左上角开始
+        for (int x = centerX; x < this.width; x += GRID_SIZE) {
             g.fill(x, 0, x + 1, this.height, GRID_LINE);
         }
-        for (int y = 0; y < this.height; y += 16) {
+        for (int x = centerX - GRID_SIZE; x >= 0; x -= GRID_SIZE) {
+            g.fill(x, 0, x + 1, this.height, GRID_LINE);
+        }
+        for (int y = centerY; y < this.height; y += GRID_SIZE) {
             g.fill(0, y, this.width, y + 1, GRID_LINE);
         }
-        g.fill(this.width / 2, 0, this.width / 2 + 1, this.height, GRID_AXIS);
-        g.fill(0, this.height / 2, this.width, this.height / 2 + 1, GRID_AXIS);
+        for (int y = centerY - GRID_SIZE; y >= 0; y -= GRID_SIZE) {
+            g.fill(0, y, this.width, y + 1, GRID_LINE);
+        }
+
+        g.fill(centerX, 0, centerX + 1, this.height, GRID_AXIS);
+        g.fill(0, centerY, this.width, centerY + 1, GRID_AXIS);
     }
 
     private void drawPreview(GuiGraphicsExtractor g) {
@@ -422,7 +440,16 @@ public final class HudEditScreen extends Screen {
                 g.fill(boxX + border, boxY + border, boxX + BOX_SIZE - border, boxY + BOX_SIZE - border, 0xFF102018);
             }
             g.text(this.font, "显示", left + 8, lineBegin + lineH * 5, visible ? TEXT : MUTED, false);
-            g.text(this.font, fit("描述: " + selected.description(), SIDEBAR_W - 16), left + 8, lineBegin + lineH * 6, MUTED, false);
+
+            var descLines = wrapText("描述: " + selected.description(), SIDEBAR_W - 16);
+            int descY = lineBegin + lineH * 6;
+            for (String descLine : descLines) {
+                if (descY + lineH > bottom) {
+                    break;
+                }
+                g.text(this.font, Component.literal(descLine), left + 8, descY, MUTED, false);
+                descY += lineH;
+            }
         } else {
             g.text(this.font, "未选中元素", left + 8, lineBegin, TEXT, true);
         }
@@ -487,7 +514,7 @@ public final class HudEditScreen extends Screen {
             return true;
         }
 
-        selectedId = null;
+        select(null);
         return true;
     }
 
@@ -617,17 +644,25 @@ public final class HudEditScreen extends Screen {
         if (element == null) {
             return;
         }
-        draft.put(element.id(), element.defaultPlacement());
+        HudPlacement originalPlacement = original.get(element.id());
+        draft.put(element.id(), originalPlacement != null
+                ? originalPlacement.copy()
+                : element.defaultPlacement());
         guidesX.clear();
         guidesY.clear();
+        refreshColorSliders();
     }
 
     private void resetAll() {
         for (HudElement element : HudManager.elements()) {
-            draft.put(element.id(), element.defaultPlacement());
+            HudPlacement originalPlacement = original.get(element.id());
+            draft.put(element.id(), originalPlacement != null
+                    ? originalPlacement.copy()
+                    : element.defaultPlacement());
         }
         guidesX.clear();
         guidesY.clear();
+        refreshColorSliders();
     }
 
     private void nudge(int dx, int dy) {
@@ -661,6 +696,7 @@ public final class HudEditScreen extends Screen {
 
     private void select(String id) {
         selectedId = id;
+        refreshColorSliders();
     }
 
     private boolean inSidebar(double mouseX, double mouseY) {
@@ -738,9 +774,13 @@ public final class HudEditScreen extends Screen {
             }
         }
         if (grid) {
-            return new Snap(Math.round(x / (float) GRID_SIZE) * GRID_SIZE, -1);
+            return new Snap(snapToCenterGrid(x, this.width / 2), -1);
         }
         return new Snap(x, -1);
+    }
+
+    private int snapToCenterGrid(int value, int center) {
+        return center + Math.round((value - center) / (float) GRID_SIZE) * GRID_SIZE;
     }
 
     private Snap snapY(int y, int height, boolean align, boolean grid) {
@@ -782,7 +822,7 @@ public final class HudEditScreen extends Screen {
             }
         }
         if (grid) {
-            return new Snap(Math.round(y / (float) GRID_SIZE) * GRID_SIZE, -1);
+            return new Snap(snapToCenterGrid(y, this.height / 2), -1);
         }
         return new Snap(y, -1);
     }
@@ -803,7 +843,113 @@ public final class HudEditScreen extends Screen {
     }
 
     private int sidebarBottom() {
-        return Math.min(sidebarY() + SIDEBAR_INFO_H, this.height - BOTTOM_H - 4);
+        int desiredHeight = Math.max(SIDEBAR_INFO_H, descriptionSidebarHeight());
+        return Math.min(sidebarY() + desiredHeight, this.height - BOTTOM_H - 4);
+    }
+
+    /**
+     * 侧栏至少需要显示 6 行信息，再额外显示折行后的描述
+     */
+    private int descriptionSidebarHeight() {
+        HudElement selected = selectedElement();
+        if (selected == null) {
+            return SIDEBAR_INFO_H;
+        }
+        int lines = Math.max(1, wrapText("描述: " + selected.description(), SIDEBAR_W - 16).size());
+        int colorHeight = selected instanceof AbstractTextHudElement ? 3 * 18 + 8 : 0;
+        return 6 * 12 + lines * 12 + 8 + colorHeight;
+    }
+
+    private void refreshColorSliders() {
+        for (SymSlider slider : colorSliders) {
+            this.removeWidget(slider);
+        }
+        colorSliders.clear();
+
+        HudElement selected = selectedElement();
+        if (!(selected instanceof AbstractTextHudElement text)) {
+            return;
+        }
+        HudPlacement placement = draft.get(selected.id());
+        if (placement == null) {
+            return;
+        }
+
+        int color = placement.textColor() != null ? placement.textColor() : text.getTextColor();
+        int alpha = color & 0xFF000000;
+        int red = (color >> 16) & 0xFF;
+        int green = (color >> 8) & 0xFF;
+        int blue = color & 0xFF;
+
+        int x = sidebarX() + 8;
+        int y = colorSliderY();
+        addColorSlider(text, placement, x, y, "R", red, alpha);
+        addColorSlider(text, placement, x, y + 18, "G", green, alpha);
+        addColorSlider(text, placement, x, y + 36, "B", blue, alpha);
+    }
+
+    private void addColorSlider(AbstractTextHudElement text, HudPlacement placement,
+                                int x, int y, String channel, int initial, int alpha) {
+        SymSlider slider = new SymSlider(x, y, SIDEBAR_W - 16, 16, 0, 255, initial, channel)
+                .onChange(value -> {
+                    int base = placement.textColor() != null
+                            ? placement.textColor()
+                            : text.getTextColor();
+                    int red = (base >> 16) & 0xFF;
+                    int green = (base >> 8) & 0xFF;
+                    int blue = base & 0xFF;
+                    int v = Math.round(value);
+                    switch (channel) {
+                        case "R" -> red = v;
+                        case "G" -> green = v;
+                        case "B" -> blue = v;
+                        default -> {
+                        }
+                    }
+                    placement.setTextColor(alpha | (red << 16) | (green << 8) | blue);
+                });
+        colorSliders.add(slider);
+        this.addRenderableWidget(slider);
+        slider.visible = chromeVisible;
+    }
+
+    private int colorSliderY() {
+        HudElement selected = selectedElement();
+        int lines = selected == null
+                ? 1
+                : Math.max(1, wrapText("描述: " + selected.description(), SIDEBAR_W - 16).size());
+        return sidebarY() + 6 + 6 * 12 + lines * 12 + 4;
+    }
+
+    /**
+     * 按像素宽度折行
+     */
+    private List<String> wrapText(String text, int maxWidth) {
+        List<String> lines = new ArrayList<>();
+        String remaining = text;
+        while (!remaining.isEmpty()) {
+            if (this.font.width(remaining) <= maxWidth) {
+                lines.add(remaining);
+                break;
+            }
+
+            int end = remaining.length();
+            while (end > 0 && this.font.width(remaining.substring(0, end)) > maxWidth) {
+                end--;
+            }
+            if (end <= 0) {
+                end = 1;
+            }
+
+            int space = remaining.lastIndexOf(' ', end);
+            if (space > 0) {
+                end = space;
+            }
+
+            lines.add(remaining.substring(0, end).stripTrailing());
+            remaining = remaining.substring(end).stripLeading();
+        }
+        return lines;
     }
 
 
@@ -855,5 +1001,7 @@ public final class HudEditScreen extends Screen {
         cancel();
     }
 }
+
+
 
 

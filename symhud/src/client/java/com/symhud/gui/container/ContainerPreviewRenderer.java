@@ -7,6 +7,7 @@ import com.symhud.function.container.ShiftHoverContainerPreviewFunction;
 import com.symhud.function.container.depend.Containers;
 import com.symbase.function.utils.ClientGuard;
 import com.symbase.gui.UiStyle;
+import com.symbase.hud.HudManager;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
@@ -48,7 +49,7 @@ public class ContainerPreviewRenderer {
      * 无界面世界中：按住中键 + 主手持容器 → 在鼠标处预览容器内容
      */
     private static void drawHandPreview(GuiGraphicsExtractor g, DeltaTracker delta) {
-        if (!MiddleClickContainerPreviewFunction.INSTANCE.isEnable()) {
+        if (!HudManager.isVisible() || !MiddleClickContainerPreviewFunction.INSTANCE.isEnable()) {
             return;
         }
         Minecraft client = Minecraft.getInstance();
@@ -190,6 +191,7 @@ public class ContainerPreviewRenderer {
         }
     }
 }
+
 
 
 

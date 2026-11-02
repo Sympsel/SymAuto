@@ -35,27 +35,25 @@ public class KeyUtils {
     }
 
     /**
-     * 上升沿检测：
-     * - KEYSYM：读 GLFW 物理状态（不受 Screen 消费影响）
-     * - MOUSE：走 clickCount（一次点击天然是一次事件）
+     * 创建一个没有默认按键的键位
+     */
+    public static KeyMapping createUnbound(String translationKey, KeyMapping.Category category) {
+        return new KeyMapping(
+                translationKey,
+                InputConstants.Type.KEYSYM,
+                GLFW.GLFW_KEY_UNKNOWN,
+                category);
+    }
+
+    /**
+     * 上升沿检测
      */
     public static boolean risingEdge(Minecraft client, String id, KeyMapping km) {
-        InputConstants.Key bind = km.getDefaultKey();
-        int code = bind.getValue();
-        if (code < 0) return false;
-
-        boolean nowDown;
-        if (bind.getType() == InputConstants.Type.KEYSYM) {
-            nowDown = InputConstants.isKeyDown(client.getWindow(), code);
-        } else if (bind.getType() == InputConstants.Type.MOUSE) {
-            nowDown = km.consumeClick();
-        } else {
-            nowDown = km.isDown();
+        if (km.isUnbound()) {
+            edgeState.put(id, false);
+            return false;
         }
-
-        boolean prev = edgeState.getOrDefault(id, false);
-        edgeState.put(id, nowDown);
-        return nowDown && !prev;
+        return km.consumeClick();
     }
 
     public static void resetEdge(String id) {

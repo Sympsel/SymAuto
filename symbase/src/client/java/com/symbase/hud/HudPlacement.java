@@ -16,13 +16,19 @@ public final class HudPlacement {
     private int offsetY;
     private float scale;
     private boolean visible;
+    private Integer textColor;
 
     public HudPlacement(HudAnchor anchor, int offsetX, int offsetY, float scale, boolean visible) {
+        this(anchor, offsetX, offsetY, scale, visible, null);
+    }
+
+    public HudPlacement(HudAnchor anchor, int offsetX, int offsetY, float scale, boolean visible, Integer textColor) {
         this.anchor = anchor == null ? HudAnchor.TOP_LEFT : anchor;
         this.offsetX = offsetX;
         this.offsetY = offsetY;
         this.scale = clampScale(scale);
         this.visible = visible;
+        this.textColor = textColor;
     }
 
     public static float clampScale(float value) {
@@ -60,6 +66,14 @@ public final class HudPlacement {
         this.scale = clampScale(scale);
     }
 
+    public Integer textColor() {
+        return textColor;
+    }
+
+    public void setTextColor(Integer textColor) {
+        this.textColor = textColor;
+    }
+
     /**
      * 计算元素在屏幕上的实际区域
      */
@@ -90,7 +104,7 @@ public final class HudPlacement {
     }
 
     public HudPlacement copy() {
-        return new HudPlacement(anchor, offsetX, offsetY, scale, visible);
+        return new HudPlacement(anchor, offsetX, offsetY, scale, visible, textColor);
     }
 
     public boolean sameState(HudPlacement other) {
@@ -99,7 +113,8 @@ public final class HudPlacement {
                 && offsetX == other.offsetX
                 && offsetY == other.offsetY
                 && Float.compare(scale, other.scale) == 0
-                && visible == other.visible;
+                && visible == other.visible
+                && Objects.equals(textColor, other.textColor);
     }
 
     @Override
@@ -109,8 +124,9 @@ public final class HudPlacement {
 
     @Override
     public int hashCode() {
-        return Objects.hash(anchor, offsetX, offsetY, scale, visible);
+        return Objects.hash(anchor, offsetX, offsetY, scale, visible, textColor);
     }
 }
+
 
 

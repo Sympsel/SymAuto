@@ -18,9 +18,7 @@ import com.symhud.core.HudFunctions;
 import com.symhud.function.utils.TradeCapture;
 import com.symhud.gui.container.ContainerPanel;
 import com.symhud.gui.container.ContainerPreviewRenderer;
-import com.symhud.hud.element.ClockHudElement;
-import com.symhud.hud.element.CoordinatesHudElement;
-import com.symhud.hud.element.FpsHudElement;
+import com.symhud.hud.element.*;
 import com.symhud.render.PlayerNameRenderer;
 import com.symhud.storage.VillagerTradeStore;
 import net.fabricmc.api.ClientModInitializer;
@@ -71,12 +69,18 @@ public class SymHudClient implements ClientModInitializer {
             ScreenMouseEvents.allowMouseRelease(screen).register((s, event) ->
                     event.button() != 0 || !ContainerPanel.consumeReleaseGuard());
         });
+        registerHudElements();
+    }
 
+    private void registerHudElements() {
         HudManager.register(new FpsHudElement());
         HudManager.register(new CoordinatesHudElement());
+        HudManager.register(new AnotherCoordinateHudElement());
         HudManager.register(new ClockHudElement());
+        HudManager.register(new HitResultIdHudElement());
+        HudManager.register(new TargetDistanceHudElement());
+        HudManager.register(new ArmorDurabilityHudElement());
+        HudManager.register(new ItemTotalCountHudElement());
     }
 }
-
-
 

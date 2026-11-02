@@ -43,11 +43,11 @@ public final class FunctionConfig {
         }
 
         for (SymAbstractFunction function : FunctionRegistry.all()) {
-            Boolean enabled = data.features.get(function.getId());
+            Boolean enabled = data.functions.get(function.getId());
             if (enabled != null) {
                 function.setEnable(enabled);
             } else {
-                data.features.put(function.getId(), function.isEnable());
+                data.functions.put(function.getId(), function.isEnable());
             }
 
             int[] tags = data.functionTags.get(function.getId());
@@ -77,7 +77,7 @@ public final class FunctionConfig {
     public static void save() {
         Data data = new Data();
         for (SymAbstractFunction function : FunctionRegistry.all()) {
-            data.features.put(function.getId(), function.isEnable());
+            data.functions.put(function.getId(), function.isEnable());
             data.functionTags.put(function.getId(), function.getTagArray());
             if (function.hasConfig()) {
                 Map<String, String> options = new LinkedHashMap<>();
@@ -114,9 +114,8 @@ public final class FunctionConfig {
 
     private static final class Data {
         private int version = 1;
-        private Map<String, Boolean> features = new LinkedHashMap<>();
+        private Map<String, Boolean> functions = new LinkedHashMap<>();
         private Map<String, int[]> functionTags = new LinkedHashMap<>();
         private Map<String, Map<String, String>> featureOptions = new LinkedHashMap<>();
     }
 }
-
