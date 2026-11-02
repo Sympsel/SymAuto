@@ -91,7 +91,7 @@ public class AutoEatFunction extends SymAbstractFunction {
         }
 
         FoodData foodData = client.player.getFoodData();
-        if (foodData.getFoodLevel() >= HUNGER_THRESHOLD_DEFAULT) {
+        if (foodData.getFoodLevel() >= hungerThreshold) {
             return;
         }
 
