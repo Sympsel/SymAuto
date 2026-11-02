@@ -21,8 +21,9 @@ public final class ArmorDurabilityHudElement extends AbstractHudElement {
             EquipmentSlot.MAINHAND,
             EquipmentSlot.OFFHAND
     };
-    private static final int SLOT_WIDTH = 20;
+    private static final int MIN_SLOT_WIDTH = 20;
     private static final int ICON_SIZE = 16;
+    private static final int TEXT_PADDING = 4;
     private static final int HEIGHT = 27;
 
     public ArmorDurabilityHudElement() {
@@ -32,13 +33,22 @@ public final class ArmorDurabilityHudElement extends AbstractHudElement {
 
     @Override
     public int width(Font font) {
-        int count = filledSlotCount();
-        return count == 0 ? 0 : count * SLOT_WIDTH + 2;
+        int total = 0;
+        Player player = Minecraft.getInstance().player;
+        if (player != null) {
+            for (EquipmentSlot slot : SLOTS) {
+                ItemStack stack = player.getItemBySlot(slot);
+                if (!stack.isEmpty()) {
+                    total += slotWidth(stack, font);
+                }
+            }
+        }
+        return total == 0 ? 0 : total + 2;
     }
 
     @Override
     public int height(Font font) {
-        return filledSlotCount() == 0 ? 0 : HEIGHT;
+        return hasItems() ? HEIGHT : 0;
     }
 
     @Override
@@ -48,46 +58,55 @@ public final class ArmorDurabilityHudElement extends AbstractHudElement {
             return;
         }
 
-        int slot = 0;
+        int x = 1;
+        int y = 1;
         for (EquipmentSlot equipmentSlot : SLOTS) {
             ItemStack stack = player.getItemBySlot(equipmentSlot);
             if (stack.isEmpty()) {
                 continue;
             }
 
-            int x = 1 + slot * SLOT_WIDTH;
-            int y = 1;
-            context.g().item(stack, x, y);
-            context.g().itemDecorations(context.font(), stack, x, y);
+            int slotWidth = slotWidth(stack, context.font());
+            int iconX = x + (slotWidth - ICON_SIZE) / 2;
+            context.g().item(stack, iconX, y);
+            context.g().itemDecorations(context.font(), stack, iconX, y);
 
             int max = stack.getMaxDamage();
             if (max > 0) {
                 int remaining = Math.max(0, max - stack.getDamageValue());
                 float ratio = remaining / (float) max;
                 int color = ratio > 0.5F ? 0xFF55FF55 : ratio > 0.25F ? 0xFFFFFF55 : 0xFFFF5555;
-                drawCentered(context, String.valueOf(remaining), x, y + ICON_SIZE + 1, color);
+                drawCentered(context, String.valueOf(remaining), x, slotWidth, y + ICON_SIZE + 1, color);
             }
 
-            slot++;
+            x += slotWidth;
         }
     }
 
-    private int filledSlotCount() {
+    private static int slotWidth(ItemStack stack, Font font) {
+        int max = stack.getMaxDamage();
+        if (max <= 0) {
+            return MIN_SLOT_WIDTH;
+        }
+        int remaining = Math.max(0, max - stack.getDamageValue());
+        return Math.max(MIN_SLOT_WIDTH, font.width(String.valueOf(remaining)) + TEXT_PADDING);
+    }
+
+    private boolean hasItems() {
         Player player = Minecraft.getInstance().player;
         if (player == null) {
-            return 0;
+            return false;
         }
-        int count = 0;
         for (EquipmentSlot slot : SLOTS) {
             if (!player.getItemBySlot(slot).isEmpty()) {
-                count++;
+                return true;
             }
         }
-        return count;
+        return false;
     }
 
-    private void drawCentered(HudRenderContext context, String text, int x, int y, int color) {
-        int textX = x + (ICON_SIZE - context.font().width(text)) / 2;
+    private void drawCentered(HudRenderContext context, String text, int x, int slotWidth, int y, int color) {
+        int textX = x + (slotWidth - context.font().width(text)) / 2;
         context.g().text(context.font(), text, textX, y, color, false);
     }
 }
