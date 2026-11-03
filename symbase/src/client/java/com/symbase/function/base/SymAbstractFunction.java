@@ -168,6 +168,9 @@ public abstract class SymAbstractFunction {
 
     protected SymAbstractFunction addOption(ConfigOption option) {
         configOptions.add(option);
+        // 注册时先应用默认值；读取到配置后再由 FunctionConfig 覆盖。
+        // 否则 BooleanOption 的 defaultValue 只是存起来，不会写入功能字段。
+        option.reset();
         return this;
     }
 
