@@ -120,6 +120,15 @@ public abstract class SymAbstractFunction {
     protected void onDisable() {
     }
 
+    /**
+     * 客户端关闭时运行时清理
+     */
+    public void cleanupOnShutdown() {
+        if (enable) {
+            onDisable();
+        }
+    }
+
     public void setEnable(boolean enable) {
         if (this.enable && !enable) {
             onDisable();

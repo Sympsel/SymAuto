@@ -9,6 +9,7 @@
     "FakeSneakMixin",
     "accessor.FishingHookAccessor",
     "accessor.MinecraftAccessor",
+    "accessor.ClientLevelAccessor",
     "InterceptDropKeyMixin",
     "accessor.AbstractContainerScreenAccessor",
     "accessor.MerchantScreenAccessor",

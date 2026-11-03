@@ -72,7 +72,7 @@ public class SymautoClient implements ClientModInitializer {
         ClientLifecycleEvents.CLIENT_STOPPING.register(client -> {
             for (SymAbstractFunction f : AutoFunctions.AUTO_ALL) {
                 try {
-                    f.setEnable(false);
+                    f.cleanupOnShutdown();
                 } catch (Throwable t) {
                     // 关游戏时世界/注册表可能已拆除，个别功能清理失败不应阻断其余清理与配置落盘
                     Constants.LOG.error("Failed to disable function '{}' on shutdown", f.getId(), t);

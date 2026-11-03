@@ -1,10 +1,12 @@
 package com.symauto.function.auto;
 
+import com.symbase.config.option.BooleanOption;
 import com.symbase.function.base.SymAbstractFunction;
 import com.symauto.core.Constants;
 import com.symbase.function.utils.Tooltip;
 import com.symauto.function.place.ScanDestroyFunction;
 import lombok.Getter;
+import lombok.Setter;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
@@ -30,18 +32,27 @@ public class AutoSwiftToolsFunction extends SymAbstractFunction {
     private int intervalMs = 100;
     @Getter
     private float floatFactor = 0.1f;
+    @Getter
+    @Setter
+    private boolean toolsProtect;
 
     private AutoSwiftToolsFunction() {
-        super("auto_swift_tools", "自动切换破坏工具", Tooltip.create()
-                .line( "自动切换破坏工具")
-                .line(ChatFormatting.BLUE, "优先级：")
-                .line(1, "快捷栏 > 精准采集 > 挖掘等级")
-                .toString()
-        );
+        super("auto_swift_tools", "自动切换破坏工具");
+        addOption(new BooleanOption("enable_high_value_tools_protect", "工具保护（耐久低于10%不在切换名单内）",
+                this::isToolsProtect, this::setToolsProtect, true));
         setIntervalMs(50);
         setFloatFactor(0.1f);
     }
 
+    @Override
+    protected String tooltip() {
+        return Tooltip.create()
+                .line( "自动切换破坏工具")
+                .line(ChatFormatting.BLUE, "优先级：")
+                .line(1, "快捷栏 > 精准采集 > 挖掘等级")
+                .keyValueLine("工具保护", toolsProtect ? "是" : "否")
+                .toString();
+    }
 
     public void setIntervalMs(int intervalMs) {
         this.intervalMs = Math.max(10, intervalMs);
@@ -274,6 +285,11 @@ public class AutoSwiftToolsFunction extends SymAbstractFunction {
 
             float speed = stack.getDestroySpeed(state);
             if (speed <= 1.0f) {
+                continue;
+            }
+            // 工具保护
+            if (toolsProtect && stack.isDamageableItem()
+                    && stack.getDamageValue() > stack.getMaxDamage() * (1 - floatFactor)) {
                 continue;
             }
 

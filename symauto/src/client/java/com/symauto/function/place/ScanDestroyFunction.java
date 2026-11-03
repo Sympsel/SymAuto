@@ -1,7 +1,10 @@
 package com.symauto.function.place;
 
+import com.symauto.mixin.accessor.ClientLevelAccessor;
 import com.symbase.config.option.BooleanOption;
+import com.symbase.config.option.IntOption;
 import com.symbase.function.base.SymAbstractFunction;
+import com.symbase.function.utils.ClientGuard;
 import com.symbase.function.utils.Tooltip;
 import com.symauto.function.auto.AutoSwiftToolsFunction;
 import lombok.Getter;
@@ -10,6 +13,9 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -34,6 +40,17 @@ public class ScanDestroyFunction extends SymAbstractFunction {
     @Setter
     private boolean disableBreakCooldown;
 
+    @Getter
+    @Setter
+    private boolean toolsProtect;
+
+    @Getter
+    @Setter
+    private int maxActionsPerTick = 20;
+
+    private static final int TIP_COOLDOWN = 100;
+    private int tipCooldown = 0;
+
     private BlockPos breakingPos;
     private Direction breakingFace = Direction.UP;
 
@@ -43,6 +60,10 @@ public class ScanDestroyFunction extends SymAbstractFunction {
                 this::isExcludeBelowCurrentY, this::setExcludeBelowCurrentY, true));
         addOption(new BooleanOption("disable_break_cooldown", "禁用挖掘冷却",
                 this::isDisableBreakCooldown, this::setDisableBreakCooldown, false));
+        addOption(new BooleanOption("enable_high_value_tools_protect", "工具保护（耐久低于10%阻止该功能）",
+                this::isToolsProtect, this::setToolsProtect, true));
+        addOption(new IntOption("max_actions_per_tick", "每tick最大可挖掘数（仅对秒破方块适用）",
+                this::getMaxActionsPerTick, this::setMaxActionsPerTick, 1, 64, 1));
     }
 
     @Override
@@ -51,13 +72,14 @@ public class ScanDestroyFunction extends SymAbstractFunction {
                 .line("破坏自身范围内所有可破坏的方块，优先准心所指向的方块")
                 .keyValueLine("排除扫描当前y值以下方块", excludeBelowCurrentY ? "是" : "否")
                 .keyValueLine("禁用挖掘冷却", disableBreakCooldown ? "是" : "否")
+                .keyValueLine("工具保护", toolsProtect ? "是" : "否")
                 .line(ChatFormatting.AQUA, "平地神器")
                 .toString();
     }
 
     @Override
     protected void onTrigger(Minecraft client) {
-        if (client.player == null || client.level == null) {
+        if (!ClientGuard.ready(client)) {
             return;
         }
 
@@ -76,29 +98,78 @@ public class ScanDestroyFunction extends SymAbstractFunction {
 
         if (crosshair != null) {
             blocks.remove(crosshair);
-            blocks.add(0, crosshair);
+            blocks.addFirst(crosshair);
         }
 
         if (breakingPos != null && !canBreak(client, breakingPos)) {
             breakingPos = null;
         }
 
+        // 兼容自动切换破坏工具
+        BlockPos toolTarget = crosshair != null ? crosshair
+                : breakingPos != null ? breakingPos
+                : blocks.isEmpty() ? null : blocks.getFirst();
+        if (toolTarget != null && AutoSwiftToolsFunction.INSTANCE.isEnable()) {
+            AutoSwiftToolsFunction.INSTANCE.ensureBestTool(client, toolTarget);
+        }
+
+        // 路径 1：批量破坏所有"当前可秒破"的方块
+        boolean creative = client.player.isCreative();
+        if (!creative && toolsProtect && durabilityBudget(client) <= 0) {
+            if (breakingPos != null) {
+                client.gameMode.stopDestroyBlock();
+                breakingPos = null;
+            }
+            if (tipCooldown < TIP_COOLDOWN) {
+                ++tipCooldown;
+            } else {
+                client.player.sendOverlayMessage(
+                        Component.literal("工具耐久过低，已停止破坏")
+                                .withStyle(ChatFormatting.YELLOW));
+                tipCooldown = 0;
+            }
+            return;
+        }
+        tipCooldown = 0;
+        int done = 0;
+        for (BlockPos pos : blocks) {
+            if (done >= maxActionsPerTick) {
+                break;
+            }
+            if (!creative && !canBreakInstantly(client, pos)) {
+                continue;
+            }
+            if (instantBreak(client, pos, Direction.UP)) {
+                ++done;
+            }
+        }
+
+        if (creative) {
+            return;
+        }
+        // 路径 2：批量破坏所有"当前可秒破"的方块
         BlockPos target = crosshair != null ? crosshair
                 : breakingPos != null ? breakingPos
                 : blocks.isEmpty() ? null : blocks.getFirst();
 
-        if (target == null) {
-            return;
+        // target 可能刚被快速路径破成空气，重选第一个仍存在的方块
+        if (target == null || client.level.getBlockState(target).isAir()) {
+            breakingPos = null;
+            target = null;
+            for (BlockPos pos : blocks) {
+                if (!client.level.getBlockState(pos).isAir()) {
+                    target = pos;
+                    break;
+                }
+            }
+            if (target == null) {
+                return;
+            }
         }
 
-        Direction face = target.equals(crosshair) && crosshairHit != null
+        Direction face = target.equals(crosshair)
                 ? crosshairHit.getDirection()
                 : Direction.UP;
-
-        // 兼容自动切换破坏工具
-        if (AutoSwiftToolsFunction.INSTANCE.isEnable()) {
-            AutoSwiftToolsFunction.INSTANCE.ensureBestTool(client, target);
-        }
 
         if (!target.equals(breakingPos)) {
             breakingPos = target;
@@ -106,13 +177,46 @@ public class ScanDestroyFunction extends SymAbstractFunction {
             client.gameMode.startDestroyBlock(target, face);
         } else {
             client.gameMode.continueDestroyBlock(target, breakingFace);
-            if (disableBreakCooldown) {
-                client.gameMode.continueDestroyBlock(target, breakingFace);
-            }
         }
 
         if (client.level.getBlockState(target).isAir()) {
             breakingPos = null;
+        }
+    }
+
+    /**
+     * 本次破坏需要耐久预算，避免工具直接爆掉
+     */
+    private static int durabilityBudget(Minecraft client) {
+        ItemStack stack = client.player.getMainHandItem();
+        if (!stack.isDamageableItem()) {
+            return Integer.MAX_VALUE;
+        }
+        int max = stack.getMaxDamage();
+        int remaining = max - stack.getDamageValue();
+        return Math.max(0, remaining - (int) (max * 0.1f));
+    }
+
+    /**
+     * 当前手持工具下能否被立即破坏
+     */
+    private static boolean canBreakInstantly(Minecraft client, BlockPos pos) {
+        return client.level.getBlockState(pos)
+                .getDestroyProgress(client.player, client.level, pos) >= 1.0F;
+    }
+
+    private static boolean instantBreak(Minecraft client, BlockPos pos, Direction face) {
+        var handler =
+                ((ClientLevelAccessor) client.level).symauto$getBlockStatePredictionHandler();
+        try (var ignored = handler.startPredicting()) {
+            int sequence = handler.currentSequence();
+            // 空气 / 创造持剑时拒绝
+            if (!client.gameMode.destroyBlock(pos)) {
+                return false;
+            }
+            client.getConnection().send(new ServerboundPlayerActionPacket(
+                    ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK, pos, face, sequence));
+            return true;
         }
     }
 
