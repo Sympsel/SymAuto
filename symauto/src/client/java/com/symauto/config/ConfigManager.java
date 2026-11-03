@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.symauto.function.auto.AutoAttackFunction;
 import com.symauto.function.auto.AutoEatFunction;
 import com.symauto.function.oneclick.OneClickDiscardItemsFunction;
+import com.symauto.function.place.ScanDestroyFunction;
 import com.symbase.model.common.SymList;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -12,6 +13,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.util.Util;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.level.block.Block;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -35,6 +37,9 @@ public class ConfigManager {
     private static final Function<EntityType<?>, String> ENTITY_TO_ID =
             type -> BuiltInRegistries.ENTITY_TYPE.getKey(type).toString();
     private static final Function<String, EntityType<?>> ENTITY_FROM_ID = ConfigManager::parseEntityType;
+    private static final Function<Block, String> BLOCK_TO_ID =
+            block -> BuiltInRegistries.BLOCK.getKey(block).toString();
+    private static final Function<String, Block> BLOCK_FROM_ID = ConfigManager::parseBlock;
 
     private record SymListHandle<T>(SymList<T> list, Function<T, String> toId, Function<String, T> fromId) {
         String displayName() {
@@ -50,7 +55,9 @@ public class ConfigManager {
             new SymListHandle<>(OneClickDiscardItemsFunction.INSTANCE.getWHITE_LIST(), ITEM_TO_ID, ITEM_FROM_ID),
             new SymListHandle<>(OneClickDiscardItemsFunction.INSTANCE.getBLACK_LIST(), ITEM_TO_ID, ITEM_FROM_ID),
             new SymListHandle<>(AutoEatFunction.INSTANCE.getBLACK_LIST(), ITEM_TO_ID, ITEM_FROM_ID),
-            new SymListHandle<>(AutoAttackFunction.INSTANCE.getBLACK_LIST(), ENTITY_TO_ID, ENTITY_FROM_ID)
+            new SymListHandle<>(AutoAttackFunction.INSTANCE.getBLACK_LIST(), ENTITY_TO_ID, ENTITY_FROM_ID),
+            new SymListHandle<>(ScanDestroyFunction.INSTANCE.getWHITE_LIST(), BLOCK_TO_ID, BLOCK_FROM_ID),
+            new SymListHandle<>(ScanDestroyFunction.INSTANCE.getBLACK_LIST(), BLOCK_TO_ID, BLOCK_FROM_ID)
     );
 
     public static void load() {
@@ -110,6 +117,11 @@ public class ConfigManager {
     private static EntityType<?> parseEntityType(String id) {
         Identifier identifier = Identifier.tryParse(id);
         return identifier == null ? null : BuiltInRegistries.ENTITY_TYPE.getOptional(identifier).orElse(null);
+    }
+
+    private static Block parseBlock(String id) {
+        Identifier identifier = Identifier.tryParse(id);
+        return identifier == null ? null : BuiltInRegistries.BLOCK.getOptional(identifier).orElse(null);
     }
 
     public static void openConfigFolder() {

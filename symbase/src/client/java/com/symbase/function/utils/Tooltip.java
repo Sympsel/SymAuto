@@ -103,8 +103,16 @@ public class Tooltip {
         if (list.isEmpty()) {
             tooltip.line(ChatFormatting.GRAY, " 无");
         } else {
+            int shown = 0;
             for (T value : list.getList()) {
+                if (shown >= 5) {
+                    break;
+                }
                 tooltip.line(ChatFormatting.GRAY, " " + toLabel.apply(value));
+                shown++;
+            }
+            if (list.size() > 5) {
+                tooltip.line(ChatFormatting.GRAY, "。。。共" + list.size() + "项");
             }
         }
         return this.append(tooltip);

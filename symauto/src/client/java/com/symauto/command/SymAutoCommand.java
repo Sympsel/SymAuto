@@ -17,6 +17,7 @@ import com.symauto.core.AutoFunctions;
 import com.symbase.function.base.SymAbstractFunction;
 import com.symauto.function.auto.AutoEatFunction;
 import com.symauto.function.oneclick.OneClickDiscardItemsFunction;
+import com.symauto.function.place.ScanDestroyFunction;
 import com.symauto.gui.screen.function.DeathRecordScreen;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.ChatFormatting;
@@ -29,6 +30,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.level.block.Block;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -48,7 +50,7 @@ public class SymAutoCommand {
      * 泛型目标：BWList + 其序列化/解析适配器 + 名词标签
      */
     private record BWTarget<T>(SymList<T> list, Function<T, String> toId, Function<String, T> parser, String noun,
-                               boolean isEntity) {
+                               boolean isEntity, Function<T, String> toLabel) {
 
         String functionId() {
             return list.getFunctionId();
@@ -57,13 +59,15 @@ public class SymAutoCommand {
 
     // 黑白名单数据源
     private static final List<BWTarget<?>> WHITELIST_TARGETS = List.of(
-            itemTarget(OneClickDiscardItemsFunction.INSTANCE.getWHITE_LIST())
+            itemTarget(OneClickDiscardItemsFunction.INSTANCE.getWHITE_LIST()),
+            blockTarget(ScanDestroyFunction.INSTANCE.getWHITE_LIST())
     );
 
     private static final List<BWTarget<?>> BLACKLIST_TARGETS = List.of(
             itemTarget(AutoEatFunction.INSTANCE.getBLACK_LIST()),
             itemTarget(OneClickDiscardItemsFunction.INSTANCE.getBLACK_LIST()),
-            entityTarget(AutoAttackFunction.INSTANCE.getBLACK_LIST())
+            entityTarget(AutoAttackFunction.INSTANCE.getBLACK_LIST()),
+            blockTarget(ScanDestroyFunction.INSTANCE.getBLACK_LIST())
     );
 
     private static final SuggestionProvider<FabricClientCommandSource> FUNCTION_IDS =
@@ -318,7 +322,7 @@ public class SymAutoCommand {
         }
         ctx.getSource().sendFeedback(Component.literal("§e" + title + "§r 共 " + values.size() + " 项（" + target.noun + "）："));
         for (T value : values) {
-            ctx.getSource().sendFeedback(Component.literal("  §7- §f" + target.toId.apply(value)));
+            ctx.getSource().sendFeedback(Component.literal("  §7- §f" + target.toLabel.apply(value)));
         }
         return 1;
     }
@@ -336,7 +340,7 @@ public class SymAutoCommand {
             ctx.getSource().sendError(Component.literal("无效 " + target.noun + " ID：§c" + valueId));
             return 0;
         }
-        String shown = target.toId.apply(value);
+        String shown = target.toLabel.apply(value);
         String title = isWhitelist(type) ? "白名单" : "黑名单";
 
         if (action.equalsIgnoreCase("add")) {
@@ -406,7 +410,8 @@ public class SymAutoCommand {
                 item -> BuiltInRegistries.ITEM.getKey(item).toString(),
                 SymAutoCommand::parseItem,
                 "物品",
-                false
+                false,
+                item -> Component.translatable(item.getDescriptionId()).getString()
         );
     }
 
@@ -415,7 +420,18 @@ public class SymAutoCommand {
                 type -> BuiltInRegistries.ENTITY_TYPE.getKey(type).toString(),
                 SymAutoCommand::parseEntityType,
                 "实体类型",
-                true
+                true,
+                type -> type.getDescription().getString()
+        );
+    }
+
+    private static BWTarget<Block> blockTarget(SymList<Block> list) {
+        return new BWTarget<>(list,
+                block -> BuiltInRegistries.BLOCK.getKey(block).toString(),
+                SymAutoCommand::parseBlock,
+                "方块",
+                false,
+                block -> block.getName().getString()
         );
     }
 
@@ -424,7 +440,8 @@ public class SymAutoCommand {
                 key -> key.identifier().toString(),
                 SymAutoCommand::parseEnchantmentType,
                 "附魔书类型",
-                true
+                true,
+                key -> Component.translatable(key.identifier().toLanguageKey("enchantment")).getString()
         );
     }
 
@@ -442,6 +459,14 @@ public class SymAutoCommand {
             return null;
         }
         return BuiltInRegistries.ENTITY_TYPE.getOptional(identifier).orElse(null);
+    }
+
+    private static Block parseBlock(String id) {
+        Identifier identifier = Identifier.tryParse(id);
+        if (identifier == null) {
+            return null;
+        }
+        return BuiltInRegistries.BLOCK.getOptional(identifier).orElse(null);
     }
 
     private static ResourceKey<Enchantment> parseEnchantmentType(String id) {

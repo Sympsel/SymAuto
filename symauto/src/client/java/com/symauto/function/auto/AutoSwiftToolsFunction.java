@@ -25,6 +25,11 @@ import net.minecraft.world.phys.HitResult;
 public class AutoSwiftToolsFunction extends SymAbstractFunction {
     public static final AutoSwiftToolsFunction INSTANCE = new AutoSwiftToolsFunction();
 
+    /**
+     * 低于该耐久比例的易损工具不再参与自动选择，避免选中后无法完成挖掘。
+     */
+    private static final float MIN_DURABILITY_RATIO = 0.1F;
+
     private int prevSlot = -1;
     private BlockPos currBlockPos = null;
     private int syncTicks = 0;
@@ -228,13 +233,31 @@ public class AutoSwiftToolsFunction extends SymAbstractFunction {
         syncTicks = 0;
     }
 
+    /**
+     * 低于 10% 耐久的易损工具不参与选择；不可损坏工具始终可用。
+     */
+    private static boolean isUsable(ItemStack stack) {
+        if (stack.isEmpty()) {
+            return false;
+        }
+        if (!stack.isDamageableItem()) {
+            return true;
+        }
+        int max = stack.getMaxDamage();
+        if (max <= 0) {
+            return true;
+        }
+        int remaining = max - stack.getDamageValue();
+        return remaining > max * MIN_DURABILITY_RATIO;
+    }
+
     private boolean isBest(Inventory inv, BlockState state, int slot) {
         if (slot < Constants.HOTBAR_START || slot >= Constants.HOTBAR_END) {
             return false;
         }
 
         ItemStack stack = inv.getItem(slot);
-        if (stack.isEmpty()) {
+        if (stack.isEmpty() || !isUsable(stack)) {
             return false;
         }
 
@@ -279,7 +302,7 @@ public class AutoSwiftToolsFunction extends SymAbstractFunction {
 
         for (int i = from; i < to; i++) {
             ItemStack stack = inv.getItem(i);
-            if (stack.isEmpty()) {
+            if (stack.isEmpty() || !isUsable(stack)) {
                 continue;
             }
 

@@ -1,11 +1,13 @@
 package com.symauto.function.place;
 
+import com.symauto.function.auto.AutoEatFunction;
 import com.symauto.mixin.accessor.ClientLevelAccessor;
 import com.symbase.config.option.BooleanOption;
 import com.symbase.config.option.IntOption;
 import com.symbase.function.base.SymAbstractFunction;
 import com.symbase.function.utils.ClientGuard;
 import com.symbase.function.utils.Tooltip;
+import com.symbase.model.common.SymList;
 import com.symauto.function.auto.AutoSwiftToolsFunction;
 import lombok.Getter;
 import lombok.Setter;
@@ -16,6 +18,8 @@ import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -46,6 +50,15 @@ public class ScanDestroyFunction extends SymAbstractFunction {
 
     @Getter
     @Setter
+    private boolean onlyWhitelist;
+
+    @Getter
+    private final SymList<Block> WHITE_LIST;
+    @Getter
+    private final SymList<Block> BLACK_LIST;
+
+    @Getter
+    @Setter
     private int maxActionsPerTick = 20;
 
     private static final int TIP_COOLDOWN = 100;
@@ -56,10 +69,43 @@ public class ScanDestroyFunction extends SymAbstractFunction {
 
     private ScanDestroyFunction() {
         super("scan_destroy", "扫描式破坏");
+        WHITE_LIST = new SymList<>(getId(), SymList.Type.WHITELIST);
+        BLACK_LIST = new SymList<>(getId(), SymList.Type.BLACKLIST);
+        // 提供默认黑名单，防止挖到信标及底座、容器类方块
+        BLACK_LIST.withDefaultItems(
+                Blocks.BEACON,
+                Blocks.IRON_BLOCK,
+                Blocks.GOLD_BLOCK,
+                Blocks.DIAMOND_BLOCK,
+                Blocks.EMERALD_BLOCK,
+                Blocks.NETHERITE_BLOCK,
+                Blocks.CHEST,
+                Blocks.TRAPPED_CHEST,
+                Blocks.ENDER_CHEST,
+                Blocks.BARREL,
+                Blocks.HOPPER,
+                Blocks.DROPPER,
+                Blocks.DISPENSER,
+                Blocks.FURNACE,
+                Blocks.BLAST_FURNACE,
+                Blocks.SMOKER,
+                Blocks.BREWING_STAND,
+                Blocks.SHULKER_BOX,
+                Blocks.CRAFTER,
+                Blocks.DECORATED_POT
+        );
+        for (Block block : Blocks.DYED_SHULKER_BOX.asList()) {
+            BLACK_LIST.add(block);
+        }
+        for (Block block : Blocks.COPPER_CHEST.asList()) {
+            BLACK_LIST.add(block);
+        }
         addOption(new BooleanOption("exclude_below_current_y", "排除扫描当前y值以下方块",
                 this::isExcludeBelowCurrentY, this::setExcludeBelowCurrentY, true));
         addOption(new BooleanOption("disable_break_cooldown", "禁用挖掘冷却",
                 this::isDisableBreakCooldown, this::setDisableBreakCooldown, false));
+        addOption(new BooleanOption("only_whitelist", "仅破坏白名单方块",
+                this::isOnlyWhitelist, this::setOnlyWhitelist, false));
         addOption(new BooleanOption("enable_high_value_tools_protect", "工具保护（耐久低于10%阻止该功能）",
                 this::isToolsProtect, this::setToolsProtect, true));
         addOption(new IntOption("max_actions_per_tick", "每tick最大可挖掘数（仅对秒破方块适用）",
@@ -72,14 +118,22 @@ public class ScanDestroyFunction extends SymAbstractFunction {
                 .line("破坏自身范围内所有可破坏的方块，优先准心所指向的方块")
                 .keyValueLine("排除扫描当前y值以下方块", excludeBelowCurrentY ? "是" : "否")
                 .keyValueLine("禁用挖掘冷却", disableBreakCooldown ? "是" : "否")
+                .keyValueLine("仅破坏白名单方块", onlyWhitelist ? "是" : "否")
                 .keyValueLine("工具保护", toolsProtect ? "是" : "否")
                 .line(ChatFormatting.AQUA, "平地神器")
+                .display(WHITE_LIST, block -> block.getName().getString())
+                .display(BLACK_LIST, block -> block.getName().getString())
                 .toString();
     }
 
     @Override
     protected void onTrigger(Minecraft client) {
         if (!ClientGuard.ready(client)) {
+            return;
+        }
+
+        // 不打断自动进食
+        if (AutoEatFunction.INSTANCE.isEating()) {
             return;
         }
 
@@ -147,7 +201,11 @@ public class ScanDestroyFunction extends SymAbstractFunction {
         if (creative) {
             return;
         }
-        // 路径 2：批量破坏所有"当前可秒破"的方块
+        // 不和秒破预测在同一个 tick 启动普通挖掘
+        if (done > 0) {
+            return;
+        }
+        // 路径 2：处理剩余需要正常挖掘的方块
         BlockPos target = crosshair != null ? crosshair
                 : breakingPos != null ? breakingPos
                 : blocks.isEmpty() ? null : blocks.getFirst();
@@ -261,7 +319,7 @@ public class ScanDestroyFunction extends SymAbstractFunction {
     /**
      * 空气和不可破坏方块不进入扫描列表
      */
-    private static boolean canBreak(Minecraft client, BlockPos pos) {
+    private boolean canBreak(Minecraft client, BlockPos pos) {
         BlockState state = client.level.getBlockState(pos);
         if (state.isAir()) {
             return false;
@@ -269,6 +327,14 @@ public class ScanDestroyFunction extends SymAbstractFunction {
         if (state.getDestroySpeed(client.level, pos) < 0.0F) {
             return false;
         }
+        Block block = state.getBlock();
+        if (BLACK_LIST.contains(block)) {
+            return false;
+        }
+        if (onlyWhitelist && !WHITE_LIST.contains(block)) {
+            return false;
+        }
         return state.getDestroyProgress(client.player, client.level, pos) > 0.0F;
     }
 }
+

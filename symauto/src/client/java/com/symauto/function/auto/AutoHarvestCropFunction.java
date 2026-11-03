@@ -11,6 +11,7 @@ import com.symbase.function.utils.Tooltip;
 import lombok.Getter;
 import lombok.Setter;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.PauseScreen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.InteractionHand;
@@ -128,6 +129,11 @@ public class AutoHarvestCropFunction extends SymAbstractFunction {
 
     @Override
     protected void onTrigger(Minecraft client) {
+        var screen = client.gui.screen();
+        if (screen != null && !(screen instanceof PauseScreen)) {
+            return;
+        }
+
         // 不打断自动进食
         if (AutoEatFunction.INSTANCE.isEating()) {
             return;
