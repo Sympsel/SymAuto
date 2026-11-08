@@ -2,12 +2,11 @@ package com.symauto.function.auto;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import com.symbase.function.base.SymAbstractFunction;
-import com.symbase.function.utils.ContainerActions;
-import com.symbase.function.utils.Tooltip;
+import com.symbase.function.util.ContainerActions;
+import com.symbase.function.util.Tooltip;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.Slot;
 import org.lwjgl.glfw.GLFW;
 

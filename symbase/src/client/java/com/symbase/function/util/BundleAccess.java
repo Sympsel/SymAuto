@@ -1,8 +1,5 @@
-package com.symbase.function.utils;
+package com.symbase.function.util;
 
-import com.symbase.function.utils.BundleContentsHelper;
-import com.symbase.function.utils.ClientGuard;
-import com.symbase.function.utils.ContainerActions;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.protocol.game.ServerboundSelectBundleItemPacket;
 import net.minecraft.world.entity.player.Inventory;

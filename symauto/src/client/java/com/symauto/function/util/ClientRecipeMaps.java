@@ -1,9 +1,7 @@
-package com.symauto.function.utils;
+package com.symauto.function.util;
 
-import com.google.gson.JsonElement;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.HolderLookup;
-import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.repository.ServerPacksSource;

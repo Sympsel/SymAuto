@@ -2,11 +2,11 @@ package com.symauto.function.auto;
 
 import com.symbase.config.option.IntOption;
 import com.symauto.core.Constants;
-import com.symbase.function.utils.ContainerActions;
+import com.symbase.function.util.ContainerActions;
 import com.symauto.storage.CraftingPresetStore;
 import com.symauto.model.preset.CraftingPreset;
 import com.symbase.function.base.SymAbstractFunction;
-import com.symbase.function.utils.Tooltip;
+import com.symbase.function.util.Tooltip;
 import com.symauto.gui.screen.function.CraftingPresetsManagerScreen;
 import it.unimi.dsi.fastutil.ints.IntList;
 import lombok.Getter;
@@ -183,8 +183,10 @@ public class AutoCraftingFunction extends SymAbstractFunction {
     private AutoCraftingFunction() {
         super("auto_crafting", "自动合成");
         addOption(new IntOption("settleTicks", "服务器同步等待（tick，过高影响效率）",
+                "服务器同步等待，延迟越高调越高",
                 this::getSettleTicks, this::setSettleTicks, 0, 10, 1));
         addOption(new IntOption("waitTicks", "失败、缺料、补料超时后的退避时间（tick）",
+                "失败、缺料、补料超时后的退避时间",
                 this::getWaitTicks, this::setWaitTicks, 0, 10, 1));
         presets = new ArrayList<>();
     }

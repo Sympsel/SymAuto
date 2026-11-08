@@ -2,6 +2,7 @@ package com.symauto.mixin;
 
 import com.symauto.core.AutoFunctions;
 import com.symauto.function.place.FixYPlaceOrDestroyFunction;
+import com.symauto.function.place.SpeedBridgeFunction;
 import net.minecraft.client.multiplayer.MultiPlayerGameMode;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
@@ -45,6 +46,8 @@ public class FixYPlaceMixin {
     @Inject(method = "startDestroyBlock", at = @At("HEAD"), cancellable = true)
     private void onStartDestroy(BlockPos pos, Direction direction,
                                 CallbackInfoReturnable<Boolean> cir) {
+        // 自动化破坏不受 Y 轴锁定影响
+        if (SpeedBridgeFunction.isAutomatedBreak()) return;
         if (!AutoFunctions.FIX_Y_PLACE_OR_DESTROY_FUNCTION.isEnable()) return;
 
         int targetY = pos.getY();
@@ -52,7 +55,7 @@ public class FixYPlaceMixin {
         if (!FixYPlaceOrDestroyFunction.isMining()) {
             // 本次左键的第一次，记录 Y
             FixYPlaceOrDestroyFunction.startMining(targetY);
-            return; // 放行
+            return;
         }
 
         // 已经在挖掘中，检查是否匹配

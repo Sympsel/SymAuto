@@ -2,9 +2,9 @@ package com.symhud.function.highlight;
 
 import com.symbase.config.option.BooleanOption;
 import com.symbase.config.option.IntOption;
-import com.symbase.function.utils.Tooltip;
+import com.symbase.function.util.Tooltip;
 import com.symbase.model.common.SymList;
-import com.symbase.function.utils.ItemUtils;
+import com.symbase.function.util.ItemUtils;
 import com.symhud.function.highlight.base.HighLightFunction;
 import com.symhud.render.glow.EntityGlowRegistry;
 import com.symhud.storage.VillagerTradeStore;
@@ -79,12 +79,16 @@ public class HighLightSpecificVillagersFunction extends HighLightFunction {
                 Enchantments.VANISHING_CURSE
         );
         addOption(new IntOption("scan_radius", "扫描半径",
+                "扫描村民的半径",
                 this::getScanRadius, this::setScanRadius, 1, 100, 1));
         addOption(new BooleanOption("only_need_better_enchantment", "仅高亮拥有更高相关附魔村民",
+                "只高亮相关附魔等级高于主手物品的村民",
                 this::isOnlyNeedBetterEnchantment, this::setOnlyNeedBetterEnchantment, true));
         addOption(new BooleanOption("intercepting_conflicting_enchantment", "非创造模式下排除带有冲突附魔的村民",
+                "非创造模式下排除带有冲突附魔的村民",
                 this::isInterceptingConflictingEnchantment, this::setInterceptingConflictingEnchantment, true));
         addOption(new BooleanOption("apply_to_any_items", "是否对任何可交易物品生效（仅单人模式生效）",
+                "单人模式下对任何可交易物品生效",
                 this::isApplyToAnyItemsCouldTrade, this::setApplyToAnyItemsCouldTrade, false));
     }
 

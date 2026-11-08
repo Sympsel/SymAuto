@@ -2,7 +2,7 @@ package com.symauto.function.auto;
 
 import com.symbase.function.base.SymAbstractFunction;
 import com.symauto.core.Constants;
-import com.symbase.function.utils.Tooltip;
+import com.symbase.function.util.Tooltip;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerInput;

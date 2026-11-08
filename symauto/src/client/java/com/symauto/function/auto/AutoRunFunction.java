@@ -4,7 +4,7 @@ import com.mojang.blaze3d.platform.InputConstants;
 import com.symauto.config.SymAutoKeys;
 import com.symbase.config.option.BooleanOption;
 import com.symbase.function.base.SymAbstractFunction;
-import com.symbase.function.utils.Tooltip;
+import com.symbase.function.util.Tooltip;
 import lombok.Getter;
 import lombok.Setter;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -22,7 +22,9 @@ public class AutoRunFunction extends SymAbstractFunction {
     @Getter
     private boolean isActive = false;
     private AutoRunFunction() {
-        super("auto_run", "自动跑路",Tooltip.create().line( "按下 Ctrl + W 激活，并自动八向校正视角，再次按下取消，建议搭配自动搭路实现挂机").toString());
+        super("auto_run", "自动跑路",Tooltip.create()
+                .line( "按下 Ctrl + W激活，并自动八向校正视角，再次按下取消，建议搭配自动搭路实现挂机")
+                .toString());
         this.toggleKey = new KeyMapping(
                 "key.symauto.auto_run",
                 InputConstants.Type.KEYSYM,
@@ -30,6 +32,7 @@ public class AutoRunFunction extends SymAbstractFunction {
                 SymAutoKeys.CATEGORY_MAIN);
         ClientTickEvents.START_CLIENT_TICK.register(this::correctViewBeforeMovement);
         addOption(new BooleanOption("auto_fixed_screen", "自动锁定视角",
+                "自动八向校正并锁定视角",
                 this::isAutoFixedScreen, this::setAutoFixedScreen, false));
     }
 

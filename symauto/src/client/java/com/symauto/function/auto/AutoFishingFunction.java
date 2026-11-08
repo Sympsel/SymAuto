@@ -1,9 +1,8 @@
 package com.symauto.function.auto;
 
-import com.symbase.config.option.ConfigOption;
 import com.symbase.config.option.IntOption;
 import com.symbase.function.base.SymAbstractFunction;
-import com.symbase.function.utils.Tooltip;
+import com.symbase.function.util.Tooltip;
 import com.symauto.mixin.accessor.FishingHookAccessor;
 import lombok.Getter;
 import lombok.Setter;
@@ -52,12 +51,15 @@ public class AutoFishingFunction extends SymAbstractFunction {
                 .line("兜底45秒没有鱼会超时重新抛竿");
         super("auto_fishing", "自动钓鱼", tooltip.toString());
         addOption(new IntOption("check_after_cast_seconds", "抛竿几秒后检查鱼钩状态",
+                "抛竿后等待几秒再检查鱼钩是否在水中",
                 this::getCheckAfterCastSeconds, this::setCheckAfterCastSeconds,
                 2, 10, 1));
         addOption(new IntOption("not_in_water_recast_seconds", "不再水中几秒后重抛",
+                "不在水中超过该秒数后重新抛竿",
                 this::getNotInWaterRecastSeconds, this::setNotInWaterRecastSeconds,
                 3, 20, 1));
         addOption(new IntOption("cast_timeout_seconds", "抛竿后最长等待几秒重抛",
+                "抛竿后最长等待该秒数，超时重新抛竿",
                 this::getCastTimeoutSeconds, this::setCastTimeoutSeconds,
                 20, 90, 5));
     }

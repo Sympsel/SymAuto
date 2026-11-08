@@ -3,7 +3,7 @@ package com.symauto.function.auto;
 import com.symbase.config.option.BooleanOption;
 import com.symbase.function.base.SymAbstractFunction;
 import com.symauto.core.Constants;
-import com.symbase.function.utils.Tooltip;
+import com.symbase.function.util.Tooltip;
 import com.symauto.function.place.ScanDestroyFunction;
 import lombok.Getter;
 import lombok.Setter;
@@ -43,7 +43,8 @@ public class AutoSwiftToolsFunction extends SymAbstractFunction {
 
     private AutoSwiftToolsFunction() {
         super("auto_swift_tools", "自动切换破坏工具");
-        addOption(new BooleanOption("enable_high_value_tools_protect", "工具保护（耐久低于10%不在切换名单内）",
+        addOption(new BooleanOption("enable_high_value_tools_protect", "工具保护",
+                "耐久低于10%的工具不参与自动切换",
                 this::isToolsProtect, this::setToolsProtect, true));
         setIntervalMs(50);
         setFloatFactor(0.1f);

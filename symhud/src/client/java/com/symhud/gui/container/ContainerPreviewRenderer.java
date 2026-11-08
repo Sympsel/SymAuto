@@ -5,7 +5,7 @@ import com.symhud.core.Constants;
 import com.symhud.function.container.MiddleClickContainerPreviewFunction;
 import com.symhud.function.container.ShiftHoverContainerPreviewFunction;
 import com.symhud.function.container.depend.Containers;
-import com.symbase.function.utils.ClientGuard;
+import com.symbase.function.util.ClientGuard;
 import com.symbase.gui.UiStyle;
 import com.symbase.hud.HudManager;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;

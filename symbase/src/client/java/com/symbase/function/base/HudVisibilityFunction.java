@@ -1,8 +1,8 @@
 package com.symbase.function.base;
 
 import com.symbase.config.SymBaseKeys;
-import com.symbase.function.utils.KeyUtils;
-import com.symbase.function.utils.Tooltip;
+import com.symbase.function.util.KeyUtils;
+import com.symbase.function.util.Tooltip;
 import com.symbase.hud.HudManager;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.KeyMapping;

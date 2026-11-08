@@ -4,10 +4,10 @@ import com.symbase.config.option.BooleanOption;
 import com.symbase.config.option.IntOption;
 import com.symauto.core.Constants;
 import com.symbase.function.base.SymAbstractFunction;
-import com.symbase.function.utils.BundleAccess;
-import com.symbase.function.utils.BundleContentsHelper;
-import com.symbase.function.utils.ContainerActions;
-import com.symbase.function.utils.Tooltip;
+import com.symbase.function.util.BundleAccess;
+import com.symbase.function.util.BundleContentsHelper;
+import com.symbase.function.util.ContainerActions;
+import com.symbase.function.util.Tooltip;
 import lombok.Getter;
 import lombok.Setter;
 import net.minecraft.client.Minecraft;
@@ -105,20 +105,26 @@ public class AutoHarvestCropFunction extends SymAbstractFunction {
     private AutoHarvestCropFunction() {
         super("auto_harvest_corp", "自动收获作物");
         addOption(new BooleanOption("auto_refill", "自动补充种子和骨粉",
+                "种子或骨粉不足时自动从背包补充",
                 this::isAutoRefill, this::setAutoRefill, true));
         addOption(new BooleanOption("enable_discard_result_if_not_seed", "自动丢出非种子产物",
+                "自动把收获到的非种子产物丢出",
                 this::isEnableDiscardResultIfNotSeed, this::setEnableDiscardResultIfNotSeed, false));
         addOption(new BooleanOption("only_ripening_crop", "仅使用骨粉催熟作物",
+                "只使用骨粉催熟，不收获也不补种",
                 this::isOnlyRipeningCrop, this::setOnlyRipeningCrop, false));
         addOption(new IntOption("max_actions_per_tick", "每 tick 最大交互数",
+                "每 tick 最多的收获/补种/催熟次数",
                 this::getMaxActionsPerTick, this::setMaxActionsPerTick, 1, 128, 1));
-        addOption(new IntOption("refill_min_count", "补充阈值（低于该数量时补充）",
+        addOption(new IntOption("refill_min_count", "补充阈值",
+                "手持物品数量低于该值时从背包补充",
                 this::getRefillMinCount, this::setRefillMinCount, 1, 64, 1));
     }
 
     @Override
     protected String tooltip() {
         return Tooltip.create()
+                .line("自动收获范围内成熟作物并补种，可用骨粉催熟")
                 .keyValueLine("自动补充种子和骨粉", autoRefill ? "是" : "否")
                 .keyValueLine("自动丢出非种子产物", enableDiscardResultIfNotSeed ? "是" : "否")
                 .keyValueLine("仅使用骨粉催熟作物", onlyRipeningCrop ? "是" : "否")

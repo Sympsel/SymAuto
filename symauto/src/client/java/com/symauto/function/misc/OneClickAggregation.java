@@ -1,7 +1,7 @@
 package com.symauto.function.misc;
 
 import com.symbase.function.base.SymAbstractFunction;
-import com.symbase.function.utils.Tooltip;
+import com.symbase.function.util.Tooltip;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.CraftingScreen;
 import net.minecraft.world.inventory.CraftingMenu;

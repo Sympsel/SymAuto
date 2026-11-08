@@ -1,6 +1,5 @@
-package com.symbase.function.utils;
+package com.symbase.function.util;
 
-import com.symbase.function.utils.ClientGuard;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerInput;

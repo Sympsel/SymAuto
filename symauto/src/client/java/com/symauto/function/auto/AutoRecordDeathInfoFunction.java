@@ -3,7 +3,7 @@ package com.symauto.function.auto;
 import com.symauto.storage.DeathInfoStore;
 import com.symbase.config.option.IntOption;
 import com.symbase.function.base.SymAbstractFunction;
-import com.symbase.function.utils.Tooltip;
+import com.symbase.function.util.Tooltip;
 import lombok.Getter;
 import lombok.Setter;
 import net.minecraft.ChatFormatting;
@@ -39,6 +39,7 @@ public class AutoRecordDeathInfoFunction extends SymAbstractFunction {
                 .toString();
         super("auto_record_death_info", "自动记录死亡信息", tooltip);
         addOption(new IntOption("death_info_record_max_size", "最多保存死亡记录的条目数",
+                "最多保存的死亡记录条数",
                 this::getMaxSize, this::setMaxSize, 0, 200, 10));
     }
 

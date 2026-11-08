@@ -1,4 +1,4 @@
-package com.symbase.gui.utils;
+package com.symbase.gui.util;
 
 public class ColorUtils {
     public static int onPress(int argb) {

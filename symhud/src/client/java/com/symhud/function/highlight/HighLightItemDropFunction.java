@@ -2,7 +2,7 @@ package com.symhud.function.highlight;
 
 import com.symbase.config.option.BooleanOption;
 import com.symbase.config.option.IntOption;
-import com.symbase.function.utils.Tooltip;
+import com.symbase.function.util.Tooltip;
 import com.symbase.model.common.SymList;
 import com.symhud.function.highlight.base.HighLightFunction;
 import lombok.Getter;
@@ -35,8 +35,10 @@ public class HighLightItemDropFunction extends HighLightFunction {
         WHITE_LIST = new SymList<>(getId(), SymList.Type.WHITELIST);
         BLACK_LIST = new SymList<>(getId(), SymList.Type.BLACKLIST);
         addOption(new IntOption("scan_radius", "扫描半径",
+                "扫描掉落物的半径",
                 this::getScanRadius, this::setScanRadius, 1, 100, 1));
         addOption(new BooleanOption("only_whitelist", "仅高亮白名单物品",
+                "只高亮白名单内的物品",
                 this::isOnlyWhitelist, this::setOnlyWhitelist, false));
     }
 

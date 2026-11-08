@@ -5,8 +5,8 @@ import com.symauto.mixin.accessor.ClientLevelAccessor;
 import com.symbase.config.option.BooleanOption;
 import com.symbase.config.option.IntOption;
 import com.symbase.function.base.SymAbstractFunction;
-import com.symbase.function.utils.ClientGuard;
-import com.symbase.function.utils.Tooltip;
+import com.symbase.function.util.ClientGuard;
+import com.symbase.function.util.Tooltip;
 import com.symbase.model.common.SymList;
 import com.symauto.function.auto.AutoSwiftToolsFunction;
 import lombok.Getter;
@@ -101,26 +101,30 @@ public class ScanDestroyFunction extends SymAbstractFunction {
             BLACK_LIST.add(block);
         }
         addOption(new BooleanOption("exclude_below_current_y", "排除扫描当前y值以下方块",
+                "扫描时排除当前 y 值以下的方块",
                 this::isExcludeBelowCurrentY, this::setExcludeBelowCurrentY, true));
         addOption(new BooleanOption("disable_break_cooldown", "禁用挖掘冷却",
+                "跳过方块破坏之间的冷却",
                 this::isDisableBreakCooldown, this::setDisableBreakCooldown, false));
         addOption(new BooleanOption("only_whitelist", "仅破坏白名单方块",
+                "只破坏白名单内的方块",
                 this::isOnlyWhitelist, this::setOnlyWhitelist, false));
-        addOption(new BooleanOption("enable_high_value_tools_protect", "工具保护（耐久低于10%阻止该功能）",
+        addOption(new BooleanOption("enable_high_value_tools_protect", "工具保护",
+                "工具耐久低于10%时停止破坏",
                 this::isToolsProtect, this::setToolsProtect, true));
-        addOption(new IntOption("max_actions_per_tick", "每tick最大可挖掘数（仅对秒破方块适用）",
+        addOption(new IntOption("max_actions_per_tick", "每tick最大可挖掘数",
+                "每 tick 最多破坏的秒破方块数",
                 this::getMaxActionsPerTick, this::setMaxActionsPerTick, 1, 64, 1));
     }
 
     @Override
     protected String tooltip() {
         return Tooltip.create()
-                .line("破坏自身范围内所有可破坏的方块，优先准心所指向的方块")
+                .line("破坏自身范围内所有可破坏的方块，优先准心所指向的方块，平地神器")
                 .keyValueLine("排除扫描当前y值以下方块", excludeBelowCurrentY ? "是" : "否")
                 .keyValueLine("禁用挖掘冷却", disableBreakCooldown ? "是" : "否")
                 .keyValueLine("仅破坏白名单方块", onlyWhitelist ? "是" : "否")
                 .keyValueLine("工具保护", toolsProtect ? "是" : "否")
-                .line(ChatFormatting.AQUA, "平地神器")
                 .display(WHITE_LIST, block -> block.getName().getString())
                 .display(BLACK_LIST, block -> block.getName().getString())
                 .toString();

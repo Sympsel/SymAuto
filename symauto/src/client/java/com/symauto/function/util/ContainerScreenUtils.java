@@ -1,4 +1,4 @@
-package com.symauto.function.utils;
+package com.symauto.function.util;
 
 import com.symauto.mixin.accessor.AbstractContainerScreenAccessor;
 import net.minecraft.client.Minecraft;

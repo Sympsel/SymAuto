@@ -1,6 +1,6 @@
 package com.symbase.gui.widget.utils;
 
-import com.symbase.gui.utils.ColorConstants;
+import com.symbase.gui.util.ColorConstants;
 import com.symbase.gui.widget.component.ArrowButton;
 import com.symbase.gui.widget.component.SymButton;
 import net.minecraft.network.chat.Component;

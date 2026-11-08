@@ -1,4 +1,4 @@
-package com.symbase.function.utils;
+package com.symbase.function.util;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.KeyMapping;

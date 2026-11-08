@@ -10,10 +10,10 @@ public class BooleanOption extends ConfigOption {
     private final Supplier<Boolean> getter;
     private final Consumer<Boolean> setter;
 
-    public BooleanOption(String key, String label,
+    public BooleanOption(String key, String label, String desc,
                          Supplier<Boolean> getter, Consumer<Boolean> setter,
                          boolean defaultValue) {
-        super(key, label, String.valueOf(defaultValue));
+        super(key, label, desc, String.valueOf(defaultValue));
         this.getter = getter;
         this.setter = setter;
     }

@@ -3,7 +3,7 @@ package com.symhud;
 import com.symbase.command.CommandRegistry;
 import com.symbase.config.ConfigServices;
 import com.symbase.function.base.SymAbstractFunction;
-import com.symbase.function.utils.ClientGuard;
+import com.symbase.function.util.ClientGuard;
 import com.symbase.gui.screen.HudEditScreen;
 import com.symbase.gui.screen.SymModMenuRegistry;
 import com.symbase.gui.screen.UpdateLogScreen;

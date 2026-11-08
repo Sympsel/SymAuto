@@ -3,7 +3,7 @@ package com.symhud.function.highlight;
 import com.symhud.function.highlight.base.HighLightFunction;
 import com.symbase.config.option.BooleanOption;
 import com.symbase.config.option.IntOption;
-import com.symbase.function.utils.Tooltip;
+import com.symbase.function.util.Tooltip;
 import lombok.Getter;
 import lombok.Setter;
 import net.minecraft.ChatFormatting;
@@ -38,8 +38,10 @@ public class HighLightPlayerFunction extends HighLightFunction {
                         .line(ChatFormatting.RED, "本质透视，有反作弊服务器慎用")
                         .toString());
         addOption(new IntOption("scan_radius", "扫描半径",
+                "扫描玩家的半径",
                 this::getScanRadius, this::setScanRadius, 1, 100, 1));
         addOption(new BooleanOption("is_highlight_self", "高亮自己",
+                "是否也高亮自己",
                 this::isHighlightSelf, this::setHighlightSelf, false));
     }
 

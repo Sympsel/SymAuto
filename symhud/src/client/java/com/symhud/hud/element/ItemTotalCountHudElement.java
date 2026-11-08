@@ -1,7 +1,7 @@
 package com.symhud.hud.element;
 
-import com.symbase.function.utils.ClientGuard;
-import com.symbase.function.utils.ItemUtils;
+import com.symbase.function.util.ClientGuard;
+import com.symbase.function.util.ItemUtils;
 import com.symbase.hud.AbstractTextHudElement;
 import com.symbase.hud.HudAnchor;
 import net.minecraft.client.Minecraft;

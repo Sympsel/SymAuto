@@ -1,7 +1,7 @@
 package com.symbase.gui;
 
-import com.symbase.gui.utils.ColorConstants;
-import com.symbase.gui.utils.ColorUtils;
+import com.symbase.gui.util.ColorConstants;
+import com.symbase.gui.util.ColorUtils;
 import lombok.NoArgsConstructor;
 
 public class UiStyle {

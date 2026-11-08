@@ -1,8 +1,8 @@
 package com.symhud.gui.container;
 
-import com.symbase.function.utils.BundleAccess;
+import com.symbase.function.util.BundleAccess;
 import com.symhud.function.container.depend.Containers;
-import com.symbase.function.utils.ClientGuard;
+import com.symbase.function.util.ClientGuard;
 import com.symbase.gui.ScreenOverlayGuard;
 import com.symhud.gui.utils.SlotHighlighter;
 import com.symbase.gui.widget.component.SymEditBox;
@@ -20,13 +20,11 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.WidgetSprites;
-import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractRecipeBookScreen;
 import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.client.gui.screens.recipebook.RecipeBookComponent;
-import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;

@@ -4,13 +4,12 @@ import com.symbase.config.option.BooleanOption;
 import com.symbase.model.common.SymList;
 import com.symauto.core.AutoFunctions;
 import com.symbase.function.base.SymAbstractFunction;
-import com.symbase.function.utils.Tooltip;
+import com.symbase.function.util.Tooltip;
 import com.symauto.mixin.accessor.MinecraftAccessor;
 import lombok.Getter;
 import lombok.Setter;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -43,6 +42,7 @@ public class AutoAttackFunction extends SymAbstractFunction {
                 EntityTypes.VILLAGER
         );
         addOption(new BooleanOption("auto_attack_safe_mode", "安全模式（防检测）",
+                "安全模式：有界面时不攻击，推荐；危险模式：直发攻击包，可后台挂机，会被反作弊检测，建议单人用",
                 this::isSafeMode, this::setSafeMode, true));
     }
 
@@ -78,9 +78,7 @@ public class AutoAttackFunction extends SymAbstractFunction {
     @Override
     public String tooltip() {
         Tooltip tooltip = Tooltip.create();
-        tooltip.line("自适应攻速的攻击")
-                .line(ChatFormatting.GREEN, "安全模式：推荐")
-                .line(ChatFormatting.RED, "危险模式：直发攻击包，可后台挂机，会被反作弊检测，建议单人用");
+        tooltip.line("自适应攻速的攻击");
         if (safeMode) {
             tooltip.keyValueLine(ChatFormatting.WHITE, "当前模式", ChatFormatting.GREEN, "安全");
         } else {

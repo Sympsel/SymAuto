@@ -1,4 +1,4 @@
-package com.symbase.function.utils;
+package com.symbase.function.util;
 
 import net.minecraft.client.Minecraft;
 

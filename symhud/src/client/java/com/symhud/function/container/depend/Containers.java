@@ -1,7 +1,7 @@
 package com.symhud.function.container.depend;
 
 import com.symhud.function.base.SymContainer;
-import com.symbase.function.utils.ItemUtils;
+import com.symbase.function.util.ItemUtils;
 import net.minecraft.world.item.BundleItem;
 import net.minecraft.world.item.ItemStack;
 

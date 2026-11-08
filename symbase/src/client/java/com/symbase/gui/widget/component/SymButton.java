@@ -1,7 +1,7 @@
 package com.symbase.gui.widget.component;
 
 import com.mojang.blaze3d.platform.cursor.CursorTypes;
-import com.symbase.gui.utils.ColorUtils;
+import com.symbase.gui.util.ColorUtils;
 import com.symbase.gui.widget.model.SymActionContext;
 import com.symbase.gui.widget.model.SymInteractions;
 import com.symbase.gui.widget.model.SymTrigger;

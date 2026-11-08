@@ -1,7 +1,7 @@
 package com.symbase.gui.screen;
 
 import com.mojang.blaze3d.platform.cursor.CursorTypes;
-import com.symbase.function.utils.KeyUtils;
+import com.symbase.function.util.KeyUtils;
 import com.symbase.gui.widget.component.SymButton;
 import com.symbase.gui.widget.component.SymDialog;
 import com.symbase.gui.widget.component.SymMenuBar;

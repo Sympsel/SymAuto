@@ -3,8 +3,8 @@ package com.symauto.function.auto;
 import com.symbase.config.option.BooleanOption;
 import com.symbase.function.base.SymAbstractFunction;
 import com.symauto.core.Constants;
-import com.symbase.function.utils.ItemUtils;
-import com.symbase.function.utils.Tooltip;
+import com.symbase.function.util.ItemUtils;
+import com.symbase.function.util.Tooltip;
 import lombok.Getter;
 import lombok.Setter;
 import net.minecraft.ChatFormatting;
@@ -27,6 +27,7 @@ public class AutoSwiftSameItemsToInventoryFunction extends SymAbstractFunction {
     private AutoSwiftSameItemsToInventoryFunction() {
         super("auto_swift_same_items_to_inventory","自动转移相同物品到背包");
         addOption(new BooleanOption("compareWithDataComponent", "比较物品数据组件",
+                "比较物品是否包含数据组件；关闭时，潜影盒内只有一种物品且两盒种类相同时视作同一物品",
                 this::isCompareWithDataComponent, this::setCompareWithDataComponent, false));
     }
 
@@ -36,7 +37,6 @@ public class AutoSwiftSameItemsToInventoryFunction extends SymAbstractFunction {
                 .line("打开容器会将容器内的而且存在于背包的物品尽可能填满容器")
                 .keyValueLine(ChatFormatting.YELLOW, "比较物品数据组件",
                         ChatFormatting.GRAY, compareWithDataComponent ? "是" : "否")
-                .line("在比较数据组件模式关闭时，对于潜影盒，当盒内只有一种物品且两盒物品种类相同时视作同一物品")
                 .toString();
     }
 

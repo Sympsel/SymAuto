@@ -3,12 +3,11 @@ package com.symauto.function.auto;
 import com.symbase.config.option.IntOption;
 import com.symbase.model.common.SymList;
 import com.symbase.function.base.SymAbstractFunction;
-import com.symbase.function.utils.Tooltip;
+import com.symbase.function.util.Tooltip;
 import lombok.Getter;
 import lombok.Setter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.component.DataComponents;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.food.FoodData;
@@ -65,6 +64,7 @@ public class AutoEatFunction extends SymAbstractFunction {
                 Items.CHICKEN
         );
         addOption(new IntOption("hunger_threshold", "饥饿值阈值",
+                "饥饿值低于该值时自动进食",
                 this::getHungerThreshold, this::setHungerThreshold,
                 0, 20, 1));
     }

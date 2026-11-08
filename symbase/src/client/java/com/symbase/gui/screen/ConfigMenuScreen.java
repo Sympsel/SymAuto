@@ -4,6 +4,7 @@ import com.symbase.config.ConfigServices;
 import com.symbase.config.option.ConfigOption;
 import com.symbase.function.base.SymAbstractFunction;
 import com.symbase.gui.widget.component.ArrowButton;
+import com.symbase.gui.widget.component.SymTooltip;
 import com.symbase.gui.widget.utils.ButtonFactory;
 import lombok.NonNull;
 import net.minecraft.ChatFormatting;
@@ -99,8 +100,15 @@ public class ConfigMenuScreen extends Screen {
             String value = opt.displayValue();
             int valueX = midX + LABEL_W + 2 + VALUE_W - FIELD_PAD_X - this.font.width(value);
             graphics.text(this.font, value, valueX, y + 6, 0xFF7FFF7F, false);
+            if (!opt.getDesc().isEmpty()
+                    && mouseX >= midX && mouseX < midX + LABEL_W
+                    && mouseY >= y && mouseY < y + ROW_H) {
+                SymTooltip.offer(this.font.split(Component.literal(opt.getDesc()), 230), mouseX, mouseY);
+            }
             y += ROW_H + GAP_Y;
         }
+
+        SymTooltip.renderAndClear(graphics, this.font, this.width, this.height);
     }
 
     @Override

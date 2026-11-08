@@ -1,8 +1,8 @@
 package com.symbase.gui.widget.component;
 
 import com.mojang.blaze3d.platform.cursor.CursorTypes;
-import com.symbase.gui.utils.ColorConstants;
-import com.symbase.gui.utils.ColorUtils;
+import com.symbase.gui.util.ColorConstants;
+import com.symbase.gui.util.ColorUtils;
 import com.symbase.gui.widget.model.SymHoverState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;

@@ -2,7 +2,7 @@ package com.symauto.function.misc;
 
 import com.symbase.config.option.BooleanOption;
 import com.symbase.function.base.SymAbstractFunction;
-import com.symbase.function.utils.Tooltip;
+import com.symbase.function.util.Tooltip;
 import com.symauto.mixin.accessor.VaultServerDataAccessor;
 import com.symbase.model.common.SymList;
 import lombok.Getter;
@@ -44,6 +44,7 @@ public class AutoVaultFunction extends SymAbstractFunction {
                 .toString()
         );
         addOption(new BooleanOption("limitless_count", "无限次数开启（仅单人模式可用）",
+                "允许在单人模式下无限次数开启宝库",
                 this::isLimitlessCount, this::setLimitlessCount, false));
         WRITE_LIST = new SymList<>(getId(), SymList.Type.WHITELIST);
         WRITE_LIST.withDefaultItems(

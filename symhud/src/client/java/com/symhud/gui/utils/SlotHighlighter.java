@@ -1,6 +1,6 @@
 package com.symhud.gui.utils;
 
-import com.symbase.function.utils.ClientGuard;
+import com.symbase.function.util.ClientGuard;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.world.entity.player.Inventory;

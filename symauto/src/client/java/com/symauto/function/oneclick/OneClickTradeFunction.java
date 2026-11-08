@@ -2,8 +2,8 @@ package com.symauto.function.oneclick;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import com.symbase.function.base.SymAbstractFunction;
-import com.symbase.function.utils.KeyUtils;
-import com.symbase.function.utils.Tooltip;
+import com.symbase.function.util.KeyUtils;
+import com.symbase.function.util.Tooltip;
 import com.symauto.mixin.accessor.MerchantScreenAccessor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.MerchantScreen;

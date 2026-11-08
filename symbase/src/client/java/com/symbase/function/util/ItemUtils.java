@@ -1,4 +1,4 @@
-package com.symbase.function.utils;
+package com.symbase.function.util;
 
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.component.DataComponents;

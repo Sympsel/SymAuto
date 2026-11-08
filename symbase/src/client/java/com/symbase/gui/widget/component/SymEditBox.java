@@ -1,7 +1,7 @@
 package com.symbase.gui.widget.component;
 
-import com.symbase.gui.utils.ColorConstants;
-import com.symbase.gui.utils.ColorUtils;
+import com.symbase.gui.util.ColorConstants;
+import com.symbase.gui.util.ColorUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.EditBox;

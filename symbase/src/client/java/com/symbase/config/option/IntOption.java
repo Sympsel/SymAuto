@@ -10,10 +10,10 @@ public class IntOption extends ConfigOption {
     private final int max;
     private final int step;
 
-    public IntOption(String key, String label,
+    public IntOption(String key, String label, String desc,
                      IntSupplier getter, IntConsumer setter,
                      int min, int max, int step) {
-        super(key, label, String.valueOf(getter.getAsInt()));
+        super(key, label, desc, String.valueOf(getter.getAsInt()));
         this.getter = getter;
         this.setter = setter;
         this.min = min;

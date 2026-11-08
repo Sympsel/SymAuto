@@ -3,7 +3,7 @@ package com.symhud.function.highlight;
 import com.symhud.function.highlight.base.HighLightFunction;
 import com.symbase.config.option.BooleanOption;
 import com.symbase.config.option.IntOption;
-import com.symbase.function.utils.Tooltip;
+import com.symbase.function.util.Tooltip;
 import com.symbase.model.common.SymList;
 import lombok.Getter;
 import lombok.Setter;
@@ -62,8 +62,10 @@ public class HighLightMasterFunction extends HighLightFunction {
                 EntityTypes.WARDEN // 监守者（不属于怪物分类，强制高亮）
         );
         addOption(new IntOption("scan_radius", "扫描半径",
+                "扫描敌对怪物的半径",
                 this::getScanRadius, this::setScanRadius, 1, 100, 1));
         addOption(new BooleanOption("only_when_holding_weapon", "仅在主手持有武器时高亮",
+                "只在主手持有武器时高亮",
                 this::isOnlyWhenHoldingWeapon, this::setOnlyWhenHoldingWeapon, false));
     }
 

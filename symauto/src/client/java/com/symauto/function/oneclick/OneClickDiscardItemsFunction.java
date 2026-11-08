@@ -3,20 +3,19 @@ package com.symauto.function.oneclick;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.platform.Window;
 import com.symbase.config.option.BooleanOption;
-import com.symbase.function.utils.BundleAccess;
-import com.symbase.function.utils.BundleContentsHelper;
-import com.symbase.function.utils.ContainerActions;
+import com.symbase.function.util.BundleAccess;
+import com.symbase.function.util.BundleContentsHelper;
+import com.symbase.function.util.ContainerActions;
 import com.symbase.model.common.SymList;
 import com.symauto.model.common.KeyCombination;
 import com.symauto.core.AutoFunctions;
 import com.symbase.function.base.SymAbstractFunction;
-import com.symbase.function.utils.KeyUtils;
-import com.symbase.function.utils.Tooltip;
+import com.symbase.function.util.KeyUtils;
+import com.symbase.function.util.Tooltip;
 import lombok.Getter;
 import lombok.Setter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientPacketListener;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -52,7 +51,8 @@ public class OneClickDiscardItemsFunction extends SymAbstractFunction {
         super(id, "一键丢弃垃圾物品");
         addOption(new BooleanOption(
                 "discard_item_in_bundles",
-                "是否丢弃收纳袋中的物品",
+                "丢弃收纳袋中的物品",
+                "丢弃时是否连同收纳袋里的物品一起丢弃",
                 this::isDiscardItemInBundles,
                 this::setDiscardItemInBundles,
                 true

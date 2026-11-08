@@ -1,7 +1,7 @@
 package com.symauto.model.preset;
 
-import com.symauto.function.utils.ClientRecipeMaps;
-import com.symbase.function.utils.ItemUtils;
+import com.symauto.function.util.ClientRecipeMaps;
+import com.symbase.function.util.ItemUtils;
 import it.unimi.dsi.fastutil.ints.IntList;
 import lombok.AllArgsConstructor;
 import lombok.Data;

@@ -9,6 +9,8 @@ public abstract class ConfigOption {
     protected final String key;
     @Getter
     protected final String label;
+    @Getter
+    protected final String desc;
     protected final String defaultValue;
 
     public abstract String displayValue();

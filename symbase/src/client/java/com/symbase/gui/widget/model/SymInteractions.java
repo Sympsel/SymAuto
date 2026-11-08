@@ -25,7 +25,19 @@ public class SymInteractions {
             return false;
         }
         SymAction action = actions.get(trigger);
+        if (action == null) {
+            action = actions.get(singleClickTrigger(trigger));
+        }
         return action != null && action.run(context);
+    }
+
+    private static SymTrigger singleClickTrigger(SymTrigger trigger) {
+        return switch (trigger) {
+            case LEFT_DOUBLE_CLICK -> SymTrigger.LEFT_CLICK;
+            case RIGHT_DOUBLE_CLICK -> SymTrigger.RIGHT_CLICK;
+            case MIDDLE_DOUBLE_CLICK -> SymTrigger.MIDDLE_CLICK;
+            default -> trigger;
+        };
     }
 }
 

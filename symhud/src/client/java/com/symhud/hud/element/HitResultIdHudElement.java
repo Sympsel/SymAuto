@@ -1,6 +1,6 @@
 package com.symhud.hud.element;
 
-import com.symbase.function.utils.ClientGuard;
+import com.symbase.function.util.ClientGuard;
 import com.symbase.hud.AbstractTextHudElement;
 import com.symbase.hud.HudAnchor;
 import com.symhud.hud.TargetRayCast;

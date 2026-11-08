@@ -3,10 +3,10 @@ package com.symauto.function.oneclick;
 import com.symbase.config.option.BooleanOption;
 import com.symbase.function.base.SymAbstractFunction;
 import com.symauto.core.Constants;
-import com.symbase.function.utils.ContainerActions;
-import com.symbase.function.utils.ItemUtils;
+import com.symbase.function.util.ContainerActions;
+import com.symbase.function.util.ItemUtils;
 import com.symbase.gui.ScreenOverlayGuard;
-import com.symbase.function.utils.Tooltip;
+import com.symbase.function.util.Tooltip;
 import com.symauto.mixin.accessor.AbstractContainerScreenAccessor;
 import lombok.Getter;
 import lombok.Setter;
@@ -28,6 +28,7 @@ public class OneClickDiscardSameItemsFunction extends SymAbstractFunction {
     private OneClickDiscardSameItemsFunction() {
         super("one_click_discard_same_items", "一键丢出相同物品");
         addOption(new BooleanOption("compareWithDataComponent", "比较物品数据组件",
+                "比较物品是否包含数据组件；关闭时，潜影盒内只有一种物品且两盒种类相同时视作同一物品",
                 this::isCompareWithDataComponent, this::setCompareWithDataComponent, false));
     }
 
@@ -37,7 +38,6 @@ public class OneClickDiscardSameItemsFunction extends SymAbstractFunction {
                 .line(ChatFormatting.AQUA, "触发方式：选中其中一组拖拽式丢弃")
                 .keyValueLine(ChatFormatting.YELLOW, "比较物品数据组件",
                         ChatFormatting.GRAY, compareWithDataComponent ? "是" : "否")
-                .line("在比较数据组件模式关闭时，对于潜影盒，当盒内只有一种物品且两盒物品种类相同时视作同一物品")
                 .toString();
     }
 
