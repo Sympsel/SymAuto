@@ -7,13 +7,63 @@ import com.symbase.function.util.Tooltip;
 import lombok.Getter;
 import lombok.Setter;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.food.FoodData;
+import net.minecraft.world.item.AxeItem;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.BoatItem;
+import net.minecraft.world.item.BrushItem;
+import net.minecraft.world.item.BucketItem;
+import net.minecraft.world.item.FireChargeItem;
+import net.minecraft.world.item.HangingEntityItem;
+import net.minecraft.world.item.HoeItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.MinecartItem;
+import net.minecraft.world.item.ProjectileItem;
+import net.minecraft.world.item.ShearsItem;
+import net.minecraft.world.item.ShovelItem;
+import net.minecraft.world.item.SpawnEggItem;
+import net.minecraft.world.level.block.AnvilBlock;
+import net.minecraft.world.level.block.BedBlock;
+import net.minecraft.world.level.block.BeehiveBlock;
+import net.minecraft.world.level.block.BellBlock;
+import net.minecraft.world.level.block.ButtonBlock;
+import net.minecraft.world.level.block.CakeBlock;
+import net.minecraft.world.level.block.CampfireBlock;
+import net.minecraft.world.level.block.CandleBlock;
+import net.minecraft.world.level.block.CandleCakeBlock;
+import net.minecraft.world.level.block.CartographyTableBlock;
+import net.minecraft.world.level.block.CauldronBlock;
+import net.minecraft.world.level.block.CaveVines;
+import net.minecraft.world.level.block.ComparatorBlock;
+import net.minecraft.world.level.block.ComposterBlock;
+import net.minecraft.world.level.block.CraftingTableBlock;
+import net.minecraft.world.level.block.DaylightDetectorBlock;
+import net.minecraft.world.level.block.DoorBlock;
+import net.minecraft.world.level.block.DragonEggBlock;
+import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.FenceGateBlock;
+import net.minecraft.world.level.block.FlowerPotBlock;
+import net.minecraft.world.level.block.GrindstoneBlock;
+import net.minecraft.world.level.block.JukeboxBlock;
+import net.minecraft.world.level.block.LeverBlock;
+import net.minecraft.world.level.block.LoomBlock;
+import net.minecraft.world.level.block.NoteBlock;
+import net.minecraft.world.level.block.RepeaterBlock;
+import net.minecraft.world.level.block.RespawnAnchorBlock;
+import net.minecraft.world.level.block.SmithingTableBlock;
+import net.minecraft.world.level.block.StonecutterBlock;
+import net.minecraft.world.level.block.SweetBerryBushBlock;
+import net.minecraft.world.level.block.TntBlock;
+import net.minecraft.world.level.block.TrapDoorBlock;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.HitResult;
 
 import java.util.Set;
 
@@ -29,11 +79,35 @@ public class AutoEatFunction extends SymAbstractFunction {
     @Getter
     private final SymList<Item> BLACK_LIST;
 
-
-    // 主手拿着这些物品时，禁止自动进食（避免右键误触发）
-    private static final Set<Item> BLOCKED_MAIN_HAND_USABLES = Set.of(
+    private static final Set<Item> MAIN_HAND_USABLE_ITEMS = Set.of(
+            Items.BOW,
+            Items.CROSSBOW,
+            Items.TRIDENT,
+            Items.ENDER_PEARL,
+            Items.SNOWBALL,
+            Items.EGG,
+            Items.POTION,
+            Items.SPLASH_POTION,
+            Items.LINGERING_POTION,
+            Items.MILK_BUCKET,
+            Items.HONEY_BOTTLE,
             Items.FIREWORK_ROCKET,
-            Items.FIREWORK_STAR
+            Items.FIREWORK_STAR,
+            Items.FLINT_AND_STEEL,
+            Items.BONE_MEAL,
+            Items.LEAD,
+            Items.NAME_TAG,
+            Items.ARMOR_STAND,
+            Items.WRITABLE_BOOK,
+            Items.WRITTEN_BOOK,
+            Items.DEBUG_STICK,
+            Items.SHIELD,
+            Items.FISHING_ROD,
+            Items.GOAT_HORN,
+            Items.HONEYCOMB,
+            Items.SPYGLASS,
+            Items.CARROT_ON_A_STICK,
+            Items.WARPED_FUNGUS_ON_A_STICK
     );
 
     @Override
@@ -48,6 +122,9 @@ public class AutoEatFunction extends SymAbstractFunction {
     private InteractionHand eatingHand = InteractionHand.MAIN_HAND;
     private int initialFoodCount = 0;
     private boolean startedUsingItem = false;
+    private int eatTicks = 0;
+    private int blockedTicks = 0;
+    private LocalPlayer trackedPlayer;
 
     private AutoEatFunction() {
         String id = "auto_eat";
@@ -81,7 +158,25 @@ public class AutoEatFunction extends SymAbstractFunction {
 
     @Override
     protected void onTrigger(Minecraft client) {
+        if (client.player == null) {
+            return;
+        }
+        if (client.player != trackedPlayer) {
+            trackedPlayer = client.player;
+            resetState();
+            client.options.keyUse.setDown(false);
+        }
+        if (client.player.isDeadOrDying()) {
+            if (eating) {
+                stopEating(client);
+            }
+            return;
+        }
         if (client.player.isCreative()) {
+            return;
+        }
+        if (blockedTicks > 0) {
+            --blockedTicks;
             return;
         }
 
@@ -95,6 +190,10 @@ public class AutoEatFunction extends SymAbstractFunction {
             return;
         }
 
+        if (isInteractiveTarget(client)) {
+            return;
+        }
+
         InteractionHand hand = findFoodHand(client);
         if (hand == null) {
             return;
@@ -103,6 +202,7 @@ public class AutoEatFunction extends SymAbstractFunction {
         eatingHand = hand;
         initialFoodCount = client.player.getItemInHand(hand).getCount();
         startedUsingItem = false;
+        eatTicks = 0;
         eating = true;
     }
 
@@ -114,13 +214,11 @@ public class AutoEatFunction extends SymAbstractFunction {
             return;
         }
 
-        // 吃副手食物时，如果主手切出了烟花等可触发物品，立刻停止
-        if (eatingHand == InteractionHand.OFF_HAND) {
-            Item mainItem = client.player.getMainHandItem().getItem();
-            if (BLOCKED_MAIN_HAND_USABLES.contains(mainItem)) {
-                stopEating(client);
-                return;
-            }
+        ++eatTicks;
+        if (!startedUsingItem && eatTicks > 10) {
+            blockedTicks = 40;
+            stopEating(client);
+            return;
         }
 
         client.options.keyUse.setDown(true);
@@ -141,7 +239,7 @@ public class AutoEatFunction extends SymAbstractFunction {
 
     private void stopEating(Minecraft client) {
         client.options.keyUse.setDown(false);
-        if (client.player.isUsingItem()) {
+        if (client.player != null && client.player.isUsingItem()) {
             client.player.stopUsingItem();
         }
         resetState();
@@ -152,18 +250,18 @@ public class AutoEatFunction extends SymAbstractFunction {
         eatingHand = InteractionHand.MAIN_HAND;
         initialFoodCount = 0;
         startedUsingItem = false;
+        eatTicks = 0;
     }
 
     private InteractionHand findFoodHand(Minecraft client) {
-        if (isEdible(client.player.getMainHandItem())) {
+        ItemStack mainHand = client.player.getMainHandItem();
+        if (isEdible(mainHand)) {
             return InteractionHand.MAIN_HAND;
         }
+        if (isUsableOnRightClick(mainHand)) {
+            return null;
+        }
         if (isEdible(client.player.getOffhandItem())) {
-            // 主手是烟花等会右键触发的物品时，不吃副手食物
-            Item mainItem = client.player.getMainHandItem().getItem();
-            if (BLOCKED_MAIN_HAND_USABLES.contains(mainItem)) {
-                return null;
-            }
             return InteractionHand.OFF_HAND;
         }
         return null;
@@ -172,7 +270,74 @@ public class AutoEatFunction extends SymAbstractFunction {
     private boolean isEdible(ItemStack stack) {
         if (stack.isEmpty()) return false;
         if (!stack.has(DataComponents.FOOD)) return false;
-        if (BLOCKED_MAIN_HAND_USABLES.contains(stack.getItem())) return false;
-        return !BLACK_LIST.contains(stack.getItem());
+        if (BLACK_LIST.contains(stack.getItem())) return false;
+        return true;
+    }
+
+    private boolean isUsableOnRightClick(ItemStack stack) {
+        if (stack.isEmpty()) return false;
+        if (stack.has(DataComponents.FOOD)) return true;
+        Item item = stack.getItem();
+        return item instanceof BlockItem
+                || item instanceof BucketItem
+                || item instanceof ProjectileItem
+                || item instanceof SpawnEggItem
+                || item instanceof BoatItem
+                || item instanceof MinecartItem
+                || item instanceof HangingEntityItem
+                || item instanceof ShovelItem
+                || item instanceof HoeItem
+                || item instanceof AxeItem
+                || item instanceof BrushItem
+                || item instanceof FireChargeItem
+                || item instanceof ShearsItem
+                || MAIN_HAND_USABLE_ITEMS.contains(item);
+    }
+
+    private boolean isInteractiveTarget(Minecraft client) {
+        HitResult hit = client.hitResult;
+        if (hit instanceof EntityHitResult) {
+            return true;
+        }
+        if (!(hit instanceof BlockHitResult blockHit) || client.level == null) {
+            return false;
+        }
+        return isInteractiveBlock(client.level.getBlockState(blockHit.getBlockPos()).getBlock());
+    }
+
+    private boolean isInteractiveBlock(net.minecraft.world.level.block.Block block) {
+        return block instanceof EntityBlock
+                || block instanceof DoorBlock
+                || block instanceof TrapDoorBlock
+                || block instanceof FenceGateBlock
+                || block instanceof ButtonBlock
+                || block instanceof LeverBlock
+                || block instanceof BedBlock
+                || block instanceof CakeBlock
+                || block instanceof ComparatorBlock
+                || block instanceof RepeaterBlock
+                || block instanceof DaylightDetectorBlock
+                || block instanceof NoteBlock
+                || block instanceof JukeboxBlock
+                || block instanceof ComposterBlock
+                || block instanceof CampfireBlock
+                || block instanceof RespawnAnchorBlock
+                || block instanceof BellBlock
+                || block instanceof DragonEggBlock
+                || block instanceof FlowerPotBlock
+                || block instanceof CandleBlock
+                || block instanceof CandleCakeBlock
+                || block instanceof TntBlock
+                || block instanceof CraftingTableBlock
+                || block instanceof AnvilBlock
+                || block instanceof GrindstoneBlock
+                || block instanceof LoomBlock
+                || block instanceof CartographyTableBlock
+                || block instanceof SmithingTableBlock
+                || block instanceof StonecutterBlock
+                || block instanceof CauldronBlock
+                || block instanceof BeehiveBlock
+                || block instanceof SweetBerryBushBlock
+                || block instanceof CaveVines;
     }
 }
