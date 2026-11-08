@@ -4,6 +4,7 @@ import com.symauto.core.AutoFunctions;
 import com.symbase.config.option.BooleanOption;
 import com.symbase.config.option.IntOption;
 import com.symbase.function.base.SymAbstractFunction;
+import com.symbase.model.common.SymList;
 import com.symauto.function.auto.AutoEatFunction;
 import com.symbase.function.util.Tooltip;
 import lombok.Getter;
@@ -15,8 +16,8 @@ import net.minecraft.network.protocol.game.ServerboundPlayerInputPacket;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Input;
 import net.minecraft.world.item.BlockItem;
-import net.minecraft.world.level.block.KelpBlock;
-import net.minecraft.world.level.block.KelpPlantBlock;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.SlabBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.SlabType;
@@ -40,14 +41,17 @@ public class SpeedBridgeFunction extends SymAbstractFunction {
     private boolean enableFakeSneak;
 
     @Getter
+    private final SymList<Block> BREAK_LIST;
+
+    @Getter
     @Setter
-    private boolean destroyKelp;
+    private boolean enableBreakWhitelist = true;
 
     @Getter
     @Setter
     private boolean frostWalkerMode;
 
-    /** 冰霜行者模式的扩散半径（以脚下平面为中心，正方形区域） */
+    /** 冰霜行者模式的扩散半径 */
     @Getter
     @Setter
     private int frostWalkerRadius = 2;
@@ -72,20 +76,59 @@ public class SpeedBridgeFunction extends SymAbstractFunction {
     @Getter
     private static boolean automatedBreak;
 
-    /** 冰霜行者模式下锁定的搭路平面（站立时刷新，跳跃/下落时保持不变） */
+    /** 冰霜行者模式下锁定的搭路平面 */
     private int frostWalkerY = Integer.MIN_VALUE;
 
     private SpeedBridgeFunction() {
         super("speed_bridge", "水平跑搭");
+        BREAK_LIST = new SymList<>(getId(), SymList.Type.WHITELIST);
+        BREAK_LIST.withDefaultItems(
+                Blocks.DANDELION,
+                Blocks.POPPY,
+                Blocks.BLUE_ORCHID,
+                Blocks.ALLIUM,
+                Blocks.AZURE_BLUET,
+                Blocks.RED_TULIP,
+                Blocks.ORANGE_TULIP,
+                Blocks.WHITE_TULIP,
+                Blocks.PINK_TULIP,
+                Blocks.OXEYE_DAISY,
+                Blocks.CORNFLOWER,
+                Blocks.LILY_OF_THE_VALLEY,
+                Blocks.WITHER_ROSE,
+                Blocks.TORCHFLOWER,
+                Blocks.SUNFLOWER,
+                Blocks.LILAC,
+                Blocks.ROSE_BUSH,
+                Blocks.PEONY,
+                Blocks.PITCHER_PLANT,
+                Blocks.SHORT_GRASS,
+                Blocks.TALL_GRASS,
+                Blocks.FERN,
+                Blocks.LARGE_FERN,
+                Blocks.DEAD_BUSH,
+                Blocks.LILY_PAD,
+                Blocks.KELP,
+                Blocks.KELP_PLANT,
+                Blocks.SEAGRASS,
+                Blocks.TALL_SEAGRASS,
+                Blocks.TORCH,
+                Blocks.SOUL_TORCH,
+                Blocks.WALL_TORCH,
+                Blocks.SOUL_WALL_TORCH,
+                Blocks.SWEET_BERRY_BUSH,
+                Blocks.CAVE_VINES,
+                Blocks.CAVE_VINES_PLANT
+        );
         addOption(new BooleanOption("fake_sneak_place", "伪潜行放置",
                 "放置时临时潜行，避免打开容器界面",
                 this::isEnableFakeSneakPlace, this::setEnableFakeSneakPlace, true));
         addOption(new BooleanOption("fake_sneak", "伪潜行",
                 "始终保持潜行状态",
                 this::isEnableFakeSneak, this::setEnableFakeSneak, false));
-        addOption(new BooleanOption("destroy_kelp", "破坏海带",
-                "破坏挡路的海带后再放置",
-                this::isDestroyKelp, this::setDestroyKelp, false));
+        addOption(new BooleanOption("enable_break_whitelist", "破坏障碍白名单",
+                "关闭后不破坏任何阻挡放置的方块",
+                this::isEnableBreakWhitelist, this::setEnableBreakWhitelist, true));
         addOption(new BooleanOption("frost_walker_mode", "冰霜行者模式",
                 "在脚下平面按半径向四周扩散放置",
                 this::isFrostWalkerMode, this::setFrostWalkerMode, false));
@@ -103,9 +146,10 @@ public class SpeedBridgeFunction extends SymAbstractFunction {
                 .line("移动时在脚下补方块，支持完整方块、上半砖和下半砖")
                 .keyValueLine("伪潜行放置", enableFakeSneakPlace ? "是" : "否")
                 .keyValueLine("伪潜行", enableFakeSneak ? "是" : "否")
-                .keyValueLine("破坏海带", destroyKelp ? "是" : "否")
+                .keyValueLine("破坏障碍白名单", enableBreakWhitelist ? "启用（" + BREAK_LIST.size() + "）" : "禁用")
                 .keyValueLine("冰霜行者模式", frostWalkerMode ? "是" : "否")
                 .keyValueLine("冰霜行者扩散半径", String.valueOf(frostWalkerRadius))
+                .display(BREAK_LIST, block -> block.getName().getString())
                 .toString();
     }
 
@@ -169,11 +213,12 @@ public class SpeedBridgeFunction extends SymAbstractFunction {
         List<BlockPos> targets = new ArrayList<>();
         for (BlockPos pos : BlockPos.betweenClosed(
                 center.offset(-radius, 0, -radius), center.offset(radius, 0, radius))) {
-            if (!client.level.getBlockState(pos).canBeReplaced()) {
-                continue;
-            }
             Vec3 hitPos = Vec3.atCenterOf(pos);
             if (!withinReach(client, hitPos, reach)) {
+                continue;
+            }
+            BlockState state = client.level.getBlockState(pos);
+            if (!state.canBeReplaced() && !isBreakTarget(client, pos, state)) {
                 continue;
             }
             targets.add(pos.immutable());
@@ -191,6 +236,14 @@ public class SpeedBridgeFunction extends SymAbstractFunction {
                 break;
             }
             BlockPos pos = targets.get(i);
+            BlockState state = client.level.getBlockState(pos);
+            if (isBreakTarget(client, pos, state)) {
+                breakBlock(client, pos);
+                state = client.level.getBlockState(pos);
+            }
+            if (!state.canBeReplaced()) {
+                continue;
+            }
             BlockHitResult hit = buildSpreadHit(client, pos, reach, slab);
             if (hit == null) {
                 continue;
@@ -393,8 +446,8 @@ public class SpeedBridgeFunction extends SymAbstractFunction {
             return true;
         }
         BlockState state = client.level.getBlockState(pos);
-        if (destroyKelp && isKelp(state)) {
-            breakKelp(client, pos);
+        if (isBreakTarget(client, pos, state)) {
+            breakBlock(client, pos);
             state = client.level.getBlockState(pos);
             if (state.isAir()) {
                 return false;
@@ -403,12 +456,13 @@ public class SpeedBridgeFunction extends SymAbstractFunction {
         return !state.isAir() && !state.canBeReplaced();
     }
 
-    private static boolean isKelp(BlockState state) {
-        return state.getBlock() instanceof KelpBlock
-                || state.getBlock() instanceof KelpPlantBlock;
+    private boolean isBreakTarget(Minecraft client, BlockPos pos, BlockState state) {
+        return enableBreakWhitelist
+                && BREAK_LIST.contains(state.getBlock())
+                && state.getDestroyProgress(client.player, client.level, pos) >= 1.0F;
     }
 
-    private void breakKelp(Minecraft client, BlockPos pos) {
+    private void breakBlock(Minecraft client, BlockPos pos) {
         if (client.gameMode == null || client.player == null) {
             return;
         }

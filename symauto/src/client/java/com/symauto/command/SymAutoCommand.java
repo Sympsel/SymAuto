@@ -18,6 +18,7 @@ import com.symbase.function.base.SymAbstractFunction;
 import com.symauto.function.auto.AutoEatFunction;
 import com.symauto.function.oneclick.OneClickDiscardItemsFunction;
 import com.symauto.function.place.ScanDestroyFunction;
+import com.symauto.function.place.SpeedBridgeFunction;
 import com.symauto.gui.screen.function.DeathRecordScreen;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.ChatFormatting;
@@ -60,7 +61,8 @@ public class SymAutoCommand {
     // 黑白名单数据源
     private static final List<BWTarget<?>> WHITELIST_TARGETS = List.of(
             itemTarget(OneClickDiscardItemsFunction.INSTANCE.getWHITE_LIST()),
-            blockTarget(ScanDestroyFunction.INSTANCE.getWHITE_LIST())
+            blockTarget(ScanDestroyFunction.INSTANCE.getWHITE_LIST()),
+            blockTarget(SpeedBridgeFunction.INSTANCE.getBREAK_LIST())
     );
 
     private static final List<BWTarget<?>> BLACKLIST_TARGETS = List.of(

@@ -6,6 +6,7 @@ import com.symauto.function.auto.AutoAttackFunction;
 import com.symauto.function.auto.AutoEatFunction;
 import com.symauto.function.oneclick.OneClickDiscardItemsFunction;
 import com.symauto.function.place.ScanDestroyFunction;
+import com.symauto.function.place.SpeedBridgeFunction;
 import com.symbase.model.common.SymList;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -57,7 +58,8 @@ public class ConfigManager {
             new SymListHandle<>(AutoEatFunction.INSTANCE.getBLACK_LIST(), ITEM_TO_ID, ITEM_FROM_ID),
             new SymListHandle<>(AutoAttackFunction.INSTANCE.getBLACK_LIST(), ENTITY_TO_ID, ENTITY_FROM_ID),
             new SymListHandle<>(ScanDestroyFunction.INSTANCE.getWHITE_LIST(), BLOCK_TO_ID, BLOCK_FROM_ID),
-            new SymListHandle<>(ScanDestroyFunction.INSTANCE.getBLACK_LIST(), BLOCK_TO_ID, BLOCK_FROM_ID)
+            new SymListHandle<>(ScanDestroyFunction.INSTANCE.getBLACK_LIST(), BLOCK_TO_ID, BLOCK_FROM_ID),
+            new SymListHandle<>(SpeedBridgeFunction.INSTANCE.getBREAK_LIST(), BLOCK_TO_ID, BLOCK_FROM_ID)
     );
 
     public static void load() {
