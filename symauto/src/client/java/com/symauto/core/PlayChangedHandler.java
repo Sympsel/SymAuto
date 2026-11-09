@@ -2,7 +2,9 @@ package com.symauto.core;
 
 import com.symauto.function.auto.AutoAttackFunction;
 import com.symauto.function.auto.AutoHarvestCropFunction;
+import com.symauto.function.auto.AutoRunFunction;
 import com.symauto.function.place.ScanDestroyFunction;
+import com.symauto.function.place.SpeedBridgeFunction;
 import com.symbase.config.ConfigServices;
 import com.symbase.function.base.SymAbstractFunction;
 import net.minecraft.client.Minecraft;
@@ -16,8 +18,10 @@ import java.util.Set;
 public final class PlayChangedHandler {
     private static final Set<Class<? extends SymAbstractFunction>> DISABLE_ON_PLAYER_CHANGE = Set.of(
             ScanDestroyFunction.class,
+            SpeedBridgeFunction.class,
             AutoAttackFunction.class,
-            AutoHarvestCropFunction.class
+            AutoHarvestCropFunction.class,
+            AutoRunFunction.class
     );
 
     private static LocalPlayer lastPlayer;
