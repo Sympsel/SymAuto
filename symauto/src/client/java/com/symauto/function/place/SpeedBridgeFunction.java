@@ -81,7 +81,7 @@ public class SpeedBridgeFunction extends SymAbstractFunction {
     private int frostWalkerY = Integer.MIN_VALUE;
 
     private SpeedBridgeFunction() {
-        super("speed_bridge", "水平跑搭");
+        super("speed_bridge", "快捷搭路");
         BREAK_LIST = new SymList<>(getId(), SymList.Type.WHITELIST);
         BREAK_LIST.withDefaultItems(
                 Blocks.DANDELION,
