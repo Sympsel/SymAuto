@@ -69,6 +69,12 @@ public class AutoSwiftToolsFunction extends SymAbstractFunction {
     }
 
     @Override
+    public void onPlayerChanged(Minecraft client) {
+        resetTarget();
+        switchBack(client);
+    }
+
+    @Override
     protected void onDisable() {
         Minecraft client = Minecraft.getInstance();
         switchBack(client);
@@ -173,6 +179,9 @@ public class AutoSwiftToolsFunction extends SymAbstractFunction {
     }
 
     public void earlySwitchBack(Minecraft client) {
+        if (ScanDestroyFunction.INSTANCE.isEnable()) {
+            return;
+        }
         if (client.options.keyAttack.isDown()) {
             return;
         }

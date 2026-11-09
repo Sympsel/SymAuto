@@ -5,6 +5,7 @@ import com.symbase.command.CommandRegistry;
 import com.symauto.config.*;
 import com.symauto.core.Constants;
 import com.symauto.core.AutoFunctions;
+import com.symauto.core.PlayChangedHandler;
 import com.symauto.core.StoreConfig;
 import com.symbase.config.ConfigServices;
 import com.symbase.function.base.SymAbstractFunction;
@@ -108,6 +109,8 @@ public class SymautoClient implements ClientModInitializer {
             if (!ClientGuard.ready(client)) {
                 return;
             }
+
+            PlayChangedHandler.tick(client);
 
             if (FixYPlaceOrDestroyFunction.isHolding() && !client.options.keyUse.isDown()) {
                 FixYPlaceOrDestroyFunction.endHold();

@@ -4,6 +4,7 @@ import com.symauto.core.AutoFunctions;
 import com.symbase.config.option.BooleanOption;
 import com.symbase.config.option.IntOption;
 import com.symbase.function.base.SymAbstractFunction;
+import com.symbase.function.util.BlockInteractionUtils;
 import com.symbase.model.common.SymList;
 import com.symauto.function.auto.AutoEatFunction;
 import com.symbase.function.util.Tooltip;
@@ -154,6 +155,12 @@ public class SpeedBridgeFunction extends SymAbstractFunction {
     }
 
     @Override
+    public void onPlayerChanged(Minecraft client) {
+        frostWalkerY = Integer.MIN_VALUE;
+        tickCounter = 0;
+    }
+
+    @Override
     protected void onTrigger(Minecraft client) {
         if (client.player == null) {
             return;
@@ -294,6 +301,9 @@ public class SpeedBridgeFunction extends SymAbstractFunction {
             if (ns.isAir() || ns.canBeReplaced()) {
                 continue;
             }
+            if (BlockInteractionUtils.isInteractiveBlock(ns.getBlock())) {
+                continue;
+            }
             VoxelShape shape = ns.getShape(client.level, neighbor);
             if (shape.isEmpty()) {
                 continue;
@@ -331,8 +341,8 @@ public class SpeedBridgeFunction extends SymAbstractFunction {
         SlabType slab = desiredSlab(client);
         // 优先点相邻实心方块的面
         BlockHitResult hit = buildSlabHit(client, target, reach, slab);
-        // 冰霜行者模式：没有支撑面时，直接点可替换方块（水/空气）自身
-        if (hit == null && frostWalkerMode) {
+        // 没有非交互支撑面时，直接点可替换方块（水/空气）自身
+        if (hit == null) {
             hit = buildFrostWalkerHit(client, target, reach, slab);
         }
         if (hit == null) {
@@ -350,6 +360,9 @@ public class SpeedBridgeFunction extends SymAbstractFunction {
             BlockPos neighbor = target.relative(dir);
             BlockState ns = client.level.getBlockState(neighbor);
             if (ns.isAir() || ns.canBeReplaced()) {
+                continue;
+            }
+            if (BlockInteractionUtils.isInteractiveBlock(ns.getBlock())) {
                 continue;
             }
             VoxelShape shape = ns.getShape(client.level, neighbor);
@@ -388,8 +401,8 @@ public class SpeedBridgeFunction extends SymAbstractFunction {
         }
         // 原路径：优先点相邻实心方块的面
         BlockHitResult hit = buildFullBlockHit(client, target, reach);
-        // 冰霜行者模式：没有支撑面时，直接点可替换方块（水/空气）自身
-        if (hit == null && frostWalkerMode) {
+        // 没有非交互支撑面时，直接点可替换方块（水/空气）自身
+        if (hit == null) {
             hit = buildFrostWalkerHit(client, target, reach, null);
         }
         if (hit == null) {

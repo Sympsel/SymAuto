@@ -84,6 +84,7 @@ public class AutoAttackFunction extends SymAbstractFunction {
         } else {
             tooltip.keyValueLine(ChatFormatting.WHITE, "当前模式", ChatFormatting.RED, "危险");
         }
+        tooltip.line(ChatFormatting.YELLOW, "死亡时自动关闭");
         tooltip.display(BLACK_LIST, entityTypes -> Component.translatable(entityTypes.getDescriptionId()).getString());
         return tooltip.toString();
     }

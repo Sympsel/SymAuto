@@ -225,6 +225,11 @@ public class AutoFishingFunction extends SymAbstractFunction {
         client.gameMode.useItem(client.player, hand);
     }
 
+    @Override
+    public void onPlayerChanged(Minecraft client) {
+        reset();
+    }
+
     private void reset() {
         state = State.IDLE;
         recastCountdown = 0;

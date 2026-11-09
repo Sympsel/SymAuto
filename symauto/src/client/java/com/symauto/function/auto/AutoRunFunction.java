@@ -104,6 +104,11 @@ public class AutoRunFunction extends SymAbstractFunction {
         stop(Minecraft.getInstance());
     }
 
+    @Override
+    public void onPlayerChanged(Minecraft client) {
+        stop(client);
+    }
+
     private void start(Minecraft client) {
         if (client.player == null) {
             return;

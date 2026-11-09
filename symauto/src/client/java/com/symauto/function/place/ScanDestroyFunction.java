@@ -125,9 +125,17 @@ public class ScanDestroyFunction extends SymAbstractFunction {
                 .keyValueLine("禁用挖掘冷却", disableBreakCooldown ? "是" : "否")
                 .keyValueLine("仅破坏白名单方块", onlyWhitelist ? "是" : "否")
                 .keyValueLine("工具保护", toolsProtect ? "是" : "否")
+                .line(ChatFormatting.YELLOW, "死亡时自动关闭")
                 .display(WHITE_LIST, block -> block.getName().getString())
                 .display(BLACK_LIST, block -> block.getName().getString())
                 .toString();
+    }
+
+    @Override
+    protected void onDisable() {
+        breakingPos = null;
+        breakingFace = Direction.UP;
+        tipCooldown = 0;
     }
 
     @Override

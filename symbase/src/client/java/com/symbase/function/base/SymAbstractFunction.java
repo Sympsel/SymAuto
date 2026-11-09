@@ -121,6 +121,12 @@ public abstract class SymAbstractFunction {
     }
 
     /**
+     * 玩家切换时执行，包括但不限于死亡、重生、切换维度、切换世界等
+     */
+    public void onPlayerChanged(Minecraft client) {
+    }
+
+    /**
      * 客户端关闭时运行时清理
      */
     public void cleanupOnShutdown() {

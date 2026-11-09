@@ -213,6 +213,12 @@ public class AutoHarvestCropFunction extends SymAbstractFunction {
      *
      * @return 是否执行了一次背包动作
      */
+    @Override
+    protected void onDisable() {
+        refillCooldown = 0;
+        boneMealSlot = -1;
+    }
+
     private boolean refillHandInUse(Minecraft client) {
         Inventory inv = client.player.getInventory();
         ItemStack main = client.player.getMainHandItem();

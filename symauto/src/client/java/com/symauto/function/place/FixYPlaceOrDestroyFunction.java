@@ -33,6 +33,12 @@ public class FixYPlaceOrDestroyFunction extends SymAbstractFunction {
     protected void onTrigger(Minecraft client) {
     }
 
+    @Override
+    public void onPlayerChanged(Minecraft client) {
+        endHold();
+        endMining();
+    }
+
     public static void startHold(int y) {
         lockedY = y;
         holding = true;

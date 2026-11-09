@@ -53,8 +53,12 @@ public class AutoRecordDeathInfoFunction extends SymAbstractFunction {
         }
 
         boolean dead = client.player.isDeadOrDying();
+        if (!dead) {
+            wasDead = false;
+            return;
+        }
         // 上边沿触发
-        if (dead && !wasDead) {
+        if (!wasDead) {
             wasDead = true;
             if (maxSize > 0) {
                 pending = createRecord(client);
@@ -67,7 +71,7 @@ public class AutoRecordDeathInfoFunction extends SymAbstractFunction {
             }
             return;
         }
-        if (dead && pending != null && pending.deathCause == null) {
+        if (pending != null && pending.deathCause == null) {
             String cause = extractDeathCause(client.gui.screen());
             if (cause != null) {
                 pending.deathCause = cause;
