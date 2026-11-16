@@ -11,6 +11,7 @@
     "accessor.MinecraftAccessor",
     "accessor.ClientLevelAccessor",
     "InterceptDropKeyMixin",
+    "ContainerScreenKeyMixin",
     "accessor.AbstractContainerScreenAccessor",
     "accessor.MerchantScreenAccessor",
     "accessor.VaultServerDataAccessor"

@@ -60,17 +60,41 @@ public class OneClickFlatItemsFunction extends SymAbstractFunction {
 
     @Override
     public void onKeyAction(Minecraft client) {
-        if (!(client.gui.screen() instanceof AbstractContainerScreen<?> cs)) {
-            return;
+        if (client.gui.screen() instanceof AbstractContainerScreen<?> cs) {
+            flatItems(client, cs);
+        }
+    }
+
+    /**
+     * 容器界面内的按键拦截。
+     *
+     * <p>界面打开时原版不会向 KeyMapping 派发点击事件，{@code consumeClick()} 永远为空，
+     * 因此该功能只能通过按键事件分发直接调用到这里（见 {@code ContainerScreenKeyMixin}）</p>
+     */
+    @Override
+    public boolean allowContainerKeyPress(Minecraft client,
+                                          AbstractContainerScreen<?> screen,
+                                          int keyCode, int scanCode, int modifiers) {
+        return !flatItems(client, screen);
+    }
+
+    /**
+     * 把鼠标悬浮的整组物品逐个铺到区域内每个空槽位。
+     *
+     * @return 是否真的执行了平铺
+     */
+    private boolean flatItems(Minecraft client, AbstractContainerScreen<?> cs) {
+        if (client.player == null || client.gameMode == null) {
+            return false;
         }
         AbstractContainerMenu menu = cs.getMenu();
         if (!menu.getCarried().isEmpty()) {
-            return;
+            return false;
         }
         Slot hovered = ContainerScreenUtils.findSlotUnderMouse(client, cs);
 
         if (hovered == null || !hovered.hasItem()) {
-            return;
+            return false;
         }
 
         int regionStart, regionEnd;
@@ -96,7 +120,7 @@ public class OneClickFlatItemsFunction extends SymAbstractFunction {
             }
         }
         if (slots.isEmpty()) {
-            return;
+            return false;
         }
 
         int cid = menu.containerId;
@@ -104,12 +128,15 @@ public class OneClickFlatItemsFunction extends SymAbstractFunction {
         client.gameMode.handleContainerInput(cid, hovered.index, 0, ContainerInput.PICKUP, client.player);
 
         for (int idx : slots) {
-            if (menu.getCarried().isEmpty()) break;
+            if (menu.getCarried().isEmpty()) {
+                break;
+            }
             Slot s = menu.getSlot(idx);
             if (s.getItem().isEmpty()) {
                 client.gameMode.handleContainerInput(cid, idx, 1, ContainerInput.PICKUP, client.player);
             }
         }
+        return true;
     }
 }
 
